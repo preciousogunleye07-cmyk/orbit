@@ -36,6 +36,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ setActiveModal, onExpl
         <div className="pt-8 pb-14 max-w-4xl mx-auto text-center space-y-6">
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-normal text-[#ffffff] font-serif leading-[1.2] tracking-tight flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
+            <span>Launch Your Career</span>
             <RotatingText
               texts={['Into Tech.', 'Into Software.', 'Into Cybersecurity.', 'Into AI & Data.']}
               mainClassName="px-3 sm:px-4 py-1 bg-gradient-to-r from-[#a855f7] via-[#c084fc] to-[#e879f9] text-[#100e17] font-sans font-semibold rounded-xl overflow-hidden shadow-lg inline-flex items-center text-3xl sm:text-4xl md:text-5xl"
