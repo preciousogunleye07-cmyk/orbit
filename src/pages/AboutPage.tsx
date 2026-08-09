@@ -68,7 +68,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ setActiveModal }) => {
         <div className="lg:col-span-5">
           <div className="relative rounded-[20px] overflow-hidden border border-[#353434] shadow-2xl group">
             <img
-              src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80"
+              src="https://cdn.phototourl.com/free/2026-08-09-2ccdab1a-ad07-4c0d-837c-4ab2e5fe796a.jpg"
               alt="Orbit Space Collaborative Environment"
               referrerPolicy="no-referrer"
               className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-500 brightness-90"

@@ -181,7 +181,7 @@ export const COURSES_DATA: Course[] = [
     badge: 'In Demand',
     iconName: 'Video',
     priceFormatted: '₦150,000',
-    imageUrl: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=800&q=80',
+    imageUrl: uiuxImg,
     curriculum: [
       'Adobe Premiere Pro & DaVinci Resolve Masterclass',
       'After Effects Motion Graphics & Keyframing',
@@ -235,7 +235,7 @@ export const COURSES_DATA: Course[] = [
     badge: 'Practical',
     iconName: 'Camera',
     priceFormatted: '₦50,000',
-    imageUrl: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=800&q=80',
+    imageUrl: fullstackImg,
     curriculum: [
       'Content Strategy, Niche Selection & Brand Identity',
       'Scriptwriting, Camera Presence & Lighting Basics',

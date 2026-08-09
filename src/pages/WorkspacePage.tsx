@@ -26,7 +26,7 @@ export const WorkspacePage: React.FC<WorkspacePageProps> = ({ setActiveModal }) 
       {/* Featured Photo Banner */}
       <div className="relative h-64 sm:h-80 rounded-[20px] overflow-hidden mb-12 border border-[#353434] shadow-2xl group">
         <img
-          src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80"
+          src="https://cdn.phototourl.com/free/2026-08-09-c5183788-9dc8-4bb4-9bd5-de3082a92959.png"
           alt="Orbit Space Coworking Environment"
           referrerPolicy="no-referrer"
           className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-700 brightness-75"
