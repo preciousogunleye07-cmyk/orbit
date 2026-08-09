@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1b1726" />
+      <stop offset="100%" stop-color="#0e0d14" />
+    </linearGradient>
+    <linearGradient id="orbitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a855f7" />
+      <stop offset="50%" stop-color="#c084fc" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#bgGrad)" stroke="#332d47" stroke-width="1.5" />
+  <g>
+    <!-- Orbit Ring -->
+    <ellipse cx="32" cy="32" rx="21" ry="8" fill="none" stroke="url(#orbitGrad)" stroke-width="3.5" transform="rotate(-28 32 32)" stroke-linecap="round" />
+    <!-- Planet Core -->
+    <circle cx="32" cy="32" r="6" fill="#ffffff" />
+    <circle cx="32" cy="32" r="4" fill="#a855f7" />
+    <!-- Orbiting Dot -->
+    <circle cx="48" cy="21" r="3" fill="#38bdf8" />
+  </g>
+</svg>
