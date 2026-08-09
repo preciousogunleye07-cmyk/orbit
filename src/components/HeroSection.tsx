@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, MapPin, Zap, ShieldCheck, GraduationCap } from 'lucide-react';
+import { ArrowRight, MapPin, Zap, ShieldCheck, GraduationCap, Mail } from 'lucide-react';
 import { ActiveModal } from '../types';
 import ShapeGrid from './ShapeGrid';
 import RotatingText from './RotatingText';
@@ -36,7 +36,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ setActiveModal, onExpl
         <div className="pt-8 pb-14 max-w-4xl mx-auto text-center space-y-6">
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-normal text-[#ffffff] font-serif leading-[1.2] tracking-tight flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
-            <span>Start Your Journey</span>
             <RotatingText
               texts={['Into Tech.', 'Into Software.', 'Into Cybersecurity.', 'Into AI & Data.']}
               mainClassName="px-3 sm:px-4 py-1 bg-gradient-to-r from-[#a855f7] via-[#c084fc] to-[#e879f9] text-[#100e17] font-sans font-semibold rounded-xl overflow-hidden shadow-lg inline-flex items-center text-3xl sm:text-4xl md:text-5xl"
@@ -58,12 +57,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ setActiveModal, onExpl
           {/* Action CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 w-full max-w-md sm:max-w-none mx-auto">
             <button
-              onClick={() => setActiveModal({ type: 'about' })}
+              onClick={() => setActiveModal({ type: 'contact' })}
               className="w-full sm:w-auto btn-purple text-sm font-semibold px-8 py-3.5 rounded-full flex items-center justify-center gap-2 group shadow-lg"
               id="btn-learn-more-hero"
             >
-              <span>Learn More About Us</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              <span>Contact Us</span>
+              <Mail className="w-4 h-4 group-hover:scale-110 transition-transform" />
             </button>
 
             <button

@@ -1,7 +1,6 @@
-export {};
+import '@react-three/fiber';
 
 declare module '*.glb';
-declare module '*.png';
 
 declare module 'meshline' {
   export const MeshLineGeometry: any;
@@ -23,3 +22,7 @@ declare global {
     }
   }
 }
+
+
+
+

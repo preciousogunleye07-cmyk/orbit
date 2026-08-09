@@ -1,4 +1,11 @@
 import { Course } from '../types';
+import cybersecurityImg from '../assets/images/regenerated_image_1786286938893.png';
+import dataAnalysisImg from '../assets/images/regenerated_image_1786286942591.png';
+import frontendImg from '../assets/images/regenerated_image_1786286952634.png';
+import backendImg from '../assets/images/regenerated_image_1786286956654.png';
+import fullstackImg from '../assets/images/regenerated_image_1786286960923.png';
+import uiuxImg from '../assets/images/regenerated_image_1786286963996.png';
+import aiAutomationImg from '../assets/images/regenerated_image_1786286968504.png';
 
 export const COURSES_DATA: Course[] = [
   {
@@ -12,7 +19,7 @@ export const COURSES_DATA: Course[] = [
     badge: 'High Demand',
     iconName: 'ShieldAlert',
     priceFormatted: '₦150,000',
-    imageUrl: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80',
+    imageUrl: cybersecurityImg,
     curriculum: [
       'Fundamentals of Networking & Operating Systems',
       'Cyber Threat Intelligence & Incident Response',
@@ -39,7 +46,7 @@ export const COURSES_DATA: Course[] = [
     badge: 'Practical Focus',
     iconName: 'BarChart3',
     priceFormatted: '₦150,000',
-    imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80',
+    imageUrl: dataAnalysisImg,
     curriculum: [
       'Advanced Microsoft Excel for Business Analytics',
       'Relational Databases & SQL Queries for Data Extraction',
@@ -66,7 +73,7 @@ export const COURSES_DATA: Course[] = [
     badge: 'Popular',
     iconName: 'Code2',
     priceFormatted: '₦150,000',
-    imageUrl: 'https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?auto=format&fit=crop&w=800&q=80',
+    imageUrl: frontendImg,
     curriculum: [
       'HTML5, Semantic Web & Accessibility (a11y)',
       'CSS3, Flexbox, Modern Grid & Tailwind CSS',
@@ -93,7 +100,7 @@ export const COURSES_DATA: Course[] = [
     badge: 'Core Tech',
     iconName: 'Server',
     priceFormatted: '₦150,000',
-    imageUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80',
+    imageUrl: backendImg,
     curriculum: [
       'Node.js Architecture & Asynchronous JavaScript',
       'Building Express.js RESTful APIs & Middleware',
@@ -120,7 +127,7 @@ export const COURSES_DATA: Course[] = [
     badge: 'Comprehensive',
     iconName: 'Layers',
     priceFormatted: '₦280,000',
-    imageUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80',
+    imageUrl: fullstackImg,
     curriculum: [
       'Complete Frontend Masterclass (HTML, CSS, JS, React)',
       'Complete Backend Infrastructure (Node.js, Express, DBs)',
@@ -138,29 +145,29 @@ export const COURSES_DATA: Course[] = [
   },
   {
     id: 'ui-ux-design',
-    title: 'UI/UX Design',
-    description: 'Learn how to design digital products that are beautiful, useful, and easy to use.',
+    title: 'UI/UX & Product Engineering',
+    description: 'Learn how to architect, design, and engineer digital products that are beautiful, functional, and developer-ready.',
     category: 'design',
     duration: '10 Weeks',
-    level: 'Beginner Friendly',
+    level: 'Beginner to Intermediate',
     schedule: 'Weekdays & Weekend',
-    badge: 'Creative',
+    badge: 'In Demand',
     iconName: 'Layout',
     priceFormatted: '₦150,000',
-    imageUrl: 'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?auto=format&fit=crop&w=800&q=80',
+    imageUrl: uiuxImg,
     curriculum: [
-      'Design Thinking & User Research Methods',
+      'Design Thinking, User Research & Product Architecture',
       'Information Architecture & User Journey Mapping',
-      'Wireframing & Low/High Fidelity Prototyping in Figma',
-      'Design Systems, Typography, Grid & Color Theory',
-      'Usability Testing, Micro-interactions & Accessibility',
-      'Building a Professional Portfolio with Case Studies'
+      'Advanced Wireframing & High-Fidelity Figma Prototyping',
+      'Design Systems, Design Tokens & Component Libraries',
+      'Usability Testing, Micro-interactions & Accessibility (a11y)',
+      'Developer Handoff, Design-to-Code Workflow & Case Studies'
     ],
     careerOutcomes: [
       'UI/UX Designer',
       'Product Designer',
-      'User Researcher',
-      'Interaction Designer'
+      'Product Architect',
+      'Design Systems Engineer'
     ]
   },
   {
@@ -191,33 +198,6 @@ export const COURSES_DATA: Course[] = [
     ]
   },
   {
-    id: 'ai-web-development-brand-identity',
-    title: 'AI Web Development & Brand Identity',
-    description: 'Combine AI, web development, branding, and creative technology to build modern digital experiences.',
-    category: 'ai',
-    duration: '12 Weeks',
-    level: 'All Levels',
-    schedule: 'Hybrid Masterclass',
-    badge: 'Next-Gen',
-    iconName: 'Sparkles',
-    priceFormatted: '₦150,000',
-    imageUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=800&q=80',
-    curriculum: [
-      'Generative AI Tools & Prompt Engineering for Developers',
-      'Integrating AI APIs (Gemini, OpenAI) into Web Apps',
-      'Brand Identity Systems, Logo Design & Visual Styling',
-      'AI-Powered Web Development Frameworks (Vite/React)',
-      'Content Generation, Automated Design & Creative Tech',
-      'Launching an AI-Assisted Brand & Digital Product'
-    ],
-    careerOutcomes: [
-      'AI Product Developer',
-      'Brand & Web Designer',
-      'Creative Technologist',
-      'Digital Strategist'
-    ]
-  },
-  {
     id: 'ai-automation',
     title: 'AI Automation',
     description: 'Build automated workflows, AI agents, and business process automations using modern AI tools.',
@@ -228,7 +208,7 @@ export const COURSES_DATA: Course[] = [
     badge: 'Specialty',
     iconName: 'Bot',
     priceFormatted: '₦50,000',
-    imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
+    imageUrl: aiAutomationImg,
     curriculum: [
       'No-Code & Low-Code AI Automation Fundamentals',
       'API Integrations with Zapier, Make & n8n',

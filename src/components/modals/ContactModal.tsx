@@ -13,7 +13,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({ onClose }) => {
 
   const openWhatsApp = () => {
     const text = encodeURIComponent("Hello Orbit Space! I have a question regarding courses/workspace.");
-    window.open(`https://wa.me/2348123456789?text=${text}`, '_blank');
+    window.open(`https://wa.me/2348067627491?text=${text}`, '_blank');
   };
 
   return (
@@ -70,7 +70,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({ onClose }) => {
                 <Phone className="w-4 h-4 text-[#a855f7] shrink-0" />
                 <div>
                   <p className="font-semibold text-[#ffffff]">Phone & WhatsApp</p>
-                  <p className="text-[#c4c7c8] font-light">+234 812 345 6789</p>
+                  <p className="text-[#c4c7c8] font-light">+234 806 762 7491</p>
                 </div>
               </div>
             </div>
