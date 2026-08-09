@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import { X, MapPin, Phone, CheckCircle2, Mail, Send, Loader2 } from 'lucide-react';
 import { useForm, ValidationError } from '@formspree/react';
 
@@ -16,8 +17,19 @@ export const ContactModal: React.FC<ContactModalProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#100e17]/85 backdrop-blur-md animate-fade-in">
-      <div className="bg-[#181524] border border-[#332d47] text-[#e2e8f0] rounded-[24px] w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 sm:p-8 relative shadow-2xl shadow-purple-950/40">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#100e17]/85 backdrop-blur-md"
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 15 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 15 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+        className="bg-[#181524] border border-[#332d47] text-[#e2e8f0] rounded-[24px] w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 sm:p-8 relative shadow-2xl shadow-purple-950/40"
+      >
         
         <button
           onClick={onClose}
@@ -165,8 +177,8 @@ export const ContactModal: React.FC<ContactModalProps> = ({ onClose }) => {
           </div>
         )}
 
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

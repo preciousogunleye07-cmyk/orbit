@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { COURSES_DATA } from '../data/coursesData';
 import { Course, ActiveModal } from '../types';
 import { 
@@ -120,13 +121,20 @@ export const CoursesSection: React.FC<CoursesSectionProps> = ({ setActiveModal }
         </div>
 
         {/* Courses Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {displayedCourses.map((course) => (
-            <div
-              key={course.id}
-              className="group relative bg-[#1f1b2e] rounded-[20px] border border-[#332d47] hover:border-[#8b5cf6]/60 transition-all duration-300 flex flex-col justify-between shadow-xl overflow-hidden hover:shadow-purple-950/40"
-              id={`course-card-${course.id}`}
-            >
+        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <AnimatePresence>
+            {displayedCourses.map((course, idx) => (
+              <motion.div
+                key={course.id}
+                layout
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.3, delay: idx * 0.05 }}
+                whileHover={{ y: -6, transition: { duration: 0.2 } }}
+                className="group relative bg-[#1f1b2e] rounded-[20px] border border-[#332d47] hover:border-[#8b5cf6]/60 transition-colors duration-300 flex flex-col justify-between shadow-xl overflow-hidden hover:shadow-purple-950/40"
+                id={`course-card-${course.id}`}
+              >
               {/* Course Image Banner */}
               {course.imageUrl && (
                 <div className="relative h-40 w-full overflow-hidden bg-[#181524] rounded-t-[20px]">
@@ -211,9 +219,10 @@ export const CoursesSection: React.FC<CoursesSectionProps> = ({ setActiveModal }
                   </button>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </AnimatePresence>
+      </motion.div>
 
         {/* View All Button */}
         {COURSES_DATA.length > 4 && (

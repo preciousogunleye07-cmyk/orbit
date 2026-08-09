@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'motion/react';
 import { X, ArrowRight, BookOpen, Award } from 'lucide-react';
 import { Course } from '../../types';
 import AnimatedList from '../AnimatedList';
@@ -23,8 +24,19 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, on
   ));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#100e17]/85 backdrop-blur-md animate-fade-in">
-      <div className="liquid-glass-card rounded-[24px] w-full max-w-2xl max-h-[90vh] overflow-y-auto relative shadow-2xl overflow-hidden">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#100e17]/85 backdrop-blur-md"
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 15 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 15 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+        className="liquid-glass-card rounded-[24px] w-full max-w-2xl max-h-[90vh] overflow-y-auto relative shadow-2xl overflow-hidden"
+      >
         
         {course.imageUrl && (
           <div className="relative h-48 w-full bg-[#100e17]">
@@ -116,7 +128,7 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, on
 
         </div>
 
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };

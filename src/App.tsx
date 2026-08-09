@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Navbar } from './components/Navbar';
 import { FooterSection } from './components/FooterSection';
 
@@ -24,7 +25,7 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState<string>('home');
 
   return (
-    <div className="min-h-screen bg-[#141313] text-[#e5e2e1] font-sans selection:bg-[#353434] selection:text-white flex flex-col justify-between">
+    <div className="min-h-screen bg-[#141313] text-[#e5e2e1] font-sans selection:bg-[#353434] selection:text-white flex flex-col justify-between overflow-x-hidden">
       
       {/* Top Header Navbar */}
       <Navbar
@@ -34,34 +35,45 @@ export default function App() {
       />
 
       {/* Main Multi-Page Content Area */}
-      <main className="pt-20 flex-1">
-        {currentPage === 'home' && (
-          <HomePage setActiveModal={setActiveModal} setCurrentPage={setCurrentPage} />
-        )}
+      <main className="pt-20 flex-1 relative w-full">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentPage}
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            className="w-full"
+          >
+            {currentPage === 'home' && (
+              <HomePage setActiveModal={setActiveModal} setCurrentPage={setCurrentPage} />
+            )}
 
-        {currentPage === 'courses' && (
-          <CoursesPage setActiveModal={setActiveModal} />
-        )}
+            {currentPage === 'courses' && (
+              <CoursesPage setActiveModal={setActiveModal} />
+            )}
 
-        {currentPage === 'siwes' && (
-          <SIWESPage setActiveModal={setActiveModal} />
-        )}
+            {currentPage === 'siwes' && (
+              <SIWESPage setActiveModal={setActiveModal} />
+            )}
 
-        {currentPage === 'workspace' && (
-          <WorkspacePage setActiveModal={setActiveModal} />
-        )}
+            {currentPage === 'workspace' && (
+              <WorkspacePage setActiveModal={setActiveModal} />
+            )}
 
-        {currentPage === 'quiz' && (
-          <QuizPage setActiveModal={setActiveModal} />
-        )}
+            {currentPage === 'quiz' && (
+              <QuizPage setActiveModal={setActiveModal} />
+            )}
 
-        {currentPage === 'about' && (
-          <AboutPage setActiveModal={setActiveModal} />
-        )}
+            {currentPage === 'about' && (
+              <AboutPage setActiveModal={setActiveModal} />
+            )}
 
-        {currentPage === 'contact' && (
-          <ContactPage />
-        )}
+            {currentPage === 'contact' && (
+              <ContactPage />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       {/* Footer Section */}
@@ -71,46 +83,48 @@ export default function App() {
       />
 
       {/* Interactive Modal Dialog Overlays */}
-      {activeModal?.type === 'enroll' && (
-        <EnrollModal
-          course={activeModal.course}
-          onClose={() => setActiveModal(null)}
-        />
-      )}
+      <AnimatePresence>
+        {activeModal?.type === 'enroll' && (
+          <EnrollModal
+            course={activeModal.course}
+            onClose={() => setActiveModal(null)}
+          />
+        )}
 
-      {activeModal?.type === 'siwes' && (
-        <SIWESModal
-          onClose={() => setActiveModal(null)}
-        />
-      )}
+        {activeModal?.type === 'siwes' && (
+          <SIWESModal
+            onClose={() => setActiveModal(null)}
+          />
+        )}
 
-      {activeModal?.type === 'workspace' && (
-        <WorkspaceModal
-          planId={activeModal.planId}
-          onClose={() => setActiveModal(null)}
-        />
-      )}
+        {activeModal?.type === 'workspace' && (
+          <WorkspaceModal
+            planId={activeModal.planId}
+            onClose={() => setActiveModal(null)}
+          />
+        )}
 
-      {activeModal?.type === 'about' && (
-        <AboutModal
-          onClose={() => setActiveModal(null)}
-          onOpenEnroll={() => setActiveModal({ type: 'enroll' })}
-        />
-      )}
+        {activeModal?.type === 'about' && (
+          <AboutModal
+            onClose={() => setActiveModal(null)}
+            onOpenEnroll={() => setActiveModal({ type: 'enroll' })}
+          />
+        )}
 
-      {activeModal?.type === 'contact' && (
-        <ContactModal
-          onClose={() => setActiveModal(null)}
-        />
-      )}
+        {activeModal?.type === 'contact' && (
+          <ContactModal
+            onClose={() => setActiveModal(null)}
+          />
+        )}
 
-      {activeModal?.type === 'course-detail' && (
-        <CourseDetailModal
-          course={activeModal.course}
-          onClose={() => setActiveModal(null)}
-          onEnroll={() => setActiveModal({ type: 'enroll', course: activeModal.course })}
-        />
-      )}
+        {activeModal?.type === 'course-detail' && (
+          <CourseDetailModal
+            course={activeModal.course}
+            onClose={() => setActiveModal(null)}
+            onEnroll={() => setActiveModal({ type: 'enroll', course: activeModal.course })}
+          />
+        )}
+      </AnimatePresence>
 
     </div>
   );

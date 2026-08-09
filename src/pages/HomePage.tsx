@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion, Variants } from 'motion/react';
 import { HeroSection } from '../components/HeroSection';
 import { CoursesSection } from '../components/CoursesSection';
 import { SIWESSection } from '../components/SIWESSection';
@@ -12,29 +13,80 @@ interface HomePageProps {
   setCurrentPage: (page: string) => void;
 }
 
+const sectionVariant: Variants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.6, ease: "easeOut" }
+  }
+};
+
 export const HomePage: React.FC<HomePageProps> = ({ setActiveModal, setCurrentPage }) => {
   return (
-    <div className="space-y-12">
+    <div className="space-y-12 overflow-hidden">
       {/* Hero Banner */}
-      <HeroSection
-        setActiveModal={setActiveModal}
-        onExploreCourses={() => setCurrentPage('courses')}
-      />
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: '-50px' }}
+        variants={sectionVariant}
+      >
+        <HeroSection
+          setActiveModal={setActiveModal}
+          onExploreCourses={() => setCurrentPage('courses')}
+        />
+      </motion.div>
 
       {/* Featured Courses Teaser */}
-      <CoursesSection setActiveModal={setActiveModal} />
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: '-50px' }}
+        variants={sectionVariant}
+      >
+        <CoursesSection setActiveModal={setActiveModal} />
+      </motion.div>
 
       {/* Career Advisor Teaser */}
-      <CareerAdvisorQuiz setActiveModal={setActiveModal} />
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: '-50px' }}
+        variants={sectionVariant}
+      >
+        <CareerAdvisorQuiz setActiveModal={setActiveModal} />
+      </motion.div>
 
       {/* SIWES Placement Teaser */}
-      <SIWESSection setActiveModal={setActiveModal} />
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: '-50px' }}
+        variants={sectionVariant}
+      >
+        <SIWESSection setActiveModal={setActiveModal} />
+      </motion.div>
 
       {/* Workspace Pass Teaser */}
-      <WorkspaceSection setActiveModal={setActiveModal} />
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: '-50px' }}
+        variants={sectionVariant}
+      >
+        <WorkspaceSection setActiveModal={setActiveModal} />
+      </motion.div>
 
       {/* FAQ */}
-      <FAQSection />
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: '-50px' }}
+        variants={sectionVariant}
+      >
+        <FAQSection />
+      </motion.div>
     </div>
   );
 };

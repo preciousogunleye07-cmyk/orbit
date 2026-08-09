@@ -36,7 +36,7 @@ export const WorkspaceSection: React.FC<WorkspaceSectionProps> = ({ setActiveMod
         </div>
 
         {/* Feature Highlights Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
             { icon: Zap, label: 'Uninterrupted Power', sub: 'Solar + Generator Backup' },
             { icon: Wifi, label: 'High-Speed Fiber Internet', sub: 'Low Latency Link' },

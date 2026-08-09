@@ -56,10 +56,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ setActiveModal, onExpl
           </p>
 
           {/* Action CTAs */}
-          <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 w-full max-w-md sm:max-w-none mx-auto">
             <button
               onClick={() => setActiveModal({ type: 'about' })}
-              className="btn-purple text-sm font-semibold px-8 py-3.5 rounded-full flex items-center gap-2 group shadow-lg"
+              className="w-full sm:w-auto btn-purple text-sm font-semibold px-8 py-3.5 rounded-full flex items-center justify-center gap-2 group shadow-lg"
               id="btn-learn-more-hero"
             >
               <span>Learn More About Us</span>
@@ -68,7 +68,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ setActiveModal, onExpl
 
             <button
               onClick={onExploreCourses}
-              className="bg-[#1f1b2e] text-[#e2e8f0] border border-[#332d47] text-sm font-medium px-8 py-3.5 rounded-full hover:bg-[#332d47] hover:text-[#ffffff] hover:border-[#8b5cf6]/50 transition-all"
+              className="w-full sm:w-auto bg-[#1f1b2e] text-[#e2e8f0] border border-[#332d47] text-sm font-medium px-8 py-3.5 rounded-full hover:bg-[#332d47] hover:text-[#ffffff] hover:border-[#8b5cf6]/50 transition-all text-center"
               id="btn-explore-courses-hero"
             >
               <span>Explore Programs</span>
@@ -78,7 +78,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ setActiveModal, onExpl
         </div>
 
         {/* High Resolution Parallax Hero Image Banner */}
-        <div className="w-full h-[380px] md:h-[480px] rounded-none overflow-hidden relative border border-[#332d47] shadow-2xl shadow-purple-950/30 mb-12 group">
+        <div className="w-full h-[260px] sm:h-[380px] md:h-[480px] rounded-2xl overflow-hidden relative border border-[#332d47] shadow-2xl shadow-purple-950/30 mb-12 group">
           <img
             src="https://cdn.phototourl.com/free/2026-08-09-2ccdab1a-ad07-4c0d-837c-4ab2e5fe796a.jpg"
             alt="Orbit Space Collaborative Tech Learning Hub"
