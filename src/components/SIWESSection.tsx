@@ -8,32 +8,32 @@ interface SIWESSectionProps {
 
 export const SIWESSection: React.FC<SIWESSectionProps> = ({ setActiveModal }) => {
   return (
-    <section id="siwes" className="py-20 relative bg-[#100e17]">
-      <div className="max-w-[1200px] mx-auto px-6 relative z-10">
+    <section id="siwes" className="py-16 sm:py-20 relative bg-[#100e17]">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 relative z-10">
         
-        <div className="bg-[#181524] rounded-[24px] p-8 md:p-12 border border-[#332d47] relative overflow-hidden shadow-2xl shadow-purple-950/20">
+        <div className="bg-[#181524] rounded-[24px] p-5 sm:p-8 md:p-12 border border-[#332d47] relative overflow-hidden shadow-2xl shadow-purple-950/20">
           
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center relative z-10">
             
             <div className="lg:col-span-7">
 
-              <span className="text-xs font-semibold text-[#a855f7] tracking-[0.2em] uppercase mb-3 block">
+              <span className="text-xs font-semibold text-[#a855f7] tracking-[0.2em] uppercase mb-2 sm:mb-3 block">
                 Industrial Training Program
               </span>
 
-              <h2 className="text-3xl md:text-4xl font-normal text-[#ffffff] font-serif leading-tight mb-4">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-normal text-[#ffffff] font-serif leading-tight mb-3 sm:mb-4">
                 Looking for a SIWES Placement?
               </h2>
 
-              <p className="text-base text-[#e2e8f0] font-light mb-3">
+              <p className="text-sm sm:text-base text-[#e2e8f0] font-light mb-2 sm:mb-3">
                 Turn your mandatory SIWES into an opportunity to learn practical, industry-relevant software skills.
               </p>
-              <p className="text-sm text-[#c4c7c8] font-light mb-8 leading-relaxed">
+              <p className="text-xs sm:text-sm text-[#c4c7c8] font-light mb-6 sm:mb-8 leading-relaxed">
                 Join Orbit Space in Ilorin and gain hands-on experience while completing your SIWES program with official logbook sign-offs and mentor support.
               </p>
 
               {/* Perks Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 mb-6 sm:mb-8">
                 {[
                   'Hands-on Practical Projects',
                   'Official Logbook Guidance & Sign-off',
@@ -44,7 +44,7 @@ export const SIWESSection: React.FC<SIWESSectionProps> = ({ setActiveModal }) =>
                 ].map((perk, i) => (
                   <div key={i} className="flex items-center gap-2.5 text-xs font-light text-[#e2e8f0] bg-[#1f1b2e] p-3 rounded-full border border-[#332d47]">
                     <CheckCircle2 className="w-4 h-4 text-[#a855f7] shrink-0" />
-                    <span className="truncate">{perk}</span>
+                    <span className="leading-tight">{perk}</span>
                   </div>
                 ))}
               </div>

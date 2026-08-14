@@ -20,9 +20,9 @@ export const FooterSection: React.FC<FooterSectionProps> = ({ setActiveModal, se
   };
 
   return (
-    <footer className="bg-[#100e17] text-[#e2e8f0] border-t border-[#332d47] pt-20 pb-12 relative overflow-hidden">
+    <footer className="bg-[#100e17] text-[#e2e8f0] border-t border-[#332d47] pt-16 sm:pt-20 pb-12 relative overflow-hidden">
       
-      <div className="max-w-[1200px] mx-auto px-6 relative z-10">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-16 border-b border-[#332d47]">
           
           {/* Brand Info */}

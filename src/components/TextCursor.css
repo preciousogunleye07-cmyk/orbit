@@ -1,0 +1,27 @@
+.text-cursor-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.text-cursor-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.text-cursor-item {
+  position: absolute;
+  user-select: none;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #c084fc;
+  text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}

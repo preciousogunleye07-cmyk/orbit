@@ -18,7 +18,7 @@ export const COURSES_DATA: Course[] = [
     schedule: 'Weekdays & Weekend options',
     badge: 'High Demand',
     iconName: 'ShieldAlert',
-    priceFormatted: '₦150,000',
+    priceFormatted: '₦165,000',
     imageUrl: cybersecurityImg,
     curriculum: [
       'Fundamentals of Networking & Operating Systems',
@@ -45,7 +45,7 @@ export const COURSES_DATA: Course[] = [
     schedule: 'Flexible Evening & Weekend',
     badge: 'Practical Focus',
     iconName: 'BarChart3',
-    priceFormatted: '₦150,000',
+    priceFormatted: '₦165,000',
     imageUrl: dataAnalysisImg,
     curriculum: [
       'Advanced Microsoft Excel for Business Analytics',
@@ -72,7 +72,7 @@ export const COURSES_DATA: Course[] = [
     schedule: 'Physical Hub & Online',
     badge: 'Popular',
     iconName: 'Code2',
-    priceFormatted: '₦150,000',
+    priceFormatted: '₦165,000',
     imageUrl: frontendImg,
     curriculum: [
       'HTML5, Semantic Web & Accessibility (a11y)',
@@ -99,7 +99,7 @@ export const COURSES_DATA: Course[] = [
     schedule: 'Weekdays',
     badge: 'Core Tech',
     iconName: 'Server',
-    priceFormatted: '₦150,000',
+    priceFormatted: '₦165,000',
     imageUrl: backendImg,
     curriculum: [
       'Node.js Architecture & Asynchronous JavaScript',
@@ -126,7 +126,7 @@ export const COURSES_DATA: Course[] = [
     schedule: 'Intensive Practical Track',
     badge: 'Comprehensive',
     iconName: 'Layers',
-    priceFormatted: '₦280,000',
+    priceFormatted: '₦295,000',
     imageUrl: fullstackImg,
     curriculum: [
       'Complete Frontend Masterclass (HTML, CSS, JS, React)',
@@ -153,7 +153,7 @@ export const COURSES_DATA: Course[] = [
     schedule: 'Weekdays & Weekend',
     badge: 'In Demand',
     iconName: 'Layout',
-    priceFormatted: '₦150,000',
+    priceFormatted: '₦165,000',
     imageUrl: uiuxImg,
     curriculum: [
       'Design Thinking, User Research & Product Architecture',
@@ -180,7 +180,7 @@ export const COURSES_DATA: Course[] = [
     schedule: 'Flexible Track',
     badge: 'In Demand',
     iconName: 'Video',
-    priceFormatted: '₦150,000',
+    priceFormatted: '₦165,000',
     imageUrl: uiuxImg,
     curriculum: [
       'Adobe Premiere Pro & DaVinci Resolve Masterclass',
@@ -207,7 +207,7 @@ export const COURSES_DATA: Course[] = [
     schedule: 'Fast Track',
     badge: 'Specialty',
     iconName: 'Bot',
-    priceFormatted: '₦50,000',
+    priceFormatted: '₦65,000',
     imageUrl: aiAutomationImg,
     curriculum: [
       'No-Code & Low-Code AI Automation Fundamentals',
@@ -234,7 +234,7 @@ export const COURSES_DATA: Course[] = [
     schedule: 'Flexible Track',
     badge: 'Practical',
     iconName: 'Camera',
-    priceFormatted: '₦50,000',
+    priceFormatted: '₦65,000',
     imageUrl: fullstackImg,
     curriculum: [
       'Content Strategy, Niche Selection & Brand Identity',

@@ -53,16 +53,16 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
         scrolled ? 'py-3' : 'py-4'
       }`}
     >
-      <div className="max-w-[1200px] mx-auto px-6">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between">
           
           {/* Logo */}
           <button
             onClick={() => handleNavClick('home')}
-            className="flex items-center gap-3 group cursor-pointer text-left"
+            className="flex items-center gap-2.5 sm:gap-3 group cursor-pointer text-left shrink-0 min-h-[44px]"
             id="brand-logo"
           >
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2 sm:gap-2.5">
               <OrbitLogo size={32} color="#c084fc" className="group-hover:scale-105 transition-transform shrink-0" />
               <div className="h-5 w-[1px] bg-[#332d47]" />
               <div className="flex flex-col">
@@ -91,7 +91,7 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
           <div className="hidden lg:flex items-center gap-3">
             <button
               onClick={() => setActiveModal({ type: 'enroll' })}
-              className="btn-purple flex items-center gap-1.5 px-5 py-2 rounded-full text-xs font-semibold shadow-md transition-all"
+              className="btn-purple flex items-center gap-1.5 px-5 py-2 rounded-full text-xs font-semibold shadow-md transition-all min-h-[40px]"
               id="btn-apply-header"
             >
               <span>Get Started</span>
@@ -102,7 +102,7 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg bg-[#201f1f] border border-[#353434] text-[#ffffff]"
+            className="md:hidden p-2.5 rounded-lg bg-[#201f1f] border border-[#353434] text-[#ffffff] min-h-[44px] min-w-[44px] flex items-center justify-center"
             aria-label="Toggle Navigation Menu"
             id="mobile-menu-toggle"
           >
@@ -119,7 +119,7 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
             animate={{ opacity: 1, height: 'auto', y: 0 }}
             exit={{ opacity: 0, height: 0, y: -10 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="md:hidden bg-[#1c1b1b]/95 backdrop-blur-xl border-b border-[#353434] px-6 pt-4 pb-6 mt-3 space-y-2 shadow-2xl overflow-hidden"
+            className="md:hidden bg-[#1c1b1b]/95 backdrop-blur-xl border-b border-[#353434] px-4 sm:px-6 pt-4 pb-6 mt-2 space-y-2 shadow-2xl max-h-[80vh] overflow-y-auto"
           >
             {[
               { id: 'home', label: 'Home' },

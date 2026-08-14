@@ -72,7 +72,7 @@ export const WorkspacePage: React.FC<WorkspacePageProps> = ({ setActiveModal }) 
         ))}
       </div>
 
-      {/* Pricing Cards Grid - EXACT PRICES: Daily: ₦3,000 | Weekly: ₦12,000 | Monthly: ₦25,000 */}
+      {/* Pricing Cards Grid - EXACT PRICES: Daily: ₦18,000 | Weekly: ₦27,000 | Monthly: ₦40,000 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {WORKSPACE_PLANS.map((plan) => (
           <div
