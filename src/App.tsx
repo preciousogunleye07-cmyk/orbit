@@ -11,6 +11,10 @@ import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
 import { QuizPage } from './pages/QuizPage';
 
+import { AdminLoginPage } from './pages/admin/AdminLoginPage';
+import { AdminDashboardLayout } from './pages/admin/AdminDashboardLayout';
+import { PublicCertificatePage } from './pages/PublicCertificatePage';
+
 import { EnrollModal } from './components/modals/EnrollModal';
 import { SIWESModal } from './components/modals/SIWESModal';
 import { WorkspaceModal } from './components/modals/WorkspaceModal';
@@ -19,16 +23,59 @@ import { ContactModal } from './components/modals/ContactModal';
 import { CourseDetailModal } from './components/modals/CourseDetailModal';
 
 import { ActiveModal } from './types';
+import { isAdminAuthenticated } from './services/certificateService';
 
-const VALID_PAGES = ['home', 'courses', 'siwes', 'workspace', 'quiz', 'about', 'contact'];
+const MAIN_PAGES = ['home', 'courses', 'siwes', 'workspace', 'quiz', 'about', 'contact'];
 
-const getPageFromPath = (path: string): string => {
-  const cleanPath = path.replace(/^\/+/, '').split('/')[0].toLowerCase();
-  if (cleanPath && VALID_PAGES.includes(cleanPath)) {
-    return cleanPath;
+type RouteState = 
+  | { mode: 'main'; page: string }
+  | { mode: 'admin-login' }
+  | { mode: 'admin-dashboard'; subTab?: 'overview' | 'directory' | 'create' }
+  | { mode: 'public-certificate'; authId: string };
+
+function parsePathToRoute(path: string): RouteState {
+  const cleanPath = path.replace(/^\/+/, '').trim();
+  const lowerPath = cleanPath.toLowerCase();
+
+  if (!lowerPath) {
+    return { mode: 'main', page: 'home' };
   }
-  return 'home';
-};
+
+  // Admin routes
+  if (lowerPath === 'admin/login') {
+    return { mode: 'admin-login' };
+  }
+
+  if (lowerPath === 'admin') {
+    return { mode: 'admin-dashboard', subTab: 'overview' };
+  }
+
+  if (lowerPath === 'admin/certificates') {
+    return { mode: 'admin-dashboard', subTab: 'directory' };
+  }
+
+  if (lowerPath === 'admin/certificates/new') {
+    return { mode: 'admin-dashboard', subTab: 'create' };
+  }
+
+  // Main site pages
+  if (MAIN_PAGES.includes(lowerPath)) {
+    return { mode: 'main', page: lowerPath };
+  }
+
+  // Handle /verify/ORB-8F29K2 or /ORB-8F29K2
+  if (lowerPath.startsWith('verify/')) {
+    const certId = cleanPath.substring(7).trim();
+    return { mode: 'public-certificate', authId: certId.toUpperCase() };
+  }
+
+  if (lowerPath === 'verify') {
+    return { mode: 'public-certificate', authId: '' };
+  }
+
+  // Default: treat any single path segment e.g. /ORB-8F29K2 as public certificate route
+  return { mode: 'public-certificate', authId: cleanPath.toUpperCase() };
+}
 
 const PAGE_TITLES: Record<string, string> = {
   home: 'Orbit Space | Practical Tech Academy & Workspace in Ilorin',
@@ -42,98 +89,161 @@ const PAGE_TITLES: Record<string, string> = {
 
 export default function App() {
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
-  const [currentPage, setCurrentPageRaw] = useState<string>(() => {
-    return getPageFromPath(window.location.pathname);
-  });
+  const [route, setRoute] = useState<RouteState>(() => parsePathToRoute(window.location.pathname));
 
-  const changePage = (page: string, pushHistory = true) => {
-    const validPage = VALID_PAGES.includes(page) ? page : 'home';
-    setCurrentPageRaw(validPage);
-    const targetPath = validPage === 'home' ? '/' : `/${validPage}`;
+  const navigateTo = (path: string, pushHistory = true) => {
+    const newRoute = parsePathToRoute(path);
+    setRoute(newRoute);
 
-    if (PAGE_TITLES[validPage]) {
-      document.title = PAGE_TITLES[validPage];
+    if (newRoute.mode === 'main' && PAGE_TITLES[newRoute.page]) {
+      document.title = PAGE_TITLES[newRoute.page];
+    } else if (newRoute.mode === 'admin-login' || newRoute.mode === 'admin-dashboard') {
+      document.title = 'Certificate Authentication Admin | Orbit Space';
+    } else if (newRoute.mode === 'public-certificate') {
+      document.title = `Certificate Verification ${newRoute.authId ? '(' + newRoute.authId + ')' : ''} | Orbit Space`;
     }
 
-    if (pushHistory && window.location.pathname !== targetPath) {
-      window.history.pushState({ page: validPage }, '', targetPath);
+    if (pushHistory && window.location.pathname !== path) {
+      window.history.pushState({ path }, '', path);
     }
   };
 
   useEffect(() => {
-    const initialPage = getPageFromPath(window.location.pathname);
-    if (PAGE_TITLES[initialPage]) {
-      document.title = PAGE_TITLES[initialPage];
-    }
-
-    const handlePopState = (e: PopStateEvent) => {
-      const page = e.state?.page || getPageFromPath(window.location.pathname);
-      changePage(page, false);
+    const handlePopState = () => {
+      setRoute(parsePathToRoute(window.location.pathname));
     };
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  // Admin authentication guard
+  const isAuthenticated = isAdminAuthenticated();
+
   return (
     <div className="min-h-screen bg-[#141313] text-[#e5e2e1] font-sans selection:bg-[#353434] selection:text-white flex flex-col justify-between overflow-x-hidden">
       
-      {/* Top Header Navbar */}
-      <Navbar
-        setActiveModal={setActiveModal}
-        currentPage={currentPage}
-        setCurrentPage={(p) => changePage(p, true)}
-      />
+      {/* Show Main Navbar only when on Main site pages */}
+      {route.mode === 'main' && (
+        <Navbar
+          setActiveModal={setActiveModal}
+          currentPage={route.page}
+          setCurrentPage={(p) => navigateTo(p === 'home' ? '/' : `/${p}`)}
+        />
+      )}
 
-      {/* Main Multi-Page Content Area */}
-      <main className="pt-20 flex-1 relative w-full">
+      {/* Main Content Router */}
+      <main className="flex-1 relative w-full">
         <AnimatePresence mode="wait">
-          <motion.div
-            key={currentPage}
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            className="w-full"
-          >
-            {currentPage === 'home' && (
-              <HomePage setActiveModal={setActiveModal} setCurrentPage={(p) => changePage(p, true)} />
-            )}
+          
+          {/* 1. Main Site Pages */}
+          {route.mode === 'main' && (
+            <motion.div
+              key={`main-${route.page}`}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="w-full pt-20"
+            >
+              {route.page === 'home' && (
+                <HomePage setActiveModal={setActiveModal} setCurrentPage={(p) => navigateTo(`/${p}`)} />
+              )}
+              {route.page === 'courses' && (
+                <CoursesPage setActiveModal={setActiveModal} />
+              )}
+              {route.page === 'siwes' && (
+                <SIWESPage setActiveModal={setActiveModal} />
+              )}
+              {route.page === 'workspace' && (
+                <WorkspacePage setActiveModal={setActiveModal} />
+              )}
+              {route.page === 'quiz' && (
+                <QuizPage setActiveModal={setActiveModal} />
+              )}
+              {route.page === 'about' && (
+                <AboutPage setActiveModal={setActiveModal} />
+              )}
+              {route.page === 'contact' && (
+                <ContactPage />
+              )}
+            </motion.div>
+          )}
 
-            {currentPage === 'courses' && (
-              <CoursesPage setActiveModal={setActiveModal} />
-            )}
+          {/* 2. Admin Login Page */}
+          {route.mode === 'admin-login' && (
+            <motion.div
+              key="admin-login"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="w-full"
+            >
+              <AdminLoginPage
+                onSuccess={() => navigateTo('/admin')}
+                onNavigateHome={() => navigateTo('/')}
+              />
+            </motion.div>
+          )}
 
-            {currentPage === 'siwes' && (
-              <SIWESPage setActiveModal={setActiveModal} />
-            )}
+          {/* 3. Admin Dashboard (Protected Route) */}
+          {route.mode === 'admin-dashboard' && (
+            <motion.div
+              key="admin-dashboard"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="w-full"
+            >
+              {isAuthenticated ? (
+                <AdminDashboardLayout
+                  initialTab={route.subTab || 'overview'}
+                  onLogout={() => navigateTo('/admin/login')}
+                  onNavigateHome={() => navigateTo('/')}
+                  onOpenPublicPage={(id) => navigateTo(`/${id}`)}
+                />
+              ) : (
+                <AdminLoginPage
+                  onSuccess={() => navigateTo('/admin')}
+                  onNavigateHome={() => navigateTo('/')}
+                />
+              )}
+            </motion.div>
+          )}
 
-            {currentPage === 'workspace' && (
-              <WorkspacePage setActiveModal={setActiveModal} />
-            )}
+          {/* 4. Public Certificate Authentication Page */}
+          {route.mode === 'public-certificate' && (
+            <motion.div
+              key={`public-cert-${route.authId}`}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="w-full"
+            >
+              <PublicCertificatePage
+                authId={route.authId}
+                onNavigateHome={() => navigateTo('/')}
+                onSearchNewId={(newId) => navigateTo(`/${newId}`)}
+                onNavigateAdminLogin={() => navigateTo('/admin/login')}
+              />
+            </motion.div>
+          )}
 
-            {currentPage === 'quiz' && (
-              <QuizPage setActiveModal={setActiveModal} />
-            )}
-
-            {currentPage === 'about' && (
-              <AboutPage setActiveModal={setActiveModal} />
-            )}
-
-            {currentPage === 'contact' && (
-              <ContactPage />
-            )}
-          </motion.div>
         </AnimatePresence>
       </main>
 
-      {/* Footer Section */}
-      <FooterSection
-        setActiveModal={setActiveModal}
-        setCurrentPage={(p) => changePage(p, true)}
-      />
+      {/* Show Main Footer only on Main site pages */}
+      {route.mode === 'main' && (
+        <FooterSection
+          setActiveModal={setActiveModal}
+          setCurrentPage={(p) => navigateTo(`/${p}`)}
+        />
+      )}
 
-      {/* Interactive Modal Dialog Overlays */}
+      {/* Interactive Modals on main site */}
       <AnimatePresence>
         {activeModal?.type === 'enroll' && (
           <EnrollModal

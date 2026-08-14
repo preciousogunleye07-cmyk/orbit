@@ -90,6 +90,16 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
           {/* Action CTAs */}
           <div className="hidden lg:flex items-center gap-3">
             <button
+              onClick={() => {
+                window.history.pushState({}, '', '/admin/login');
+                window.dispatchEvent(new Event('popstate'));
+              }}
+              className="px-4 py-2 rounded-full text-xs font-medium text-[#c084fc] hover:text-[#ffffff] bg-[#1f1b2e] hover:bg-[#2b253f] border border-[#332d47] transition-all min-h-[40px] flex items-center gap-1.5"
+              id="btn-verify-header"
+            >
+              <span>Verify Certificate</span>
+            </button>
+            <button
               onClick={() => setActiveModal({ type: 'enroll' })}
               className="btn-purple flex items-center gap-1.5 px-5 py-2 rounded-full text-xs font-semibold shadow-md transition-all min-h-[40px]"
               id="btn-apply-header"

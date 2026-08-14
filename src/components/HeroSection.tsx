@@ -43,13 +43,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ setActiveModal, onExpl
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 relative z-10">
         
         {/* Main Hero Content Area */}
-        <div className="pt-6 sm:pt-8 pb-10 sm:pb-14 max-w-4xl mx-auto text-center space-y-5 sm:space-y-6">
+        <div className="pt-6 sm:pt-8 pb-10 sm:pb-14 max-w-4xl mx-auto text-center flex flex-col items-center justify-center gap-5 sm:gap-6">
 
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-normal text-[#ffffff] font-serif leading-[1.25] tracking-tight flex flex-wrap items-center justify-center gap-x-2 sm:gap-x-3 gap-y-2 max-w-full">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-normal text-[#ffffff] font-serif leading-tight tracking-tight flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3.5 max-w-full">
             <span className="whitespace-nowrap">Launch Your Career</span>
             <RotatingText
               texts={['Into Tech.', 'Into Software.', 'Into Cybersecurity.', 'Into AI & Data.']}
-              mainClassName="px-2.5 sm:px-4 py-0.5 sm:py-1 bg-gradient-to-r from-[#a855f7] via-[#c084fc] to-[#e879f9] text-[#100e17] font-sans font-semibold rounded-xl overflow-hidden shadow-lg inline-flex items-center text-2xl sm:text-4xl md:text-5xl max-w-full text-center justify-center"
+              mainClassName="px-3 sm:px-4.5 py-1 sm:py-1.5 bg-gradient-to-r from-[#a855f7] via-[#c084fc] to-[#e879f9] text-[#100e17] font-sans font-semibold rounded-xl overflow-hidden shadow-lg inline-flex items-center justify-center text-2xl sm:text-4xl md:text-5xl max-w-full text-center whitespace-nowrap min-h-[44px] sm:min-h-[60px]"
               staggerFrom="last"
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
@@ -66,7 +66,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ setActiveModal, onExpl
           </p>
 
           {/* Action CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 w-full max-w-xs sm:max-w-none mx-auto">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-2 w-full max-w-xs sm:max-w-none mx-auto">
             <button
               onClick={() => setActiveModal({ type: 'contact' })}
               className="w-full sm:w-auto btn-purple text-sm font-semibold px-8 py-3.5 rounded-full flex items-center justify-center gap-2 group shadow-lg min-h-[44px]"
