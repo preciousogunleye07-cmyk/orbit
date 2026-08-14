@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Compass, Sparkles, ArrowRight, RotateCcw } from 'lucide-react';
 import { COURSES_DATA } from '../data/coursesData';
 import { Course, ActiveModal } from '../types';
+import { playSound } from '../utils/soundEffects';
 
 interface CareerAdvisorQuizProps {
   setActiveModal: (modal: ActiveModal) => void;
@@ -18,8 +19,10 @@ export const CareerAdvisorQuiz: React.FC<CareerAdvisorQuizProps> = ({ setActiveM
     setAnswers(updated);
 
     if (step < 3) {
+      playSound('droplet');
       setStep(step + 1);
     } else {
+      playSound('sparkle');
       let matchId = 'frontend-development';
       if (updated.interest === 'security') matchId = 'cybersecurity';
       else if (updated.interest === 'data') matchId = 'data-analysis';
@@ -35,6 +38,7 @@ export const CareerAdvisorQuiz: React.FC<CareerAdvisorQuizProps> = ({ setActiveM
   };
 
   const resetQuiz = () => {
+    playSound('pulse');
     setStep(1);
     setAnswers({});
     setRecommendedCourse(null);

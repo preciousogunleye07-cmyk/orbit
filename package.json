@@ -20,6 +20,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/three": "^0.185.4",
     "@vitejs/plugin-react": "^5.0.4",
+    "cuelume": "^0.2.2",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "gsap": "^3.15.0",

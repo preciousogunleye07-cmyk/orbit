@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import SpotlightCard from './SpotlightCard';
 import { COURSES_DATA } from '../data/coursesData';
 import { Course, ActiveModal } from '../types';
+import { playSound } from '../utils/soundEffects';
 import { 
   ShieldAlert, 
   BarChart3, 
@@ -91,6 +92,7 @@ export const CoursesSection: React.FC<CoursesSectionProps> = ({ setActiveModal }
               <button
                 key={tab.id}
                 onClick={() => {
+                  playSound('droplet');
                   setSelectedCategory(tab.id);
                   setShowAll(true);
                 }}

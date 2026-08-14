@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import './GooeyNav.css';
+import { playSound } from '../utils/soundEffects';
 
 export interface GooeyNavItem {
   label: string;
@@ -121,6 +122,7 @@ export const GooeyNav: React.FC<GooeyNavProps> = ({
 
   const handleClick = (e: React.MouseEvent<HTMLElement> | { currentTarget: HTMLElement }, index: number) => {
     const liEl = e.currentTarget;
+    playSound('pulse');
     if (controlledActiveIndex === undefined) {
       setInternalActiveIndex(index);
     }

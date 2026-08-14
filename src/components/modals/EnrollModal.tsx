@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { X, CheckCircle2, Orbit, ArrowRight, Loader2 } from 'lucide-react';
 import { useForm, ValidationError } from '@formspree/react';
 import { Course } from '../../types';
 import { COURSES_DATA } from '../../data/coursesData';
+import { playSound } from '../../utils/soundEffects';
 
 interface EnrollModalProps {
   course?: Course;
@@ -23,6 +24,12 @@ export const EnrollModal: React.FC<EnrollModalProps> = ({ course: initialCourse,
   });
 
   const activeCourse = COURSES_DATA.find((c) => c.id === selectedCourseId) || COURSES_DATA[0];
+
+  useEffect(() => {
+    if (state.succeeded) {
+      playSound('success');
+    }
+  }, [state.succeeded]);
 
   return (
     <motion.div

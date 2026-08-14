@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X, ArrowUpRight, MapPin } from 'lucide-react';
+import { Menu, X, ArrowUpRight, MapPin, Volume2, VolumeX } from 'lucide-react';
 import { ActiveModal } from '../types';
 import { GooeyNav, GooeyNavItem } from './GooeyNav';
 import { OrbitLogo } from './OrbitLogo';
+import { playSound, toggleSound, getSoundStatus } from '../utils/soundEffects';
 
 interface NavbarProps {
   setActiveModal: (modal: ActiveModal) => void;
@@ -14,8 +15,10 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, setCurrentPage }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
 
   useEffect(() => {
+    setSoundEnabled(getSoundStatus());
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
@@ -23,7 +26,13 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const handleToggleAudio = () => {
+    const newState = toggleSound();
+    setSoundEnabled(newState);
+  };
+
   const handleNavClick = (page: string) => {
+    playSound('pulse');
     setMobileMenuOpen(false);
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -88,9 +97,22 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
           </div>
 
           {/* Action CTAs */}
-          <div className="hidden lg:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-2.5">
+            <button
+              onClick={handleToggleAudio}
+              className="p-2 rounded-full text-[#c4c7c8] hover:text-[#ffffff] bg-[#1f1b2e] hover:bg-[#2b253f] border border-[#332d47] transition-all min-h-[40px] min-w-[40px] flex items-center justify-center"
+              title={soundEnabled ? 'Mute Interaction Sounds' : 'Unmute Interaction Sounds'}
+              aria-label={soundEnabled ? 'Mute Sounds' : 'Unmute Sounds'}
+            >
+              {soundEnabled ? (
+                <Volume2 className="w-4 h-4 text-[#c084fc]" />
+              ) : (
+                <VolumeX className="w-4 h-4 text-[#c4c7c8]" />
+              )}
+            </button>
             <button
               onClick={() => {
+                playSound('pulse');
                 window.history.pushState({}, '', '/admin/login');
                 window.dispatchEvent(new Event('popstate'));
               }}
@@ -100,7 +122,10 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
               <span>Verify Certificate</span>
             </button>
             <button
-              onClick={() => setActiveModal({ type: 'enroll' })}
+              onClick={() => {
+                playSound('sparkle');
+                setActiveModal({ type: 'enroll' });
+              }}
               className="btn-purple flex items-center gap-1.5 px-5 py-2 rounded-full text-xs font-semibold shadow-md transition-all min-h-[40px]"
               id="btn-apply-header"
             >

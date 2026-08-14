@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Navbar } from './components/Navbar';
 import { FooterSection } from './components/FooterSection';
+import { initSoundSystem, playSound } from './utils/soundEffects';
 
 import { HomePage } from './pages/HomePage';
 import { CoursesPage } from './pages/CoursesPage';
@@ -91,9 +92,22 @@ export default function App() {
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
   const [route, setRoute] = useState<RouteState>(() => parsePathToRoute(window.location.pathname));
 
+  useEffect(() => {
+    initSoundSystem();
+
+    const handlePopState = () => {
+      setRoute(parsePathToRoute(window.location.pathname));
+      playSound('page');
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   const navigateTo = (path: string, pushHistory = true) => {
     const newRoute = parsePathToRoute(path);
     setRoute(newRoute);
+    playSound('page');
 
     if (newRoute.mode === 'main' && PAGE_TITLES[newRoute.page]) {
       document.title = PAGE_TITLES[newRoute.page];
@@ -107,15 +121,6 @@ export default function App() {
       window.history.pushState({ path }, '', path);
     }
   };
-
-  useEffect(() => {
-    const handlePopState = () => {
-      setRoute(parsePathToRoute(window.location.pathname));
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
 
   // Admin authentication guard
   const isAuthenticated = isAdminAuthenticated();
