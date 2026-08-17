@@ -4,9 +4,9 @@ export const WORKSPACE_PLANS: WorkspacePlan[] = [
   {
     id: 'daily-pass',
     name: 'Daily Pass',
-    price: 18000,
+    price: 3000,
     period: 'day',
-    formattedPrice: '₦18,000',
+    formattedPrice: '₦3,000',
     features: [
       'Flexible Hot Desk Access for 1 Day',
       'Uninterrupted High-Speed Fiber Internet',
@@ -19,9 +19,9 @@ export const WORKSPACE_PLANS: WorkspacePlan[] = [
   {
     id: 'weekly-pass',
     name: 'Weekly Pass',
-    price: 27000,
+    price: 10000,
     period: 'week',
-    formattedPrice: '₦27,000',
+    formattedPrice: '₦10,000',
     recommended: true,
     features: [
       '5 Consecutive Days Hot Desk Access',
@@ -36,9 +36,9 @@ export const WORKSPACE_PLANS: WorkspacePlan[] = [
   {
     id: 'monthly-pass',
     name: 'Monthly Pass',
-    price: 40000,
+    price: 27000,
     period: 'month',
-    formattedPrice: '₦40,000',
+    formattedPrice: '₦27,000',
     features: [
       'Full 30 Days Desk Access',
       'Dedicated Locker & Fixed Desk Option',
@@ -74,7 +74,7 @@ export const TESTIMONIALS_DATA: Testimonial[] = [
     name: 'Emmanuel Faruq',
     role: 'Data Analyst & Remote Freelancer',
     courseOrProgram: 'Data Analysis Graduate & Workspace Member',
-    content: 'The workspace in Orbit Space is top notch. The ₦40,000 monthly plan with high-speed internet and uninterrupted power in Ilorin is an absolute lifesaver for tech workers.',
+    content: 'The workspace in Orbit Space is top notch. The ₦27,000 monthly plan with high-speed internet and uninterrupted power in Ilorin is an absolute lifesaver for tech workers.',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200'
   }
 ];
@@ -98,7 +98,7 @@ export const FAQ_DATA: FAQItem[] = [
   {
     category: 'workspace',
     question: 'Can I just walk in and pay for a Daily Workspace pass?',
-    answer: 'Yes! You can walk in anytime between 8:00 AM and 8:00 PM, pay ₦18,000 for a daily pass, and start working immediately with fast internet and reliable power.'
+    answer: 'Yes! You can walk in anytime between 8:00 AM and 8:00 PM, pay ₦3,000 for a daily pass, and start working immediately with fast internet and reliable power.'
   },
   {
     category: 'courses',

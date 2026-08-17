@@ -4,7 +4,6 @@ import { HeroSection } from '../components/HeroSection';
 import { CoursesSection } from '../components/CoursesSection';
 import { SIWESSection } from '../components/SIWESSection';
 import { WorkspaceSection } from '../components/WorkspaceSection';
-import { CareerAdvisorQuiz } from '../components/CareerAdvisorQuiz';
 import { FAQSection } from '../components/FAQSection';
 import { ActiveModal } from '../types';
 
@@ -46,16 +45,6 @@ export const HomePage: React.FC<HomePageProps> = ({ setActiveModal, setCurrentPa
         variants={sectionVariant}
       >
         <CoursesSection setActiveModal={setActiveModal} />
-      </motion.div>
-
-      {/* Career Advisor Teaser */}
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: '-50px' }}
-        variants={sectionVariant}
-      >
-        <CareerAdvisorQuiz setActiveModal={setActiveModal} />
       </motion.div>
 
       {/* SIWES Placement Teaser */}

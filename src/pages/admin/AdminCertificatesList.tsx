@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, Plus, Copy, ExternalLink, Download, AlertTriangle, Eye, CheckCircle2, AlertOctagon, RefreshCw } from 'lucide-react';
+import { Search, Filter, Plus, Copy, ExternalLink, Download, AlertTriangle, Eye, CheckCircle2, AlertOctagon, RefreshCw, Trash2 } from 'lucide-react';
 import { CertificateRecord, getPublicAuthUrl, getActualBrowserAuthUrl } from '../../services/certificateService';
 import { downloadQrCode } from '../../utils/qrCode';
 import { playSound } from '../../utils/soundEffects';
@@ -10,6 +10,7 @@ interface AdminCertificatesListProps {
   onSelectCertificate: (cert: CertificateRecord) => void;
   onOpenPublicPage: (id: string) => void;
   onRequestRevoke: (cert: CertificateRecord) => void;
+  onRequestDelete?: (cert: CertificateRecord) => void;
 }
 
 export const AdminCertificatesList: React.FC<AdminCertificatesListProps> = ({
@@ -17,7 +18,8 @@ export const AdminCertificatesList: React.FC<AdminCertificatesListProps> = ({
   onGenerateClick,
   onSelectCertificate,
   onOpenPublicPage,
-  onRequestRevoke
+  onRequestRevoke,
+  onRequestDelete
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'valid' | 'revoked'>('all');
@@ -274,10 +276,23 @@ export const AdminCertificatesList: React.FC<AdminCertificatesListProps> = ({
                                 playSound('toggle');
                                 onRequestRevoke(cert);
                               }}
-                              className="p-2 rounded-lg bg-[#100e17] border border-[#332d47] text-rose-400 hover:bg-rose-950/40 hover:border-rose-800 transition-all"
+                              className="p-2 rounded-lg bg-[#100e17] border border-[#332d47] text-amber-400 hover:bg-amber-950/40 hover:border-amber-800 transition-all"
                               title="Revoke Certificate"
                             >
                               <AlertTriangle className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
+                          {onRequestDelete && (
+                            <button
+                              onClick={() => {
+                                playSound('toggle');
+                                onRequestDelete(cert);
+                              }}
+                              className="p-2 rounded-lg bg-[#100e17] border border-[#332d47] text-rose-400 hover:bg-rose-950/50 hover:border-rose-800 transition-all"
+                              title="Permanently Delete Certificate"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           )}
                         </div>

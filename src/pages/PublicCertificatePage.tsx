@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { 
   CertificateRecord, 
+  fetchCertificateByIdAsync, 
   getCertificateById, 
   getPublicAuthUrl, 
   getActualBrowserAuthUrl 
@@ -52,20 +53,29 @@ export const PublicCertificatePage: React.FC<PublicCertificatePageProps> = ({
   const browserUrl = getActualBrowserAuthUrl(authId);
 
   useEffect(() => {
+    let isMounted = true;
     setLoading(true);
-    // Simulate lightweight lookup
-    const record = getCertificateById(authId);
-    setCertificate(record);
-    setLoading(false);
 
-    if (record) {
-      playSound('arrival');
-      generateQrCodeDataUrl(browserUrl, 500)
-        .then(url => setQrDataUrl(url))
-        .catch(console.error);
-    } else {
-      playSound('error');
-    }
+    fetchCertificateByIdAsync(authId).then((record) => {
+      if (!isMounted) return;
+      setCertificate(record);
+      setLoading(false);
+
+      if (record) {
+        playSound('arrival');
+        generateQrCodeDataUrl(browserUrl, 500)
+          .then(url => {
+            if (isMounted) setQrDataUrl(url);
+          })
+          .catch(console.error);
+      } else {
+        playSound('error');
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
   }, [authId, browserUrl]);
 
   const handleCopyLink = () => {

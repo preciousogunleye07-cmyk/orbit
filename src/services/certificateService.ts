@@ -1,3 +1,5 @@
+import { getSupabase, isSupabaseConfigured } from './supabase';
+
 export interface CertificateRecord {
   id: string; // Public authentication ID, e.g. "ORB-8F29K2"
   studentName: string;
@@ -94,6 +96,82 @@ export function generateCertificateId(): string {
   return `ORB-${result}`;
 }
 
+// Supabase Record Mapping
+function mapToCertificateRecord(row: Record<string, any>): CertificateRecord {
+  return {
+    id: row.id,
+    studentName: row.student_name,
+    course: row.course,
+    certificateNumber: row.certificate_number,
+    dateIssued: row.date_issued,
+    courseDuration: row.course_duration,
+    certificateType: row.certificate_type,
+    studentId: row.student_id,
+    additionalNotes: row.additional_notes,
+    status: row.status as 'valid' | 'revoked',
+    createdAt: row.created_at,
+    documentUrl: row.document_url,
+    fileName: row.file_name,
+    fileSize: row.file_size,
+    fileType: row.file_type
+  };
+}
+
+function mapToSupabaseRow(cert: CertificateRecord) {
+  return {
+    id: cert.id,
+    student_name: cert.studentName,
+    course: cert.course,
+    certificate_number: cert.certificateNumber,
+    date_issued: cert.dateIssued,
+    course_duration: cert.courseDuration,
+    certificate_type: cert.certificateType,
+    student_id: cert.studentId,
+    additional_notes: cert.additionalNotes,
+    status: cert.status,
+    created_at: cert.createdAt,
+    document_url: cert.documentUrl,
+    file_name: cert.fileName,
+    file_size: cert.fileSize,
+    file_type: cert.fileType
+  };
+}
+
+// Asynchronously fetch from Supabase and cache locally
+export async function syncCertificatesFromSupabase(): Promise<CertificateRecord[]> {
+  const client = getSupabase();
+  if (!client) {
+    return getCertificates();
+  }
+
+  try {
+    const { data, error } = await client
+      .from('certificates')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.warn('Supabase fetch notice (using cached data):', error.message);
+      return getCertificates();
+    }
+
+    if (data && data.length > 0) {
+      const records = data.map(mapToCertificateRecord);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+      return records;
+    } else if (data && data.length === 0) {
+      // Table exists but is empty, seed defaults into Supabase
+      const defaultRows = DEFAULT_CERTIFICATES.map(mapToSupabaseRow);
+      await client.from('certificates').insert(defaultRows);
+      return DEFAULT_CERTIFICATES;
+    }
+  } catch (err) {
+    console.warn('Could not sync with Supabase, relying on local storage:', err);
+  }
+
+  return getCertificates();
+}
+
 // Retrieve certificates from local storage or fallback to defaults
 export function getCertificates(): CertificateRecord[] {
   try {
@@ -110,7 +188,36 @@ export function getCertificates(): CertificateRecord[] {
   }
 }
 
-// Lookup certificate by ID (case insensitive)
+// Lookup certificate by ID (case insensitive, tries Supabase first then local)
+export async function fetchCertificateByIdAsync(id: string): Promise<CertificateRecord | null> {
+  if (!id) return null;
+  const cleanId = id.trim().toUpperCase();
+
+  const client = getSupabase();
+  if (client) {
+    try {
+      const { data, error } = await client
+        .from('certificates')
+        .select('*')
+        .ilike('id', cleanId)
+        .single();
+
+      if (!error && data) {
+        const record = mapToCertificateRecord(data);
+        // Update local cache
+        const all = getCertificates().filter(c => c.id.toUpperCase() !== cleanId);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify([record, ...all]));
+        return record;
+      }
+    } catch (e) {
+      console.warn('Supabase single fetch fallback to local:', e);
+    }
+  }
+
+  return getCertificateById(cleanId);
+}
+
+// Synchronous local lookup fallback
 export function getCertificateById(id: string): CertificateRecord | null {
   if (!id) return null;
   const cleanId = id.trim().toUpperCase();
@@ -170,7 +277,27 @@ export function createCertificate(
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   } catch (err) {
-    console.error('Failed to save certificate:', err);
+    console.error('Failed to save certificate locally:', err);
+  }
+
+  // Asynchronously send to Supabase in background
+  const client = getSupabase();
+  if (client) {
+    (async () => {
+      try {
+        const { error } = await client
+          .from('certificates')
+          .insert([mapToSupabaseRow(newRecord)]);
+
+        if (error) {
+          console.warn('Could not insert certificate into Supabase (will remain in local storage):', error.message);
+        } else {
+          console.log('Certificate successfully synced to Supabase:', newRecord.id);
+        }
+      } catch (err) {
+        console.warn('Supabase sync error:', err);
+      }
+    })();
   }
 
   return newRecord;
@@ -190,11 +317,73 @@ export function revokeCertificate(id: string): CertificateRecord | null {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
   } catch (err) {
-    console.error('Failed to revoke certificate:', err);
+    console.error('Failed to revoke certificate locally:', err);
+  }
+
+  // Sync revocation to Supabase
+  const client = getSupabase();
+  if (client) {
+    (async () => {
+      try {
+        const { error } = await client
+          .from('certificates')
+          .update({ status: 'revoked' })
+          .eq('id', all[index].id);
+
+        if (error) {
+          console.warn('Could not revoke certificate in Supabase:', error.message);
+        } else {
+          console.log('Certificate revoked in Supabase:', all[index].id);
+        }
+      } catch (err) {
+        console.warn('Supabase revoke sync error:', err);
+      }
+    })();
   }
 
   return all[index];
 }
+
+// Permanently delete a certificate
+export function deleteCertificate(id: string): boolean {
+  const all = getCertificates();
+  const cleanId = id.trim().toUpperCase();
+  const filtered = all.filter(c => c.id.toUpperCase() !== cleanId);
+  
+  if (filtered.length === all.length) return false;
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+  } catch (err) {
+    console.error('Failed to delete certificate locally:', err);
+  }
+
+  // Delete in Supabase
+  const client = getSupabase();
+  if (client) {
+    (async () => {
+      try {
+        const { error } = await client
+          .from('certificates')
+          .delete()
+          .ilike('id', cleanId);
+
+        if (error) {
+          console.warn('Could not delete certificate from Supabase:', error.message);
+        } else {
+          console.log('Certificate permanently deleted from Supabase:', cleanId);
+        }
+      } catch (err) {
+        console.warn('Supabase delete error:', err);
+      }
+    })();
+  }
+
+  return true;
+}
+
+
+
 
 // Dashboard Stats calculation
 export function getCertificateStats() {

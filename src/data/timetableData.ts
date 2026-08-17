@@ -11,7 +11,7 @@ export interface TimetableSlot {
   instructor: string;
   instructorTitle?: string;
   venue: string;
-  category: 'security' | 'development' | 'creative' | 'automation' | 'engineering';
+  category: 'security' | 'development' | 'creative' | 'automation' | 'engineering' | 'data';
   badge?: string;
 }
 
@@ -218,6 +218,22 @@ export const TIMETABLE_DATA: TimetableSlot[] = [
     badge: 'Server Sprint'
   },
   {
+    id: 'fri-stat',
+    day: 'Friday',
+    dayIndex: 5,
+    time: '1:00–3:00 PM',
+    startHour: 13,
+    startMinute: 0,
+    endHour: 15,
+    endMinute: 0,
+    course: 'Statistics',
+    instructor: 'Mr. Stat',
+    instructorTitle: 'Lead Statistics & Data Science Mentor',
+    venue: 'Data Analytics Suite (Lab 2)',
+    category: 'data',
+    badge: 'Applied Data'
+  },
+  {
     id: 'fri-4',
     day: 'Friday',
     dayIndex: 5,
@@ -300,6 +316,22 @@ export const TIMETABLE_DATA: TimetableSlot[] = [
     badge: 'Weekend Build'
   },
   {
+    id: 'sat-stat',
+    day: 'Saturday',
+    dayIndex: 6,
+    time: '1:00–3:00 PM',
+    startHour: 13,
+    startMinute: 0,
+    endHour: 15,
+    endMinute: 0,
+    course: 'Statistics',
+    instructor: 'Mr. Stat',
+    instructorTitle: 'Lead Statistics & Data Science Mentor',
+    venue: 'Data Analytics Suite (Lab 2)',
+    category: 'data',
+    badge: 'Practical Analytics'
+  },
+  {
     id: 'sat-3',
     day: 'Saturday',
     dayIndex: 6,
@@ -331,12 +363,13 @@ export const INSTRUCTORS = [
   { name: 'Lawal', track: 'Front End & Back End Development', role: 'Senior Full Stack Lead', avatar: 'LW', color: '#38bdf8' },
   { name: 'Ayo', track: 'Product Engineering', role: 'Principal Product Engineer', avatar: 'AY', color: '#ec4899' },
   { name: 'Precious', track: 'Video Editing & Automation', role: 'Creative Director & AI Mentor', avatar: 'PR', color: '#10b981' },
-  { name: 'Rekay', track: 'Content Creation', role: 'Lead Content Strategist', avatar: 'RK', color: '#f59e0b' }
+  { name: 'Rekay', track: 'Content Creation', role: 'Lead Content Strategist', avatar: 'RK', color: '#f59e0b' },
+  { name: 'Mr. Stat', track: 'Statistics & Data Science', role: 'Statistics & Analytics Lead', avatar: 'ST', color: '#06b6d4' }
 ];
 
 export const TIMETABLE_STATS = {
-  totalClassesPerWeek: 18,
-  activeInstructors: 5,
-  coreTracks: 7,
+  totalClassesPerWeek: 20,
+  activeInstructors: 6,
+  coreTracks: 8,
   hubLocations: 4
 };

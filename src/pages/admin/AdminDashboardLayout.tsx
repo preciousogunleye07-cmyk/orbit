@@ -13,6 +13,7 @@ import {
 import { 
   CertificateRecord, 
   getCertificates, 
+  syncCertificatesFromSupabase,
   getAdminSession, 
   logoutAdmin,
   AdminUser
@@ -23,6 +24,7 @@ import { AdminCertificatesList } from './AdminCertificatesList';
 import { AdminCreateCertificatePage } from './AdminCreateCertificatePage';
 import { CertificateDetailsModal } from '../../components/admin/CertificateDetailsModal';
 import { RevokeConfirmationModal } from '../../components/admin/RevokeConfirmationModal';
+import { DeleteConfirmationModal } from '../../components/admin/DeleteConfirmationModal';
 import { OrbitLogo } from '../../components/OrbitLogo';
 import { playSound } from '../../utils/soundEffects';
 
@@ -46,9 +48,13 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
   // Modal states
   const [selectedCertificate, setSelectedCertificate] = useState<CertificateRecord | null>(null);
   const [certificateToRevoke, setCertificateToRevoke] = useState<CertificateRecord | null>(null);
+  const [certificateToDelete, setCertificateToDelete] = useState<CertificateRecord | null>(null);
 
   const refreshData = () => {
     setCertificates(getCertificates());
+    syncCertificatesFromSupabase().then((latest) => {
+      setCertificates(latest);
+    });
   };
 
   useEffect(() => {
@@ -79,6 +85,13 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
       const updated = certificates.find(c => c.id === selectedCertificate.id);
       if (updated) setSelectedCertificate(updated);
     }
+  };
+
+  const handleDeleted = () => {
+    playSound('trash');
+    refreshData();
+    setSelectedCertificate(null);
+    setCertificateToDelete(null);
   };
 
   return (
@@ -215,6 +228,7 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
               onSelectCertificate={(cert) => setSelectedCertificate(cert)}
               onOpenPublicPage={onOpenPublicPage}
               onRequestRevoke={(cert) => setCertificateToRevoke(cert)}
+              onRequestDelete={(cert) => setCertificateToDelete(cert)}
             />
           )}
 
@@ -237,6 +251,7 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
             onClose={() => setSelectedCertificate(null)}
             onOpenPublicView={onOpenPublicPage}
             onRequestRevoke={(cert) => setCertificateToRevoke(cert)}
+            onRequestDelete={(cert) => setCertificateToDelete(cert)}
           />
         )}
 
@@ -245,6 +260,14 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
             certificate={certificateToRevoke}
             onClose={() => setCertificateToRevoke(null)}
             onRevoked={handleRevoked}
+          />
+        )}
+
+        {certificateToDelete && (
+          <DeleteConfirmationModal
+            certificate={certificateToDelete}
+            onClose={() => setCertificateToDelete(null)}
+            onDeleted={handleDeleted}
           />
         )}
       </AnimatePresence>

@@ -37,6 +37,7 @@ const SpotlightCard: React.FC<SpotlightCardProps> = ({
       id={id}
       className={`card-spotlight ${className}`}
     >
+      <div className="card-spotlight-glow" />
       {children}
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { X, CheckCircle2, AlertOctagon, Copy, ExternalLink, Download, AlertTriangle, FileText, Calendar, User, BookOpen, Hash, Clock } from 'lucide-react';
+import { X, CheckCircle2, AlertOctagon, Copy, ExternalLink, Download, AlertTriangle, Trash2, FileText, Calendar, User, BookOpen, Hash, Clock } from 'lucide-react';
 import { CertificateRecord, getPublicAuthUrl, getActualBrowserAuthUrl } from '../../services/certificateService';
 import { generateQrCodeDataUrl, downloadQrCode } from '../../utils/qrCode';
 import { playSound } from '../../utils/soundEffects';
@@ -10,13 +10,15 @@ interface CertificateDetailsModalProps {
   onClose: () => void;
   onOpenPublicView: (id: string) => void;
   onRequestRevoke: (cert: CertificateRecord) => void;
+  onRequestDelete?: (cert: CertificateRecord) => void;
 }
 
 export const CertificateDetailsModal: React.FC<CertificateDetailsModalProps> = ({
   certificate,
   onClose,
   onOpenPublicView,
-  onRequestRevoke
+  onRequestRevoke,
+  onRequestDelete
 }) => {
   const [copied, setCopied] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
@@ -229,19 +231,36 @@ export const CertificateDetailsModal: React.FC<CertificateDetailsModalProps> = (
             </button>
           </div>
 
-          {certificate.status === 'valid' && (
-            <button
-              onClick={() => {
-                playSound('toggle');
-                onClose();
-                onRequestRevoke(certificate);
-              }}
-              className="py-2.5 px-4 rounded-full bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/50 text-rose-300 text-xs font-semibold flex items-center gap-2 transition-all"
-            >
-              <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
-              <span>Revoke Certificate</span>
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {certificate.status === 'valid' && (
+              <button
+                onClick={() => {
+                  playSound('toggle');
+                  onClose();
+                  onRequestRevoke(certificate);
+                }}
+                className="py-2.5 px-4 rounded-full bg-amber-950/40 hover:bg-amber-900/60 border border-amber-800/50 text-amber-300 text-xs font-semibold flex items-center gap-2 transition-all"
+              >
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                <span>Revoke</span>
+              </button>
+            )}
+
+            {onRequestDelete && (
+              <button
+                onClick={() => {
+                  playSound('toggle');
+                  onClose();
+                  onRequestDelete(certificate);
+                }}
+                className="py-2.5 px-4 rounded-full bg-rose-950/50 hover:bg-rose-900/70 border border-rose-800/50 text-rose-300 text-xs font-semibold flex items-center gap-2 transition-all"
+                title="Permanently Delete Certificate"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                <span>Delete</span>
+              </button>
+            )}
+          </div>
         </div>
 
       </motion.div>

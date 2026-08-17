@@ -1,16 +1,12 @@
-import React, { useState } from 'react';
-import { WORKSPACE_PLANS } from '../data/workspaceData';
+import React from 'react';
 import { ActiveModal } from '../types';
-import SpotlightCard from './SpotlightCard';
 import { playSound } from '../utils/soundEffects';
 import { 
   Wifi, 
   Zap, 
   Coffee, 
   ArrowRight, 
-  Check, 
-  Building,
-  Calendar
+  Building
 } from 'lucide-react';
 
 interface WorkspaceSectionProps {
@@ -18,8 +14,6 @@ interface WorkspaceSectionProps {
 }
 
 export const WorkspaceSection: React.FC<WorkspaceSectionProps> = ({ setActiveModal }) => {
-  const [selectedPlanId, setSelectedPlanId] = useState<string>('weekly-pass');
-
   return (
     <section id="workspace" className="py-16 sm:py-20 relative bg-[#100e17]">
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 relative z-10">
@@ -78,73 +72,6 @@ export const WorkspaceSection: React.FC<WorkspaceSectionProps> = ({ setActiveMod
           </div>
         </div>
 
-        {/* Pricing Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          {WORKSPACE_PLANS.map((plan) => (
-            <SpotlightCard
-              key={plan.id}
-              onClick={() => {
-                playSound('droplet');
-                setSelectedPlanId(plan.id);
-              }}
-              spotlightColor={plan.recommended ? 'rgba(192, 132, 252, 0.35)' : 'rgba(168, 85, 247, 0.2)'}
-              className={`relative bg-[#1f1b2e] rounded-[20px] p-8 border transition-all duration-300 cursor-pointer flex flex-col justify-between shadow-xl ${
-                plan.recommended
-                  ? 'border-[#8b5cf6] bg-[#1f1b2e] shadow-2xl shadow-purple-900/30'
-                  : 'border-[#332d47] hover:border-[#8b5cf6]/60'
-              }`}
-              id={`workspace-plan-${plan.id}`}
-            >
-              {plan.recommended && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-0.5 rounded-full bg-gradient-to-r from-[#7c3aed] to-[#a855f7] text-[#ffffff] text-[10px] font-mono tracking-widest uppercase font-semibold shadow-md z-10">
-                  Most Popular
-                </div>
-              )}
-
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-serif text-[#ffffff] font-normal">{plan.name}</h3>
-                  <Calendar className="w-5 h-5 text-[#a855f7]" />
-                </div>
-
-                <div className="mb-6">
-                  <span className="text-3xl font-serif text-[#ffffff] font-normal">
-                    {plan.formattedPrice}
-                  </span>
-                  <span className="text-xs text-[#c4c7c8] font-light ml-1">
-                    / {plan.period}
-                  </span>
-                </div>
-
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((feat, idx) => (
-                    <li key={idx} className="flex items-start gap-2.5 text-xs text-[#c4c7c8] font-light">
-                      <Check className="w-4 h-4 text-[#a855f7] shrink-0 mt-0.5" />
-                      <span>{feat}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  playSound('sparkle');
-                  setActiveModal({ type: 'workspace', planId: plan.id });
-                }}
-                className={`w-full py-3 px-4 rounded-full font-semibold text-xs transition-all flex items-center justify-center gap-2 relative z-10 ${
-                  plan.recommended
-                    ? 'btn-purple shadow-lg'
-                    : 'bg-[#181524] hover:bg-[#332d47] text-[#e2e8f0] border border-[#332d47] hover:text-[#a855f7]'
-                }`}
-              >
-                <span>Reserve Pass</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </SpotlightCard>
-          ))}
-        </div>
-
         {/* Action CTA */}
         <div className="text-center">
           <button
@@ -152,10 +79,10 @@ export const WorkspaceSection: React.FC<WorkspaceSectionProps> = ({ setActiveMod
               playSound('sparkle');
               setActiveModal({ type: 'workspace' });
             }}
-            className="btn-purple inline-flex items-center gap-2 px-8 py-4 rounded-full font-semibold text-xs transition-all shadow-lg"
+            className="btn-purple inline-flex items-center gap-2 px-8 py-4 rounded-full font-semibold text-xs transition-all shadow-lg cursor-pointer"
             id="btn-explore-workspace"
           >
-            <span>Explore Workspace</span>
+            <span>Explore Workspace & Passes</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
