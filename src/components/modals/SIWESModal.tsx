@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { X, CheckCircle2, GraduationCap, ArrowRight, Loader2 } from 'lucide-react';
 import { useForm, ValidationError } from '@formspree/react';
+import { playSound } from '../../utils/soundEffects';
 
 interface SIWESModalProps {
   onClose: () => void;
@@ -20,6 +21,17 @@ export const SIWESModal: React.FC<SIWESModalProps> = ({ onClose }) => {
     startMonth: 'Next Month'
   });
 
+  useEffect(() => {
+    if (state.succeeded) {
+      playSound('success');
+    }
+  }, [state.succeeded]);
+
+  const handleClose = () => {
+    playSound('release');
+    onClose();
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -36,7 +48,7 @@ export const SIWESModal: React.FC<SIWESModalProps> = ({ onClose }) => {
       >
         
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute top-5 right-5 p-2 rounded-full bg-[#201f1f] text-[#c4c7c8] hover:text-[#ffffff] hover:bg-[#353434] transition-all"
         >
           <X className="w-5 h-5" />
@@ -220,7 +232,7 @@ export const SIWESModal: React.FC<SIWESModalProps> = ({ onClose }) => {
               We have received your SIWES application for <strong className="text-[#ffffff]">{formData.techTrack}</strong> ({formData.siwesDuration}). Our SIWES coordinator will issue your acceptance letter after quick verification on WhatsApp.
             </p>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="px-8 py-3 rounded-full bg-[#ffffff] hover:bg-[#e2e2e2] text-[#141313] font-semibold text-xs"
             >
               Done

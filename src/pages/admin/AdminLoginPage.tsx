@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { ShieldCheck, Eye, EyeOff, Lock, Mail, ArrowRight, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { loginAdmin } from '../../services/certificateService';
 import { OrbitLogo } from '../../components/OrbitLogo';
+import { playSound } from '../../utils/soundEffects';
 
 interface AdminLoginPageProps {
   onSuccess: () => void;
@@ -24,8 +25,10 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onNav
 
     try {
       await loginAdmin(email, password);
+      playSound('ready');
       onSuccess();
     } catch (err: any) {
+      playSound('error');
       setError(err.message || 'Authentication failed. Please check your credentials.');
     } finally {
       setLoading(false);
@@ -42,7 +45,10 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onNav
         {/* Brand Header */}
         <div className="text-center mb-8">
           <button
-            onClick={onNavigateHome}
+            onClick={() => {
+              playSound('pulse');
+              onNavigateHome();
+            }}
             className="inline-flex items-center gap-3 group cursor-pointer text-left mb-6 transition-transform hover:scale-105"
             title="Return to Orbit Space Homepage"
           >

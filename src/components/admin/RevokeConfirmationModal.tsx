@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { AlertTriangle, X, Loader2 } from 'lucide-react';
 import { CertificateRecord, revokeCertificate } from '../../services/certificateService';
+import { playSound } from '../../utils/soundEffects';
 
 interface RevokeConfirmationModalProps {
   certificate: CertificateRecord;
@@ -16,10 +17,16 @@ export const RevokeConfirmationModal: React.FC<RevokeConfirmationModalProps> = (
 }) => {
   const [loading, setLoading] = useState(false);
 
+  const handleClose = () => {
+    playSound('release');
+    onClose();
+  };
+
   const handleConfirm = async () => {
     setLoading(true);
     await new Promise(r => setTimeout(r, 400));
     revokeCertificate(certificate.id);
+    playSound('error');
     setLoading(false);
     onRevoked();
     onClose();
@@ -34,7 +41,7 @@ export const RevokeConfirmationModal: React.FC<RevokeConfirmationModalProps> = (
         className="bg-[#181524] border border-[#332d47] rounded-[24px] max-w-md w-full p-6 shadow-2xl relative overflow-hidden"
       >
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute top-4 right-4 p-2 text-[#c4c7c8] hover:text-[#ffffff] rounded-lg bg-[#1f1b2e] border border-[#332d47] transition-colors"
         >
           <X className="w-4 h-4" />
@@ -67,7 +74,7 @@ export const RevokeConfirmationModal: React.FC<RevokeConfirmationModalProps> = (
 
         <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#332d47]">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             disabled={loading}
             className="py-2.5 px-5 rounded-full bg-[#1f1b2e] border border-[#332d47] text-xs font-medium text-[#e2e8f0] hover:bg-[#332d47] transition-all"
           >

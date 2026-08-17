@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { X, CheckCircle2, Building, ArrowRight, Loader2 } from 'lucide-react';
 import { useForm, ValidationError } from '@formspree/react';
 import { WORKSPACE_PLANS } from '../../data/workspaceData';
+import { playSound } from '../../utils/soundEffects';
 
 interface WorkspaceModalProps {
   planId?: string;
@@ -21,6 +22,22 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({ planId: initialP
 
   const activePlan = WORKSPACE_PLANS.find((p) => p.id === selectedPlanId) || WORKSPACE_PLANS[0];
 
+  useEffect(() => {
+    if (state.succeeded) {
+      playSound('success');
+    }
+  }, [state.succeeded]);
+
+  const handleClose = () => {
+    playSound('release');
+    onClose();
+  };
+
+  const handleSelectPlan = (id: string) => {
+    playSound('toggle');
+    setSelectedPlanId(id);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -37,7 +54,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({ planId: initialP
       >
         
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute top-5 right-5 p-2 rounded-full bg-[#201f1f] text-[#c4c7c8] hover:text-[#ffffff] hover:bg-[#353434] transition-all"
         >
           <X className="w-5 h-5" />
@@ -75,7 +92,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({ planId: initialP
                     <button
                       key={p.id}
                       type="button"
-                      onClick={() => setSelectedPlanId(p.id)}
+                      onClick={() => handleSelectPlan(p.id)}
                       className={`p-3 rounded-[12px] border text-center transition-all ${
                         selectedPlanId === p.id
                           ? 'bg-[#ffffff] border-[#ffffff] text-[#141313]'
@@ -187,7 +204,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({ planId: initialP
               Your <strong className="text-[#ffffff]">{activePlan.name}</strong> ({activePlan.formattedPrice}) reservation has been logged for <strong className="text-[#ffffff]">{formData.startDate}</strong>. Show up at Orbit Space Ilorin and pay at front desk or via transfer!
             </p>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="px-8 py-3 rounded-full bg-[#ffffff] hover:bg-[#e2e2e2] text-[#141313] font-semibold text-xs"
             >
               Done

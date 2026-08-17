@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Search, Filter, Plus, Copy, ExternalLink, Download, AlertTriangle, Eye, CheckCircle2, AlertOctagon, RefreshCw } from 'lucide-react';
 import { CertificateRecord, getPublicAuthUrl, getActualBrowserAuthUrl } from '../../services/certificateService';
 import { downloadQrCode } from '../../utils/qrCode';
+import { playSound } from '../../utils/soundEffects';
 
 interface AdminCertificatesListProps {
   certificates: CertificateRecord[];
@@ -58,7 +59,13 @@ export const AdminCertificatesList: React.FC<AdminCertificatesListProps> = ({
     return filteredCertificates.slice(start, start + itemsPerPage);
   }, [filteredCertificates, currentPage]);
 
+  const handleFilterChange = (filter: 'all' | 'valid' | 'revoked') => {
+    playSound('droplet');
+    setStatusFilter(filter);
+  };
+
   const handleCopy = (id: string) => {
+    playSound('sparkle');
     const url = getPublicAuthUrl(id);
     navigator.clipboard.writeText(url);
     setCopiedId(id);
@@ -66,8 +73,14 @@ export const AdminCertificatesList: React.FC<AdminCertificatesListProps> = ({
   };
 
   const handleDownloadQr = (cert: CertificateRecord) => {
+    playSound('chime');
     const browserUrl = getActualBrowserAuthUrl(cert.id);
     downloadQrCode(browserUrl, `Orbit_Space_Certificate_QR_${cert.id}.png`);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    playSound('page');
+    setCurrentPage(newPage);
   };
 
   return (
@@ -118,7 +131,7 @@ export const AdminCertificatesList: React.FC<AdminCertificatesListProps> = ({
           {/* Status Filter Tabs */}
           <div className="flex items-center gap-1.5 bg-[#100e17] p-1 rounded-xl border border-[#332d47] w-full sm:w-auto">
             <button
-              onClick={() => setStatusFilter('all')}
+              onClick={() => handleFilterChange('all')}
               className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 statusFilter === 'all'
                   ? 'bg-[#1f1b2e] text-[#ffffff] shadow-sm border border-[#332d47]'
@@ -128,7 +141,7 @@ export const AdminCertificatesList: React.FC<AdminCertificatesListProps> = ({
               All ({certificates.length})
             </button>
             <button
-              onClick={() => setStatusFilter('valid')}
+              onClick={() => handleFilterChange('valid')}
               className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 statusFilter === 'valid'
                   ? 'bg-emerald-950/60 text-emerald-300 shadow-sm border border-emerald-800/50'
@@ -138,7 +151,7 @@ export const AdminCertificatesList: React.FC<AdminCertificatesListProps> = ({
               Valid ({certificates.filter(c => c.status === 'valid').length})
             </button>
             <button
-              onClick={() => setStatusFilter('revoked')}
+              onClick={() => handleFilterChange('revoked')}
               className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 statusFilter === 'revoked'
                   ? 'bg-rose-950/60 text-rose-300 shadow-sm border border-rose-800/50'
@@ -217,7 +230,10 @@ export const AdminCertificatesList: React.FC<AdminCertificatesListProps> = ({
                       <td className="py-4 px-3 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
-                            onClick={() => onSelectCertificate(cert)}
+                            onClick={() => {
+                              playSound('scan');
+                              onSelectCertificate(cert);
+                            }}
                             className="p-2 rounded-lg bg-[#100e17] border border-[#332d47] text-[#c4c7c8] hover:text-[#ffffff] hover:border-[#a855f7] transition-all flex items-center gap-1 text-[11px]"
                             title="View Details"
                           >
@@ -234,7 +250,10 @@ export const AdminCertificatesList: React.FC<AdminCertificatesListProps> = ({
                           </button>
 
                           <button
-                            onClick={() => onOpenPublicPage(cert.id)}
+                            onClick={() => {
+                              playSound('scan');
+                              onOpenPublicPage(cert.id);
+                            }}
                             className="p-2 rounded-lg bg-[#100e17] border border-[#332d47] text-[#c4c7c8] hover:text-[#a855f7] hover:border-[#a855f7] transition-all"
                             title="Open Authentication Page"
                           >
@@ -251,7 +270,10 @@ export const AdminCertificatesList: React.FC<AdminCertificatesListProps> = ({
 
                           {cert.status === 'valid' && (
                             <button
-                              onClick={() => onRequestRevoke(cert)}
+                              onClick={() => {
+                                playSound('toggle');
+                                onRequestRevoke(cert);
+                              }}
                               className="p-2 rounded-lg bg-[#100e17] border border-[#332d47] text-rose-400 hover:bg-rose-950/40 hover:border-rose-800 transition-all"
                               title="Revoke Certificate"
                             >
@@ -276,7 +298,7 @@ export const AdminCertificatesList: React.FC<AdminCertificatesListProps> = ({
                 <div className="flex items-center gap-2">
                   <button
                     disabled={currentPage === 1}
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                     className="px-3 py-1.5 rounded-lg bg-[#100e17] border border-[#332d47] hover:bg-[#1f1b2e] disabled:opacity-40 transition-all"
                   >
                     Previous
@@ -286,7 +308,7 @@ export const AdminCertificatesList: React.FC<AdminCertificatesListProps> = ({
                   </span>
                   <button
                     disabled={currentPage === totalPages}
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
                     className="px-3 py-1.5 rounded-lg bg-[#100e17] border border-[#332d47] hover:bg-[#1f1b2e] disabled:opacity-40 transition-all"
                   >
                     Next

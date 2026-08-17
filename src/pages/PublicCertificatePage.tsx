@@ -27,6 +27,7 @@ import {
 } from '../services/certificateService';
 import { generateQrCodeDataUrl, downloadQrCode } from '../utils/qrCode';
 import { OrbitLogo } from '../components/OrbitLogo';
+import { playSound } from '../utils/soundEffects';
 
 interface PublicCertificatePageProps {
   authId: string;
@@ -58,30 +59,37 @@ export const PublicCertificatePage: React.FC<PublicCertificatePageProps> = ({
     setLoading(false);
 
     if (record) {
+      playSound('arrival');
       generateQrCodeDataUrl(browserUrl, 500)
         .then(url => setQrDataUrl(url))
         .catch(console.error);
+    } else {
+      playSound('error');
     }
   }, [authId, browserUrl]);
 
   const handleCopyLink = () => {
+    playSound('sparkle');
     navigator.clipboard.writeText(publicUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDownloadQr = () => {
+    playSound('chime');
     downloadQrCode(browserUrl, `Orbit_Space_Certificate_QR_${authId.toUpperCase()}.png`);
   };
 
   const handleLookupSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (lookupInput.trim()) {
+      playSound('scan');
       onSearchNewId(lookupInput.trim().toUpperCase());
     }
   };
 
   const handlePrint = () => {
+    playSound('pulse');
     window.print();
   };
 

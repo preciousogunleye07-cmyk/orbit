@@ -24,6 +24,7 @@ import { AdminCreateCertificatePage } from './AdminCreateCertificatePage';
 import { CertificateDetailsModal } from '../../components/admin/CertificateDetailsModal';
 import { RevokeConfirmationModal } from '../../components/admin/RevokeConfirmationModal';
 import { OrbitLogo } from '../../components/OrbitLogo';
+import { playSound } from '../../utils/soundEffects';
 
 interface AdminDashboardLayoutProps {
   onLogout: () => void;
@@ -55,16 +56,24 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
     setAdminUser(getAdminSession());
   }, []);
 
+  const handleTabChange = (tab: 'overview' | 'directory' | 'create') => {
+    playSound('droplet');
+    setActiveTab(tab);
+  };
+
   const handleLogout = () => {
+    playSound('release');
     logoutAdmin();
     onLogout();
   };
 
   const handleCreated = (newCert: CertificateRecord) => {
+    playSound('success');
     refreshData();
   };
 
   const handleRevoked = () => {
+    playSound('toggle');
     refreshData();
     if (selectedCertificate) {
       const updated = certificates.find(c => c.id === selectedCertificate.id);
@@ -111,7 +120,7 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
           {/* Navigation Tab Pills */}
           <div className="flex items-center gap-1.5 bg-[#100e17] p-1.5 rounded-full border border-[#332d47] w-full md:w-auto overflow-x-auto">
             <button
-              onClick={() => setActiveTab('overview')}
+              onClick={() => handleTabChange('overview')}
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
                 activeTab === 'overview'
                   ? 'btn-purple text-white shadow-md'
@@ -123,7 +132,7 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
             </button>
 
             <button
-              onClick={() => setActiveTab('directory')}
+              onClick={() => handleTabChange('directory')}
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
                 activeTab === 'directory'
                   ? 'btn-purple text-white shadow-md'
@@ -135,7 +144,7 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
             </button>
 
             <button
-              onClick={() => setActiveTab('create')}
+              onClick={() => handleTabChange('create')}
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
                 activeTab === 'create'
                   ? 'btn-purple text-white shadow-md'
@@ -165,7 +174,10 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
 
             <div className="flex items-center gap-2">
               <button
-                onClick={onNavigateHome}
+                onClick={() => {
+                  playSound('pulse');
+                  onNavigateHome();
+                }}
                 className="p-2 rounded-xl bg-[#100e17] border border-[#332d47] text-[#c4c7c8] hover:text-[#ffffff] transition-colors"
                 title="View Orbit Space Main Website"
               >

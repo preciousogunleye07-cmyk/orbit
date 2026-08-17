@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { X, CheckCircle2, AlertOctagon, Copy, ExternalLink, Download, AlertTriangle, FileText, Calendar, User, BookOpen, Hash, Clock } from 'lucide-react';
 import { CertificateRecord, getPublicAuthUrl, getActualBrowserAuthUrl } from '../../services/certificateService';
 import { generateQrCodeDataUrl, downloadQrCode } from '../../utils/qrCode';
+import { playSound } from '../../utils/soundEffects';
 
 interface CertificateDetailsModalProps {
   certificate: CertificateRecord;
@@ -29,13 +30,20 @@ export const CertificateDetailsModal: React.FC<CertificateDetailsModalProps> = (
       .catch(console.error);
   }, [browserUrl]);
 
+  const handleClose = () => {
+    playSound('release');
+    onClose();
+  };
+
   const handleCopy = () => {
+    playSound('sparkle');
     navigator.clipboard.writeText(publicUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDownloadQr = () => {
+    playSound('chime');
     downloadQrCode(browserUrl, `Orbit_Space_Certificate_QR_${certificate.id}.png`);
   };
 
@@ -48,7 +56,7 @@ export const CertificateDetailsModal: React.FC<CertificateDetailsModalProps> = (
         className="bg-[#181524] border border-[#332d47] rounded-[24px] max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative my-8"
       >
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute top-5 right-5 p-2 text-[#c4c7c8] hover:text-[#ffffff] rounded-xl bg-[#1f1b2e] border border-[#332d47] transition-colors"
         >
           <X className="w-4 h-4" />
@@ -210,7 +218,10 @@ export const CertificateDetailsModal: React.FC<CertificateDetailsModalProps> = (
             </button>
 
             <button
-              onClick={() => onOpenPublicView(certificate.id)}
+              onClick={() => {
+                playSound('scan');
+                onOpenPublicView(certificate.id);
+              }}
               className="py-2.5 px-4 rounded-full btn-purple text-xs font-semibold flex items-center gap-2 shadow-md transition-all"
             >
               <ExternalLink className="w-3.5 h-3.5" />
@@ -221,6 +232,7 @@ export const CertificateDetailsModal: React.FC<CertificateDetailsModalProps> = (
           {certificate.status === 'valid' && (
             <button
               onClick={() => {
+                playSound('toggle');
                 onClose();
                 onRequestRevoke(certificate);
               }}

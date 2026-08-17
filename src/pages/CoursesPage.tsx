@@ -167,6 +167,29 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({ setActiveModal }) => {
         ))}
       </div>
 
+      {/* Timetable CTA Banner */}
+      <div className="mt-16 bg-[#1f1b2e] rounded-2xl border border-[#332d47] p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl">
+        <div className="space-y-1 text-center sm:text-left">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#100e17] border border-[#a855f7]/40 text-xs font-mono text-[#c084fc] mb-2">
+            <span>Weekly Class Timetable</span>
+          </div>
+          <h3 className="text-xl font-bold text-white">Want to see exact lecture and lab hours?</h3>
+          <p className="text-xs text-[#c4c7c8] font-light max-w-xl">
+            Check the complete timetable across all weekdays and Saturdays with instructors, lab rooms, and times.
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            window.history.pushState({}, '', '/timetable');
+            window.dispatchEvent(new Event('popstate'));
+          }}
+          className="btn-purple px-6 py-3 rounded-full text-xs font-semibold whitespace-nowrap shadow-md hover:scale-105 transition-all shrink-0 flex items-center gap-2"
+        >
+          <span>View Class Timetable</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
+
       {filteredCourses.length === 0 && (
         <div className="text-center py-16 bg-[#1c1b1b] rounded-[16px] border border-[#353434]">
           <p className="text-lg font-serif text-[#ffffff] mb-2">No courses found matching "{searchQuery}"</p>

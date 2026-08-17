@@ -2,6 +2,7 @@ import React from 'react';
 import { ActiveModal } from '../types';
 import { MapPin, MessageCircle, Instagram, Linkedin, Video } from 'lucide-react';
 import { OrbitLogo } from './OrbitLogo';
+import { playSound } from '../utils/soundEffects';
 
 interface FooterSectionProps {
   setActiveModal: (modal: ActiveModal) => void;
@@ -10,11 +11,13 @@ interface FooterSectionProps {
 
 export const FooterSection: React.FC<FooterSectionProps> = ({ setActiveModal, setCurrentPage }) => {
   const navigateToPage = (page: string) => {
+    playSound('pulse');
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const openWhatsApp = () => {
+    playSound('scan');
     const text = encodeURIComponent("Hello Orbit Space! I am reaching out from your website.");
     window.open(`https://wa.me/2348067627491?text=${text}`, '_blank');
   };
@@ -71,6 +74,14 @@ export const FooterSection: React.FC<FooterSectionProps> = ({ setActiveModal, se
                   className="hover:text-[#a855f7] transition-colors"
                 >
                   Courses
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => navigateToPage('timetable')}
+                  className="hover:text-[#a855f7] transition-colors"
+                >
+                  Class Timetable
                 </button>
               </li>
               <li>

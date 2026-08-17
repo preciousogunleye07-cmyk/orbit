@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Plus, Award, CheckCircle2, AlertOctagon, Clock, ArrowRight, ExternalLink, Copy, Search, Eye } from 'lucide-react';
 import { CertificateRecord, getCertificateStats, getPublicAuthUrl } from '../../services/certificateService';
+import { playSound } from '../../utils/soundEffects';
 
 interface AdminDashboardOverviewProps {
   certificates: CertificateRecord[];
@@ -24,6 +25,7 @@ export const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({
   const [copiedId, setCopiedId] = React.useState<string | null>(null);
 
   const handleCopy = (id: string) => {
+    playSound('sparkle');
     const url = getPublicAuthUrl(id);
     navigator.clipboard.writeText(url);
     setCopiedId(id);
@@ -49,7 +51,10 @@ export const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({
 
         {/* Primary Action Button */}
         <button
-          onClick={onGenerateClick}
+          onClick={() => {
+            playSound('sparkle');
+            onGenerateClick();
+          }}
           className="btn-purple py-3.5 px-6 rounded-full font-semibold text-xs sm:text-sm flex items-center justify-center gap-2.5 shadow-xl hover:scale-105 transition-all shrink-0 min-h-[48px]"
         >
           <Plus className="w-5 h-5" />
@@ -118,7 +123,10 @@ export const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({
             <p className="text-xs text-[#c4c7c8] font-light mt-0.5">Quick overview of recent student authentication records</p>
           </div>
           <button
-            onClick={onViewAllClick}
+            onClick={() => {
+              playSound('droplet');
+              onViewAllClick();
+            }}
             className="text-xs text-[#c084fc] hover:text-[#ffffff] font-medium flex items-center gap-1 transition-colors"
           >
             <span>View All ({certificates.length})</span>
@@ -181,7 +189,10 @@ export const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({
                     <td className="py-3.5 px-3 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          onClick={() => onSelectCertificate(cert)}
+                          onClick={() => {
+                            playSound('scan');
+                            onSelectCertificate(cert);
+                          }}
                           className="p-1.5 rounded-lg bg-[#100e17] border border-[#332d47] text-[#c4c7c8] hover:text-[#ffffff] hover:border-[#a855f7] transition-all"
                           title="View Details"
                         >
@@ -195,7 +206,10 @@ export const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({
                           <Copy className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => onOpenPublicPage(cert.id)}
+                          onClick={() => {
+                            playSound('scan');
+                            onOpenPublicPage(cert.id);
+                          }}
                           className="p-1.5 rounded-lg bg-[#100e17] border border-[#332d47] text-[#c4c7c8] hover:text-[#a855f7] hover:border-[#a855f7] transition-all"
                           title="Open Public Authentication Page"
                         >

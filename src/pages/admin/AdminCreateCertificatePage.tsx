@@ -26,6 +26,7 @@ import {
   getActualBrowserAuthUrl 
 } from '../../services/certificateService';
 import { generateQrCodeDataUrl, downloadQrCode } from '../../utils/qrCode';
+import { playSound } from '../../utils/soundEffects';
 
 interface AdminCreateCertificatePageProps {
   onCreated: (cert: CertificateRecord) => void;
@@ -111,6 +112,8 @@ export const AdminCreateCertificatePage: React.FC<AdminCreateCertificatePageProp
       return;
     }
 
+    playSound('page');
+
     // Simulate clean upload progress
     setUploadedFile({ file, progress: 20 });
     let p = 20;
@@ -134,6 +137,7 @@ export const AdminCreateCertificatePage: React.FC<AdminCreateCertificatePageProp
   };
 
   const handleRemoveFile = () => {
+    playSound('release');
     setUploadedFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -181,6 +185,7 @@ export const AdminCreateCertificatePage: React.FC<AdminCreateCertificatePageProp
       console.error('QR generation error:', err);
     }
 
+    playSound('ready');
     setCreatedCertificate(newRecord);
     setLoading(false);
     onCreated(newRecord);
@@ -188,6 +193,7 @@ export const AdminCreateCertificatePage: React.FC<AdminCreateCertificatePageProp
 
   const handleCopyLink = () => {
     if (!createdCertificate) return;
+    playSound('sparkle');
     const publicUrl = getPublicAuthUrl(createdCertificate.id);
     navigator.clipboard.writeText(publicUrl);
     setCopied(true);
@@ -196,11 +202,13 @@ export const AdminCreateCertificatePage: React.FC<AdminCreateCertificatePageProp
 
   const handleDownloadQr = () => {
     if (!createdCertificate) return;
+    playSound('chime');
     const browserUrl = getActualBrowserAuthUrl(createdCertificate.id);
     downloadQrCode(browserUrl, `Orbit_Space_Certificate_QR_${createdCertificate.id}.png`);
   };
 
   const handleResetForm = () => {
+    playSound('droplet');
     setCreatedCertificate(null);
     setStudentName('');
     setSelectedCourse('Full Stack Development');

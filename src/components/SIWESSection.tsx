@@ -1,6 +1,7 @@
 import React from 'react';
 import { CheckCircle2, ArrowRight, Building2, Award } from 'lucide-react';
 import { ActiveModal } from '../types';
+import { playSound } from '../utils/soundEffects';
 
 interface SIWESSectionProps {
   setActiveModal: (modal: ActiveModal) => void;
@@ -51,7 +52,10 @@ export const SIWESSection: React.FC<SIWESSectionProps> = ({ setActiveModal }) =>
 
               {/* Action Button */}
               <button
-                onClick={() => setActiveModal({ type: 'siwes' })}
+                onClick={() => {
+                  playSound('sparkle');
+                  setActiveModal({ type: 'siwes' });
+                }}
                 className="btn-purple px-8 py-4 rounded-full font-semibold text-xs transition-all flex items-center justify-center gap-2 group w-full sm:w-auto shadow-lg"
                 id="btn-apply-siwes"
               >

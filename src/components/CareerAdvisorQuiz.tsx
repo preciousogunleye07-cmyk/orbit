@@ -189,7 +189,10 @@ export const CareerAdvisorQuiz: React.FC<CareerAdvisorQuizProps> = ({ setActiveM
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
                   <button
-                    onClick={() => setActiveModal({ type: 'enroll', course: recommendedCourse })}
+                    onClick={() => {
+                      playSound('sparkle');
+                      setActiveModal({ type: 'enroll', course: recommendedCourse });
+                    }}
                     className="w-full sm:w-auto btn-purple px-8 py-3.5 rounded-full font-semibold text-xs shadow-lg flex items-center justify-center gap-2"
                   >
                     <span>Enroll in {recommendedCourse.title}</span>

@@ -38,12 +38,13 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const navPages = ['home', 'courses', 'siwes', 'workspace', 'quiz', 'about', 'contact'];
+  const navPages = ['home', 'courses', 'timetable', 'siwes', 'workspace', 'quiz', 'about', 'contact'];
   const activeIndex = Math.max(0, navPages.indexOf(currentPage));
 
   const gooeyNavItems: GooeyNavItem[] = [
     { label: 'Home', onClick: () => handleNavClick('home') },
     { label: 'Courses', onClick: () => handleNavClick('courses') },
+    { label: 'Timetable', onClick: () => handleNavClick('timetable') },
     { label: 'SIWES', onClick: () => handleNavClick('siwes') },
     { label: 'Workspace', onClick: () => handleNavClick('workspace') },
     { label: 'Advisor', onClick: () => handleNavClick('quiz') },
@@ -159,6 +160,7 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
             {[
               { id: 'home', label: 'Home' },
               { id: 'courses', label: 'Courses Catalog' },
+              { id: 'timetable', label: 'Class Timetable' },
               { id: 'siwes', label: 'SIWES Placement' },
               { id: 'workspace', label: 'Workspace Passes' },
               { id: 'quiz', label: 'Career Advisor' },

@@ -212,13 +212,19 @@ export const CoursesSection: React.FC<CoursesSectionProps> = ({ setActiveModal }
                     {/* Action Buttons */}
                     <div className="pt-4 border-t border-[#332d47] flex items-center gap-2">
                       <button
-                        onClick={() => setActiveModal({ type: 'course-detail', course })}
+                        onClick={() => {
+                          playSound('scan');
+                          setActiveModal({ type: 'course-detail', course });
+                        }}
                         className="flex-1 py-2 px-3 rounded-full bg-[#181524] hover:bg-[#332d47] border border-[#332d47] text-xs font-medium text-[#e2e8f0] hover:text-[#a855f7] transition-all text-center relative z-10"
                       >
                         Syllabus
                       </button>
                       <button
-                        onClick={() => setActiveModal({ type: 'enroll', course })}
+                        onClick={() => {
+                          playSound('sparkle');
+                          setActiveModal({ type: 'enroll', course });
+                        }}
                         className="flex-1 py-2 px-3 rounded-full btn-purple text-xs font-semibold transition-all flex items-center justify-center gap-1 shadow-md relative z-10"
                       >
                         <span>Enroll</span>
@@ -237,6 +243,7 @@ export const CoursesSection: React.FC<CoursesSectionProps> = ({ setActiveModal }
           <div className="text-center mt-12">
             <button
               onClick={() => {
+                playSound('toggle');
                 setShowAll(!showAll);
                 setSelectedCategory('all');
                 setSearchQuery('');

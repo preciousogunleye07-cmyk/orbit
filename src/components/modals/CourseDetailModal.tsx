@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { X, ArrowRight, BookOpen, Award } from 'lucide-react';
 import { Course } from '../../types';
 import AnimatedList from '../AnimatedList';
+import { playSound } from '../../utils/soundEffects';
 
 interface CourseDetailModalProps {
   course: Course;
@@ -11,6 +12,11 @@ interface CourseDetailModalProps {
 }
 
 export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, onClose, onEnroll }) => {
+  const handleClose = () => {
+    playSound('release');
+    onClose();
+  };
+
   const syllabusItems = course.curriculum.map((mod, i) => (
     <div key={i} className="flex items-start gap-3">
       <div className="w-6 h-6 rounded-full bg-[#181524] border border-[#a855f7]/40 text-[#a855f7] text-xs font-mono font-semibold flex items-center justify-center shrink-0 mt-0.5">
@@ -51,7 +57,7 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, on
         )}
 
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute top-5 right-5 z-10 p-2 rounded-full bg-[#100e17]/80 backdrop-blur-sm text-[#c4c7c8] hover:text-[#a855f7] hover:bg-[#332d47] transition-all shadow-sm"
         >
           <X className="w-5 h-5" />
@@ -114,6 +120,7 @@ export const CourseDetailModal: React.FC<CourseDetailModalProps> = ({ course, on
               </div>
               <button
                 onClick={() => {
+                  playSound('sparkle');
                   onClose();
                   onEnroll();
                 }}

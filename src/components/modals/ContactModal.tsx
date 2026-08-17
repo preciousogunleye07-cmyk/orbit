@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { X, MapPin, Phone, CheckCircle2, Mail, Send, Loader2 } from 'lucide-react';
 import { useForm, ValidationError } from '@formspree/react';
+import { playSound } from '../../utils/soundEffects';
 
 interface ContactModalProps {
   onClose: () => void;
@@ -11,7 +12,19 @@ export const ContactModal: React.FC<ContactModalProps> = ({ onClose }) => {
   const [state, handleSubmit] = useForm('xzepdwwp');
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
 
+  useEffect(() => {
+    if (state.succeeded) {
+      playSound('success');
+    }
+  }, [state.succeeded]);
+
+  const handleClose = () => {
+    playSound('release');
+    onClose();
+  };
+
   const openWhatsApp = () => {
+    playSound('scan');
     const text = encodeURIComponent("Hello Orbit Space! I have a question regarding courses/workspace.");
     window.open(`https://wa.me/2348067627491?text=${text}`, '_blank');
   };
@@ -32,7 +45,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({ onClose }) => {
       >
         
         <button
-          onClick={onClose}
+          onClick={handleClose}
           aria-label="Close dialog"
           className="absolute top-5 right-5 p-2 rounded-full bg-[#1f1b2e] text-[#c4c7c8] hover:text-[#a855f7] hover:bg-[#332d47] transition-all"
         >
@@ -169,7 +182,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({ onClose }) => {
               Thank you {formData.name || 'for contacting us'}. We will get back to you shortly.
             </p>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="btn-purple px-8 py-3 rounded-full text-xs font-semibold"
             >
               Close

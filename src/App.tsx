@@ -11,6 +11,7 @@ import { WorkspacePage } from './pages/WorkspacePage';
 import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
 import { QuizPage } from './pages/QuizPage';
+import { TimetablePage } from './pages/TimetablePage';
 
 import { AdminLoginPage } from './pages/admin/AdminLoginPage';
 import { AdminDashboardLayout } from './pages/admin/AdminDashboardLayout';
@@ -26,7 +27,7 @@ import { CourseDetailModal } from './components/modals/CourseDetailModal';
 import { ActiveModal } from './types';
 import { isAdminAuthenticated } from './services/certificateService';
 
-const MAIN_PAGES = ['home', 'courses', 'siwes', 'workspace', 'quiz', 'about', 'contact'];
+const MAIN_PAGES = ['home', 'courses', 'timetable', 'siwes', 'workspace', 'quiz', 'about', 'contact'];
 
 type RouteState = 
   | { mode: 'main'; page: string }
@@ -81,6 +82,7 @@ function parsePathToRoute(path: string): RouteState {
 const PAGE_TITLES: Record<string, string> = {
   home: 'Orbit Space | Practical Tech Academy & Workspace in Ilorin',
   courses: 'Courses & Programs | Orbit Space Academia',
+  timetable: 'Weekly Class Timetable | Orbit Space Academia Ilorin',
   siwes: 'SIWES Placement & Industrial Training | Orbit Space Academia',
   workspace: 'Coworking Space & Passes | Orbit Space Academia',
   quiz: 'Tech Career Advisor Quiz | Orbit Space Academia',
@@ -156,6 +158,9 @@ export default function App() {
               )}
               {route.page === 'courses' && (
                 <CoursesPage setActiveModal={setActiveModal} />
+              )}
+              {route.page === 'timetable' && (
+                <TimetablePage setActiveModal={setActiveModal} />
               )}
               {route.page === 'siwes' && (
                 <SIWESPage setActiveModal={setActiveModal} />

@@ -2,9 +2,16 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { FAQ_DATA } from '../data/workspaceData';
 import { ChevronDown, HelpCircle } from 'lucide-react';
+import { playSound } from '../utils/soundEffects';
 
 export const FAQSection: React.FC = () => {
   const [openIdx, setOpenIdx] = useState<number | null>(0);
+
+  const toggleFaq = (idx: number) => {
+    const isClosing = openIdx === idx;
+    playSound(isClosing ? 'release' : 'toggle');
+    setOpenIdx(isClosing ? null : idx);
+  };
 
   return (
     <section className="py-20 relative bg-[#100e17]">
@@ -28,7 +35,7 @@ export const FAQSection: React.FC = () => {
               }`}
             >
               <button
-                onClick={() => setOpenIdx(openIdx === idx ? null : idx)}
+                onClick={() => toggleFaq(idx)}
                 className="w-full p-5 text-left flex items-center justify-between gap-4 focus:outline-none cursor-pointer"
               >
                 <span className={`text-sm font-medium ${openIdx === idx ? 'text-[#a855f7]' : 'text-[#ffffff]'}`}>

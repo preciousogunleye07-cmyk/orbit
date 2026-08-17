@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { X, Orbit, MapPin, Zap, CheckCircle2, ShieldCheck, ArrowRight } from 'lucide-react';
+import { playSound } from '../../utils/soundEffects';
 
 interface AboutModalProps {
   onClose: () => void;
@@ -8,6 +9,11 @@ interface AboutModalProps {
 }
 
 export const AboutModal: React.FC<AboutModalProps> = ({ onClose, onOpenEnroll }) => {
+  const handleClose = () => {
+    playSound('release');
+    onClose();
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -24,7 +30,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ onClose, onOpenEnroll })
       >
         
         <button
-          onClick={onClose}
+          onClick={handleClose}
           aria-label="Close dialog"
           className="absolute top-5 right-5 p-2 rounded-full bg-[#1f1b2e] text-[#c4c7c8] hover:text-[#a855f7] hover:bg-[#332d47] transition-all"
         >
@@ -98,6 +104,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ onClose, onOpenEnroll })
             </div>
             <button
               onClick={() => {
+                playSound('sparkle');
                 onClose();
                 onOpenEnroll();
               }}

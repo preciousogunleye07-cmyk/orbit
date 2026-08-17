@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { WORKSPACE_PLANS } from '../data/workspaceData';
 import { ActiveModal } from '../types';
 import SpotlightCard from './SpotlightCard';
+import { playSound } from '../utils/soundEffects';
 import { 
   Wifi, 
   Zap, 
@@ -82,7 +83,10 @@ export const WorkspaceSection: React.FC<WorkspaceSectionProps> = ({ setActiveMod
           {WORKSPACE_PLANS.map((plan) => (
             <SpotlightCard
               key={plan.id}
-              onClick={() => setSelectedPlanId(plan.id)}
+              onClick={() => {
+                playSound('droplet');
+                setSelectedPlanId(plan.id);
+              }}
               spotlightColor={plan.recommended ? 'rgba(192, 132, 252, 0.35)' : 'rgba(168, 85, 247, 0.2)'}
               className={`relative bg-[#1f1b2e] rounded-[20px] p-8 border transition-all duration-300 cursor-pointer flex flex-col justify-between shadow-xl ${
                 plan.recommended
@@ -125,6 +129,7 @@ export const WorkspaceSection: React.FC<WorkspaceSectionProps> = ({ setActiveMod
               <button
                 onClick={(e) => {
                   e.stopPropagation();
+                  playSound('sparkle');
                   setActiveModal({ type: 'workspace', planId: plan.id });
                 }}
                 className={`w-full py-3 px-4 rounded-full font-semibold text-xs transition-all flex items-center justify-center gap-2 relative z-10 ${
@@ -143,7 +148,10 @@ export const WorkspaceSection: React.FC<WorkspaceSectionProps> = ({ setActiveMod
         {/* Action CTA */}
         <div className="text-center">
           <button
-            onClick={() => setActiveModal({ type: 'workspace' })}
+            onClick={() => {
+              playSound('sparkle');
+              setActiveModal({ type: 'workspace' });
+            }}
             className="btn-purple inline-flex items-center gap-2 px-8 py-4 rounded-full font-semibold text-xs transition-all shadow-lg"
             id="btn-explore-workspace"
           >
