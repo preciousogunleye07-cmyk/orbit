@@ -35,11 +35,40 @@ type RouteState =
   | { mode: 'admin-dashboard'; subTab?: 'overview' | 'directory' | 'create' }
   | { mode: 'public-certificate'; authId: string };
 
+function getCurrentLocationPath(): string {
+  if (typeof window === 'undefined') return '/';
+
+  // Check if redirected from 404.html via ?p=... or ?page=...
+  const searchParams = new URLSearchParams(window.location.search);
+  const pParam = searchParams.get('p') || searchParams.get('page');
+  if (pParam) {
+    try {
+      const cleanTarget = pParam.startsWith('/') ? pParam : `/${pParam}`;
+      window.history.replaceState(null, '', cleanTarget);
+      return cleanTarget;
+    } catch {}
+    return pParam;
+  }
+
+  // Check hash route fallback (e.g. #/timetable or #timetable)
+  if (window.location.hash) {
+    const hashVal = window.location.hash.replace(/^#[!/]+/, '');
+    if (hashVal) {
+      return `/${hashVal}`;
+    }
+  }
+
+  return window.location.pathname;
+}
+
 function parsePathToRoute(path: string): RouteState {
-  const cleanPath = path.replace(/^\/+/, '').trim();
+  // Strip query strings and hashes
+  const withoutQuery = path.split('?')[0].split('#')[0];
+  // Strip leading and trailing slashes
+  const cleanPath = withoutQuery.replace(/^\/+|\/+$/g, '').trim();
   const lowerPath = cleanPath.toLowerCase();
 
-  if (!lowerPath) {
+  if (!lowerPath || lowerPath === 'index.html') {
     return { mode: 'main', page: 'home' };
   }
 
@@ -75,8 +104,13 @@ function parsePathToRoute(path: string): RouteState {
     return { mode: 'public-certificate', authId: '' };
   }
 
-  // Default: treat any single path segment e.g. /ORB-8F29K2 as public certificate route
-  return { mode: 'public-certificate', authId: cleanPath.toUpperCase() };
+  // Specific certificate format pattern (ORB-XXXXXX)
+  if (lowerPath.startsWith('orb-') || lowerPath.startsWith('cert-')) {
+    return { mode: 'public-certificate', authId: cleanPath.toUpperCase() };
+  }
+
+  // Fallback to home page for any unknown routes
+  return { mode: 'main', page: 'home' };
 }
 
 const PAGE_TITLES: Record<string, string> = {
@@ -92,18 +126,29 @@ const PAGE_TITLES: Record<string, string> = {
 
 export default function App() {
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
-  const [route, setRoute] = useState<RouteState>(() => parsePathToRoute(window.location.pathname));
+  const [route, setRoute] = useState<RouteState>(() => parsePathToRoute(getCurrentLocationPath()));
 
   useEffect(() => {
     initSoundSystem();
 
-    const handlePopState = () => {
-      setRoute(parsePathToRoute(window.location.pathname));
+    const handleLocationChange = () => {
+      setRoute(parsePathToRoute(getCurrentLocationPath()));
       playSound('page');
     };
 
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
+
+    // Update document title for initial load
+    const current = parsePathToRoute(getCurrentLocationPath());
+    if (current.mode === 'main' && PAGE_TITLES[current.page]) {
+      document.title = PAGE_TITLES[current.page];
+    }
+
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+    };
   }, []);
 
   const navigateTo = (path: string, pushHistory = true) => {

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Orbit Space Academy</title>
+    <script>
+      // SPA redirect for static hosts (GitHub Pages, etc.)
+      var path = window.location.pathname;
+      var query = window.location.search;
+      var hash = window.location.hash;
+      window.location.replace('/?p=' + encodeURIComponent(path + query) + hash);
+    </script>
+  </head>
+  <body style="background-color: #141313; color: #ffffff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0;">
+    <div style="text-align: center;">
+      <p>Redirecting to Orbit Space...</p>
+      <a href="/" style="color: #a855f7;">Click here if not redirected automatically</a>
+    </div>
+  </body>
+</html>
