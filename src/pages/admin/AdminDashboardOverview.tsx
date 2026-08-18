@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Plus, Award, CheckCircle2, AlertOctagon, Clock, ArrowRight, ExternalLink, Copy, Search, Eye } from 'lucide-react';
+import { Plus, Award, CheckCircle2, AlertOctagon, Clock, ArrowRight, ExternalLink, Copy, Search, Eye, Edit3 } from 'lucide-react';
 import { CertificateRecord, getCertificateStats, getPublicAuthUrl } from '../../services/certificateService';
 import { playSound } from '../../utils/soundEffects';
 
@@ -9,6 +9,7 @@ interface AdminDashboardOverviewProps {
   onGenerateClick: () => void;
   onViewAllClick: () => void;
   onSelectCertificate: (cert: CertificateRecord) => void;
+  onEditCertificate?: (cert: CertificateRecord) => void;
   onOpenPublicPage: (id: string) => void;
 }
 
@@ -17,6 +18,7 @@ export const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({
   onGenerateClick,
   onViewAllClick,
   onSelectCertificate,
+  onEditCertificate,
   onOpenPublicPage
 }) => {
   const stats = getCertificateStats();
@@ -198,6 +200,18 @@ export const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({
                         >
                           <Eye className="w-3.5 h-3.5" />
                         </button>
+                        {onEditCertificate && (
+                          <button
+                            onClick={() => {
+                              playSound('toggle');
+                              onEditCertificate(cert);
+                            }}
+                            className="p-1.5 rounded-lg bg-[#100e17] border border-[#332d47] text-[#c084fc] hover:text-[#ffffff] hover:border-[#a855f7] transition-all"
+                            title="Edit Certificate Details"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                         <button
                           onClick={() => handleCopy(cert.id)}
                           className="p-1.5 rounded-lg bg-[#100e17] border border-[#332d47] text-[#c4c7c8] hover:text-[#c084fc] hover:border-[#a855f7] transition-all"

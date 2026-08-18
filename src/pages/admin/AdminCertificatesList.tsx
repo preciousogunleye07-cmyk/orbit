@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, Plus, Copy, ExternalLink, Download, AlertTriangle, Eye, CheckCircle2, AlertOctagon, RefreshCw, Trash2 } from 'lucide-react';
+import { Search, Filter, Plus, Copy, ExternalLink, Download, AlertTriangle, Eye, CheckCircle2, AlertOctagon, RefreshCw, Trash2, Edit3 } from 'lucide-react';
 import { CertificateRecord, getPublicAuthUrl, getActualBrowserAuthUrl } from '../../services/certificateService';
 import { downloadQrCode } from '../../utils/qrCode';
 import { playSound } from '../../utils/soundEffects';
@@ -8,6 +8,7 @@ interface AdminCertificatesListProps {
   certificates: CertificateRecord[];
   onGenerateClick: () => void;
   onSelectCertificate: (cert: CertificateRecord) => void;
+  onEditCertificate?: (cert: CertificateRecord) => void;
   onOpenPublicPage: (id: string) => void;
   onRequestRevoke: (cert: CertificateRecord) => void;
   onRequestDelete?: (cert: CertificateRecord) => void;
@@ -17,6 +18,7 @@ export const AdminCertificatesList: React.FC<AdminCertificatesListProps> = ({
   certificates,
   onGenerateClick,
   onSelectCertificate,
+  onEditCertificate,
   onOpenPublicPage,
   onRequestRevoke,
   onRequestDelete
@@ -242,6 +244,20 @@ export const AdminCertificatesList: React.FC<AdminCertificatesListProps> = ({
                             <Eye className="w-3.5 h-3.5 text-[#a855f7]" />
                             <span className="hidden sm:inline">View</span>
                           </button>
+
+                          {onEditCertificate && (
+                            <button
+                              onClick={() => {
+                                playSound('toggle');
+                                onEditCertificate(cert);
+                              }}
+                              className="p-2 rounded-lg bg-[#100e17] border border-[#332d47] text-[#c084fc] hover:text-[#ffffff] hover:border-[#a855f7] transition-all flex items-center gap-1 text-[11px]"
+                              title="Edit Certificate"
+                            >
+                              <Edit3 className="w-3.5 h-3.5 text-[#c084fc]" />
+                              <span className="hidden sm:inline">Edit</span>
+                            </button>
+                          )}
 
                           <button
                             onClick={() => handleCopy(cert.id)}

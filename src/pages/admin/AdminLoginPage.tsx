@@ -11,8 +11,8 @@ interface AdminLoginPageProps {
 }
 
 export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onNavigateHome }) => {
-  const [email, setEmail] = useState('admin@orbitspace.academy');
-  const [password, setPassword] = useState('OrbitAdmin2026!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -127,7 +127,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onNav
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
+                  placeholder="Enter your password"
                   className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7] text-[#ffffff] text-sm rounded-xl pl-10 pr-11 py-3 transition-colors outline-none font-sans"
                 />
                 <button
@@ -173,18 +173,6 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onNav
               )}
             </button>
           </form>
-
-          {/* Quick Demo Help Banner */}
-          <div className="mt-6 pt-5 border-t border-[#332d47] bg-[#100e17]/60 p-3.5 rounded-xl border border-[#332d47]/60 text-xs">
-            <div className="flex items-center gap-2 text-[#a855f7] font-semibold mb-1">
-              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-              <span>Demo Login Hint:</span>
-            </div>
-            <p className="text-[#c4c7c8] font-mono text-[11px] select-all leading-tight">
-              Email: <span className="text-[#ffffff]">admin@orbitspace.academy</span><br />
-              Pass: <span className="text-[#ffffff]">OrbitAdmin2026!</span>
-            </p>
-          </div>
         </motion.div>
 
         {/* Back to main site link */}

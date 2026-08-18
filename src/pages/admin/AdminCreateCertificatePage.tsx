@@ -20,7 +20,7 @@ import {
   FileCheck
 } from 'lucide-react';
 import { 
-  createCertificate, 
+  createCertificateAsync, 
   CertificateRecord, 
   getPublicAuthUrl, 
   getActualBrowserAuthUrl 
@@ -159,9 +159,8 @@ export const AdminCreateCertificatePage: React.FC<AdminCreateCertificatePageProp
     }
 
     setLoading(true);
-    await new Promise(r => setTimeout(r, 600));
 
-    const newRecord = createCertificate({
+    const result = await createCertificateAsync({
       studentName: studentName.trim(),
       course: finalCourse,
       certificateNumber: certificateNumber.trim() || undefined,
@@ -175,6 +174,8 @@ export const AdminCreateCertificatePage: React.FC<AdminCreateCertificatePageProp
       fileType: uploadedFile?.file.type,
       documentUrl: uploadedFile?.previewUrl
     });
+
+    const newRecord = result.certificate!;
 
     // Generate QR code for success screen
     const browserUrl = getActualBrowserAuthUrl(newRecord.id);

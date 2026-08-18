@@ -23,6 +23,7 @@ import { AdminDashboardOverview } from './AdminDashboardOverview';
 import { AdminCertificatesList } from './AdminCertificatesList';
 import { AdminCreateCertificatePage } from './AdminCreateCertificatePage';
 import { CertificateDetailsModal } from '../../components/admin/CertificateDetailsModal';
+import { EditCertificateModal } from '../../components/admin/EditCertificateModal';
 import { RevokeConfirmationModal } from '../../components/admin/RevokeConfirmationModal';
 import { DeleteConfirmationModal } from '../../components/admin/DeleteConfirmationModal';
 import { OrbitLogo } from '../../components/OrbitLogo';
@@ -47,6 +48,7 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
 
   // Modal states
   const [selectedCertificate, setSelectedCertificate] = useState<CertificateRecord | null>(null);
+  const [certificateToEdit, setCertificateToEdit] = useState<CertificateRecord | null>(null);
   const [certificateToRevoke, setCertificateToRevoke] = useState<CertificateRecord | null>(null);
   const [certificateToDelete, setCertificateToDelete] = useState<CertificateRecord | null>(null);
 
@@ -76,6 +78,14 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
   const handleCreated = (newCert: CertificateRecord) => {
     playSound('success');
     refreshData();
+  };
+
+  const handleEdited = (updatedCert: CertificateRecord) => {
+    playSound('success');
+    refreshData();
+    if (selectedCertificate && selectedCertificate.id === updatedCert.id) {
+      setSelectedCertificate(updatedCert);
+    }
   };
 
   const handleRevoked = () => {
@@ -217,6 +227,7 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
               onGenerateClick={() => setActiveTab('create')}
               onViewAllClick={() => setActiveTab('directory')}
               onSelectCertificate={(cert) => setSelectedCertificate(cert)}
+              onEditCertificate={(cert) => setCertificateToEdit(cert)}
               onOpenPublicPage={onOpenPublicPage}
             />
           )}
@@ -226,6 +237,7 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
               certificates={certificates}
               onGenerateClick={() => setActiveTab('create')}
               onSelectCertificate={(cert) => setSelectedCertificate(cert)}
+              onEditCertificate={(cert) => setCertificateToEdit(cert)}
               onOpenPublicPage={onOpenPublicPage}
               onRequestRevoke={(cert) => setCertificateToRevoke(cert)}
               onRequestDelete={(cert) => setCertificateToDelete(cert)}
@@ -250,8 +262,17 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
             certificate={selectedCertificate}
             onClose={() => setSelectedCertificate(null)}
             onOpenPublicView={onOpenPublicPage}
+            onEdit={(cert) => setCertificateToEdit(cert)}
             onRequestRevoke={(cert) => setCertificateToRevoke(cert)}
             onRequestDelete={(cert) => setCertificateToDelete(cert)}
+          />
+        )}
+
+        {certificateToEdit && (
+          <EditCertificateModal
+            certificate={certificateToEdit}
+            onClose={() => setCertificateToEdit(null)}
+            onUpdated={handleEdited}
           />
         )}
 

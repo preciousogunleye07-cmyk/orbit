@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { X, CheckCircle2, AlertOctagon, Copy, ExternalLink, Download, AlertTriangle, Trash2, FileText, Calendar, User, BookOpen, Hash, Clock } from 'lucide-react';
+import { X, CheckCircle2, AlertOctagon, Copy, ExternalLink, Download, AlertTriangle, Trash2, FileText, Calendar, User, BookOpen, Hash, Clock, Edit3 } from 'lucide-react';
 import { CertificateRecord, getPublicAuthUrl, getActualBrowserAuthUrl } from '../../services/certificateService';
 import { generateQrCodeDataUrl, downloadQrCode } from '../../utils/qrCode';
 import { playSound } from '../../utils/soundEffects';
@@ -9,6 +9,7 @@ interface CertificateDetailsModalProps {
   certificate: CertificateRecord;
   onClose: () => void;
   onOpenPublicView: (id: string) => void;
+  onEdit?: (cert: CertificateRecord) => void;
   onRequestRevoke: (cert: CertificateRecord) => void;
   onRequestDelete?: (cert: CertificateRecord) => void;
 }
@@ -17,6 +18,7 @@ export const CertificateDetailsModal: React.FC<CertificateDetailsModalProps> = (
   certificate,
   onClose,
   onOpenPublicView,
+  onEdit,
   onRequestRevoke,
   onRequestDelete
 }) => {
@@ -232,6 +234,21 @@ export const CertificateDetailsModal: React.FC<CertificateDetailsModalProps> = (
           </div>
 
           <div className="flex items-center gap-2">
+            {onEdit && (
+              <button
+                onClick={() => {
+                  playSound('toggle');
+                  onClose();
+                  onEdit(certificate);
+                }}
+                className="py-2.5 px-4 rounded-full bg-[#1f1b2e] hover:bg-[#332d47] border border-[#332d47] text-[#c084fc] hover:text-[#ffffff] text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer"
+                title="Edit Certificate Details"
+              >
+                <Edit3 className="w-3.5 h-3.5 text-[#a855f7]" />
+                <span>Edit Certificate</span>
+              </button>
+            )}
+
             {certificate.status === 'valid' && (
               <button
                 onClick={() => {
@@ -239,7 +256,7 @@ export const CertificateDetailsModal: React.FC<CertificateDetailsModalProps> = (
                   onClose();
                   onRequestRevoke(certificate);
                 }}
-                className="py-2.5 px-4 rounded-full bg-amber-950/40 hover:bg-amber-900/60 border border-amber-800/50 text-amber-300 text-xs font-semibold flex items-center gap-2 transition-all"
+                className="py-2.5 px-4 rounded-full bg-amber-950/40 hover:bg-amber-900/60 border border-amber-800/50 text-amber-300 text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer"
               >
                 <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
                 <span>Revoke</span>
@@ -253,7 +270,7 @@ export const CertificateDetailsModal: React.FC<CertificateDetailsModalProps> = (
                   onClose();
                   onRequestDelete(certificate);
                 }}
-                className="py-2.5 px-4 rounded-full bg-rose-950/50 hover:bg-rose-900/70 border border-rose-800/50 text-rose-300 text-xs font-semibold flex items-center gap-2 transition-all"
+                className="py-2.5 px-4 rounded-full bg-rose-950/50 hover:bg-rose-900/70 border border-rose-800/50 text-rose-300 text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer"
                 title="Permanently Delete Certificate"
               >
                 <Trash2 className="w-3.5 h-3.5 text-rose-400" />

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Trash2, X, Loader2, AlertCircle } from 'lucide-react';
-import { CertificateRecord, deleteCertificate } from '../../services/certificateService';
+import { CertificateRecord, deleteCertificateAsync } from '../../services/certificateService';
 import { playSound } from '../../utils/soundEffects';
 
 interface DeleteConfirmationModalProps {
@@ -16,6 +16,7 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
   onDeleted
 }) => {
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleClose = () => {
     playSound('release');
@@ -24,8 +25,16 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
 
   const handleConfirm = async () => {
     setLoading(true);
-    await new Promise(r => setTimeout(r, 400));
-    deleteCertificate(certificate.id);
+    setErrorMessage(null);
+
+    const result = await deleteCertificateAsync(certificate.id);
+    
+    if (result && !result.success && result.error) {
+      setErrorMessage(result.error);
+      setLoading(false);
+      return;
+    }
+
     playSound('error');
     setLoading(false);
     onDeleted();
@@ -71,6 +80,12 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
             <span className="text-[#ffffff] font-mono">{certificate.certificateNumber}</span>
           </div>
         </div>
+
+        {errorMessage && (
+          <div className="p-3 rounded-xl bg-rose-950 border border-rose-600 text-rose-200 text-xs mb-4">
+            <strong>Supabase Notice:</strong> {errorMessage}. Make sure your Supabase project allows DELETE operations in Row Level Security policies.
+          </div>
+        )}
 
         <div className="p-3.5 rounded-xl bg-rose-950/30 border border-rose-800/40 flex items-start gap-2.5 mb-6">
           <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
