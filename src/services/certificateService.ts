@@ -530,7 +530,116 @@ export function getCertificateStats() {
   return { total, active, revoked, recent };
 }
 
-// Admin Authentication Service Abstractions
+// Admin Authentication Service Abstractions & Rate Limiting
+const RATE_LIMIT_STORAGE_KEY = 'ORBIT_ADMIN_RATE_LIMIT_V1';
+export const MAX_LOGIN_ATTEMPTS = 5;
+export const LOCKOUT_DURATION_SECONDS = 300; // 5 minutes
+
+export interface LoginRateLimitInfo {
+  isLocked: boolean;
+  remainingLockoutSeconds: number;
+  failedAttempts: number;
+  remainingAttempts: number;
+}
+
+export function getLoginRateLimitInfo(): LoginRateLimitInfo {
+  try {
+    const raw = localStorage.getItem(RATE_LIMIT_STORAGE_KEY);
+    if (!raw) {
+      return {
+        isLocked: false,
+        remainingLockoutSeconds: 0,
+        failedAttempts: 0,
+        remainingAttempts: MAX_LOGIN_ATTEMPTS
+      };
+    }
+
+    const data: { failedAttempts: number; lockoutUntil: number | null } = JSON.parse(raw);
+    const now = Date.now();
+
+    if (data.lockoutUntil && data.lockoutUntil > now) {
+      const remainingSeconds = Math.ceil((data.lockoutUntil - now) / 1000);
+      return {
+        isLocked: true,
+        remainingLockoutSeconds: remainingSeconds,
+        failedAttempts: data.failedAttempts,
+        remainingAttempts: 0
+      };
+    }
+
+    // If lockout has elapsed, reset
+    if (data.lockoutUntil && data.lockoutUntil <= now) {
+      localStorage.removeItem(RATE_LIMIT_STORAGE_KEY);
+      return {
+        isLocked: false,
+        remainingLockoutSeconds: 0,
+        failedAttempts: 0,
+        remainingAttempts: MAX_LOGIN_ATTEMPTS
+      };
+    }
+
+    return {
+      isLocked: false,
+      remainingLockoutSeconds: 0,
+      failedAttempts: data.failedAttempts || 0,
+      remainingAttempts: Math.max(0, MAX_LOGIN_ATTEMPTS - (data.failedAttempts || 0))
+    };
+  } catch {
+    return {
+      isLocked: false,
+      remainingLockoutSeconds: 0,
+      failedAttempts: 0,
+      remainingAttempts: MAX_LOGIN_ATTEMPTS
+    };
+  }
+}
+
+function recordFailedAttempt(): { errorMsg: string; isNowLocked: boolean; remainingLockoutSeconds: number } {
+  try {
+    const raw = localStorage.getItem(RATE_LIMIT_STORAGE_KEY);
+    const currentData = raw ? JSON.parse(raw) : { failedAttempts: 0, lockoutUntil: null };
+    const newAttempts = (currentData.failedAttempts || 0) + 1;
+
+    if (newAttempts >= MAX_LOGIN_ATTEMPTS) {
+      const lockoutUntil = Date.now() + (LOCKOUT_DURATION_SECONDS * 1000);
+      localStorage.setItem(RATE_LIMIT_STORAGE_KEY, JSON.stringify({
+        failedAttempts: newAttempts,
+        lockoutUntil
+      }));
+      return {
+        errorMsg: `Too many failed attempts. For security, login is locked for 5 minutes.`,
+        isNowLocked: true,
+        remainingLockoutSeconds: LOCKOUT_DURATION_SECONDS
+      };
+    } else {
+      localStorage.setItem(RATE_LIMIT_STORAGE_KEY, JSON.stringify({
+        failedAttempts: newAttempts,
+        lockoutUntil: null
+      }));
+      const remaining = MAX_LOGIN_ATTEMPTS - newAttempts;
+      return {
+        errorMsg: `Access denied. Invalid administrator email or password. (${remaining} ${remaining === 1 ? 'attempt' : 'attempts'} remaining before temporary lockout)`,
+        isNowLocked: false,
+        remainingLockoutSeconds: 0
+      };
+    }
+  } catch {
+    return {
+      errorMsg: 'Access denied. Invalid administrator email or password.',
+      isNowLocked: false,
+      remainingLockoutSeconds: 0
+    };
+  }
+}
+
+export function resetLoginRateLimit(): void {
+  try {
+    localStorage.removeItem(RATE_LIMIT_STORAGE_KEY);
+  } catch (err) {
+    console.error('Failed to reset rate limit:', err);
+  }
+}
+
 export function isAdminAuthenticated(): boolean {
   try {
     const session = localStorage.getItem(ADMIN_SESSION_KEY);
@@ -550,6 +659,15 @@ export function getAdminSession(): AdminUser | null {
 }
 
 export async function loginAdmin(email: string, pass: string): Promise<AdminUser> {
+  // 1. Check rate limiting before processing
+  const rateLimit = getLoginRateLimitInfo();
+  if (rateLimit.isLocked) {
+    const mins = Math.floor(rateLimit.remainingLockoutSeconds / 60);
+    const secs = rateLimit.remainingLockoutSeconds % 60;
+    const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+    throw new Error(`Security Lockout Active: Too many failed login attempts. Please wait ${timeStr} before trying again.`);
+  }
+
   const cleanEmail = email.trim().toLowerCase();
   
   if (!cleanEmail || !pass) {
@@ -561,6 +679,9 @@ export async function loginAdmin(email: string, pass: string): Promise<AdminUser
 
   // Strict check: only orbitspace.ilorin@gmail.com and Amazing@3 are authorized
   if (cleanEmail === EXACT_ADMIN_EMAIL && pass === EXACT_ADMIN_PASSWORD) {
+    // Reset rate limit on successful authentication
+    resetLoginRateLimit();
+
     const user: AdminUser = {
       email: EXACT_ADMIN_EMAIL,
       name: 'Orbit Space Administrator',
@@ -570,8 +691,9 @@ export async function loginAdmin(email: string, pass: string): Promise<AdminUser
     return user;
   }
 
-  // Any other email or password is completely denied
-  throw new Error('Access denied. Invalid administrator email or password.');
+  // Record failed attempt and compute lockout
+  const failResult = recordFailedAttempt();
+  throw new Error(failResult.errorMsg);
 }
 
 export function logoutAdmin() {
