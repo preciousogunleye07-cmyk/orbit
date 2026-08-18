@@ -1,0 +1,32 @@
+<IfModule mod_headers.c>
+  # Content Security Policy
+  Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https: wss:; worker-src 'self' blob:; frame-ancestors 'self' https://*.google.com https://*.run.app; object-src 'none'; base-uri 'self'; form-action 'self' https://formspree.io;"
+
+  # X-Frame-Options
+  Header set X-Frame-Options "SAMEORIGIN"
+
+  # X-Content-Type-Options
+  Header set X-Content-Type-Options "nosniff"
+
+  # Referrer-Policy
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+
+  # Permissions-Policy
+  Header set Permissions-Policy "camera=(), microphone=(), geolocation=(), browsing-topics=(), interest-cohort=()"
+
+  # Strict-Transport-Security (HSTS)
+  Header set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+
+  # X-XSS-Protection
+  Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Single Page Application (SPA) routing fallback
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
