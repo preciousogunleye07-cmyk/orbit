@@ -137,19 +137,6 @@ export const FooterSection: React.FC<FooterSectionProps> = ({ setActiveModal, se
                   <span>Verify Certificate</span>
                 </a>
               </li>
-              <li>
-                <a
-                  href="/admin/login"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    window.history.pushState({}, '', '/admin/login');
-                    window.dispatchEvent(new Event('popstate'));
-                  }}
-                  className="text-[#c4c7c8] hover:text-[#a855f7] transition-colors text-[11px] font-mono"
-                >
-                  Admin Portal Login
-                </a>
-              </li>
             </ul>
           </div>
 

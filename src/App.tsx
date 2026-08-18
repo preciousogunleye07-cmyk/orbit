@@ -25,7 +25,12 @@ import { ContactModal } from './components/modals/ContactModal';
 import { CourseDetailModal } from './components/modals/CourseDetailModal';
 
 import { ActiveModal } from './types';
-import { isAdminAuthenticated } from './services/certificateService';
+import { 
+  isAdminAuthenticated, 
+  SECRET_ADMIN_PREFIX, 
+  SECRET_ADMIN_LOGIN_PATH, 
+  SECRET_ADMIN_DASHBOARD_PATH 
+} from './services/certificateService';
 
 const MAIN_PAGES = ['home', 'courses', 'timetable', 'siwes', 'workspace', 'quiz', 'about', 'contact'];
 
@@ -72,22 +77,24 @@ function parsePathToRoute(path: string): RouteState {
     return { mode: 'main', page: 'home' };
   }
 
-  // Admin routes
-  if (lowerPath === 'admin/login') {
+  // Secret Admin obfuscated routes (e.g. /portal-auth-x98k72/login or /portal-auth-x98k72/dashboard)
+  if (lowerPath === `${SECRET_ADMIN_PREFIX}/login` || lowerPath === `${SECRET_ADMIN_PREFIX}`) {
     return { mode: 'admin-login' };
   }
 
-  if (lowerPath === 'admin') {
+  if (lowerPath === `${SECRET_ADMIN_PREFIX}/dashboard` || lowerPath === `${SECRET_ADMIN_PREFIX}/admin`) {
     return { mode: 'admin-dashboard', subTab: 'overview' };
   }
 
-  if (lowerPath === 'admin/certificates') {
+  if (lowerPath === `${SECRET_ADMIN_PREFIX}/certificates`) {
     return { mode: 'admin-dashboard', subTab: 'directory' };
   }
 
-  if (lowerPath === 'admin/certificates/new') {
+  if (lowerPath === `${SECRET_ADMIN_PREFIX}/certificates/new`) {
     return { mode: 'admin-dashboard', subTab: 'create' };
   }
+
+  // Note: /admin, /admin/login, /admin/dashboard are deliberately NOT mapped to admin to prevent public discovery and bot scanning. They return to the home view.
 
   // Main site pages
   if (MAIN_PAGES.includes(lowerPath)) {
@@ -236,7 +243,7 @@ export default function App() {
               className="w-full"
             >
               <AdminLoginPage
-                onSuccess={() => navigateTo('/admin')}
+                onSuccess={() => navigateTo(SECRET_ADMIN_DASHBOARD_PATH)}
                 onNavigateHome={() => navigateTo('/')}
               />
             </motion.div>
@@ -255,13 +262,13 @@ export default function App() {
               {isAuthenticated ? (
                 <AdminDashboardLayout
                   initialTab={route.subTab || 'overview'}
-                  onLogout={() => navigateTo('/admin/login')}
+                  onLogout={() => navigateTo(SECRET_ADMIN_LOGIN_PATH)}
                   onNavigateHome={() => navigateTo('/')}
                   onOpenPublicPage={(id) => navigateTo(`/${id}`)}
                 />
               ) : (
                 <AdminLoginPage
-                  onSuccess={() => navigateTo('/admin')}
+                  onSuccess={() => navigateTo(SECRET_ADMIN_DASHBOARD_PATH)}
                   onNavigateHome={() => navigateTo('/')}
                 />
               )}
@@ -282,7 +289,6 @@ export default function App() {
                 authId={route.authId}
                 onNavigateHome={() => navigateTo('/')}
                 onSearchNewId={(newId) => navigateTo(`/${newId}`)}
-                onNavigateAdminLogin={() => navigateTo('/admin/login')}
               />
             </motion.div>
           )}

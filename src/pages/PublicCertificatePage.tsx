@@ -34,14 +34,12 @@ interface PublicCertificatePageProps {
   authId: string;
   onNavigateHome: () => void;
   onSearchNewId: (newId: string) => void;
-  onNavigateAdminLogin: () => void;
 }
 
 export const PublicCertificatePage: React.FC<PublicCertificatePageProps> = ({
   authId,
   onNavigateHome,
-  onSearchNewId,
-  onNavigateAdminLogin
+  onSearchNewId
 }) => {
   const [certificate, setCertificate] = useState<CertificateRecord | null>(null);
   const [loading, setLoading] = useState(true);
@@ -140,15 +138,12 @@ export const PublicCertificatePage: React.FC<PublicCertificatePageProps> = ({
             </div>
           </button>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onNavigateAdminLogin}
-              className="text-xs font-mono text-[#c4c7c8] hover:text-[#c084fc] px-3 py-1.5 rounded-full bg-[#181524] border border-[#332d47] transition-colors flex items-center gap-1.5"
-            >
-              <Lock className="w-3 h-3 text-[#a855f7]" />
-              <span>Admin Portal</span>
-            </button>
-          </div>
+          <button
+            onClick={onNavigateHome}
+            className="text-xs text-[#c4c7c8] hover:text-[#ffffff] px-4 py-1.5 rounded-full bg-[#181524] border border-[#332d47] transition-colors"
+          >
+            ← Back to Orbit Space
+          </button>
         </div>
 
         {/* 1. STATE A: VALID CERTIFICATE */}

@@ -113,19 +113,6 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
             </button>
             <button
               onClick={() => {
-                playSound('pulse');
-                window.history.pushState({}, '', '/admin/login');
-                window.dispatchEvent(new Event('popstate'));
-              }}
-              className="px-3.5 py-2 rounded-full text-xs font-medium text-[#c084fc] hover:text-[#ffffff] bg-[#1f1b2e] hover:bg-[#2b253f] border border-[#332d47] transition-all min-h-[40px] flex items-center gap-1.5"
-              id="btn-verify-header"
-              title="Admin Portal"
-            >
-              <Shield className="w-3.5 h-3.5 text-[#a855f7]" />
-              <span>Admin</span>
-            </button>
-            <button
-              onClick={() => {
                 playSound('sparkle');
                 setActiveModal({ type: 'enroll' });
               }}
@@ -192,18 +179,6 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
                 className="w-full py-2.5 rounded-full bg-[#ffffff] text-[#141313] font-bold text-center text-xs shadow-sm hover:bg-slate-200 transition-colors"
               >
                 Enroll in a Program
-              </button>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  playSound('pulse');
-                  window.history.pushState({}, '', '/admin/login');
-                  window.dispatchEvent(new Event('popstate'));
-                }}
-                className="w-full py-2.5 rounded-full bg-[#1f1b2e] border border-[#332d47] text-[#c084fc] font-medium text-center text-xs flex items-center justify-center gap-2 hover:bg-[#2b253f] transition-colors"
-              >
-                <Shield className="w-3.5 h-3.5 text-[#a855f7]" />
-                Admin Portal
               </button>
               <button
                 onClick={openWhatsApp}

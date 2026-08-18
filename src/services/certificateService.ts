@@ -704,6 +704,11 @@ export function logoutAdmin() {
   }
 }
 
+// Secret Admin Route Path Slugs (obfuscated against guessing/bots)
+export const SECRET_ADMIN_PREFIX = 'portal-auth-x98k72';
+export const SECRET_ADMIN_LOGIN_PATH = `/${SECRET_ADMIN_PREFIX}/login`;
+export const SECRET_ADMIN_DASHBOARD_PATH = `/${SECRET_ADMIN_PREFIX}/dashboard`;
+
 // Generate canonical public authentication URL
 export function getPublicAuthUrl(certificateId: string): string {
   const origin = window.location.origin || 'https://orbitspace.academy';
