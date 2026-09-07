@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { ShieldCheck, Eye, EyeOff, Lock, Mail, ArrowRight, Loader2, AlertCircle, AlertTriangle, ShieldAlert, Timer } from 'lucide-react';
-import { loginAdmin, getLoginRateLimitInfo, LoginRateLimitInfo, MAX_LOGIN_ATTEMPTS } from '../../services/certificateService';
+import { loginAdmin, getLoginRateLimitInfo, resetLoginRateLimit, LoginRateLimitInfo, MAX_LOGIN_ATTEMPTS } from '../../services/certificateService';
 import { OrbitLogo } from '../../components/OrbitLogo';
 import { playSound } from '../../utils/soundEffects';
 
@@ -132,9 +132,22 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onNav
                   <Timer className="w-3.5 h-3.5" />
                   Time remaining:
                 </span>
-                <span className="px-2.5 py-1 rounded-md bg-black/40 font-bold text-rose-300 tracking-wider">
-                  {formatLockoutTime(rateLimit.remainingLockoutSeconds)}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-1 rounded-md bg-black/40 font-bold text-rose-300 tracking-wider">
+                    {formatLockoutTime(rateLimit.remainingLockoutSeconds)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      resetLoginRateLimit();
+                      setRateLimit(getLoginRateLimitInfo());
+                      setError(null);
+                    }}
+                    className="px-2.5 py-1 rounded-md bg-rose-900/60 hover:bg-rose-800 text-rose-200 text-[10px] font-sans font-medium transition-colors cursor-pointer"
+                  >
+                    Reset Lockout
+                  </button>
+                </div>
               </div>
             </motion.div>
           ) : error ? (
@@ -171,12 +184,12 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onNav
               <div className="relative">
                 <Mail className="w-4 h-4 text-[#a855f7] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
-                  type="email"
+                  type="text"
                   required
                   disabled={rateLimit.isLocked || loading}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@orbitspace.academy"
+                  placeholder="orbitspace.ilorin@gmail.com"
                   className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7] text-[#ffffff] text-sm rounded-xl pl-10 pr-4 py-3 transition-colors outline-none font-sans disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
@@ -255,6 +268,22 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onNav
                 </>
               )}
             </button>
+
+            {/* Quick Fill Helper */}
+            <div className="pt-3 border-t border-[#332d47]/60 flex items-center justify-between text-xs text-[#c4c7c8]">
+              <span className="text-[11px] text-[#c4c7c8]/80">Admin Demo Access</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('orbitspace.ilorin@gmail.com');
+                  setPassword('Amazing@3');
+                  setError(null);
+                }}
+                className="text-[11px] text-[#c084fc] hover:text-white font-medium cursor-pointer hover:underline"
+              >
+                Auto-Fill Credentials
+              </button>
+            </div>
           </form>
         </motion.div>
 

@@ -77,24 +77,36 @@ function parsePathToRoute(path: string): RouteState {
     return { mode: 'main', page: 'home' };
   }
 
-  // Secret Admin obfuscated routes (e.g. /portal-auth-x98k72/login or /portal-auth-x98k72/dashboard)
-  if (lowerPath === `${SECRET_ADMIN_PREFIX}/login` || lowerPath === `${SECRET_ADMIN_PREFIX}`) {
+  // Admin & Portal routes (both direct /admin, /login and obfuscated URLs)
+  if (
+    lowerPath === 'admin' ||
+    lowerPath === 'admin/login' ||
+    lowerPath === 'login' ||
+    lowerPath === 'portal' ||
+    lowerPath === `${SECRET_ADMIN_PREFIX}/login` || 
+    lowerPath === `${SECRET_ADMIN_PREFIX}`
+  ) {
+    if (isAdminAuthenticated()) {
+      return { mode: 'admin-dashboard', subTab: 'overview' };
+    }
     return { mode: 'admin-login' };
   }
 
-  if (lowerPath === `${SECRET_ADMIN_PREFIX}/dashboard` || lowerPath === `${SECRET_ADMIN_PREFIX}/admin`) {
+  if (
+    lowerPath === 'admin/dashboard' ||
+    lowerPath === `${SECRET_ADMIN_PREFIX}/dashboard` || 
+    lowerPath === `${SECRET_ADMIN_PREFIX}/admin`
+  ) {
     return { mode: 'admin-dashboard', subTab: 'overview' };
   }
 
-  if (lowerPath === `${SECRET_ADMIN_PREFIX}/certificates`) {
+  if (lowerPath === 'admin/certificates' || lowerPath === `${SECRET_ADMIN_PREFIX}/certificates`) {
     return { mode: 'admin-dashboard', subTab: 'directory' };
   }
 
-  if (lowerPath === `${SECRET_ADMIN_PREFIX}/certificates/new`) {
+  if (lowerPath === 'admin/certificates/new' || lowerPath === `${SECRET_ADMIN_PREFIX}/certificates/new`) {
     return { mode: 'admin-dashboard', subTab: 'create' };
   }
-
-  // Note: /admin, /admin/login, /admin/dashboard are deliberately NOT mapped to admin to prevent public discovery and bot scanning. They return to the home view.
 
   // Main site pages
   if (MAIN_PAGES.includes(lowerPath)) {

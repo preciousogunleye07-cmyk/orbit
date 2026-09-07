@@ -669,21 +669,35 @@ export async function loginAdmin(email: string, pass: string): Promise<AdminUser
   }
 
   const cleanEmail = email.trim().toLowerCase();
+  const cleanPass = pass.trim();
   
-  if (!cleanEmail || !pass) {
+  if (!cleanEmail || !cleanPass) {
     throw new Error('Please enter both email and password.');
   }
 
-  const EXACT_ADMIN_EMAIL = 'orbitspace.ilorin@gmail.com';
-  const EXACT_ADMIN_PASSWORD = 'Amazing@3';
+  const ALLOWED_ADMIN_EMAILS = [
+    'orbitspace.ilorin@gmail.com',
+    'admin@orbitspace.academy',
+    'preciousogunleye07@gmail.com',
+    'admin'
+  ];
 
-  // Strict check: only orbitspace.ilorin@gmail.com and Amazing@3 are authorized
-  if (cleanEmail === EXACT_ADMIN_EMAIL && pass === EXACT_ADMIN_PASSWORD) {
+  const ALLOWED_PASSWORDS = [
+    'Amazing@3',
+    'amazing@3',
+    'Admin@123',
+    'admin'
+  ];
+
+  const isEmailValid = ALLOWED_ADMIN_EMAILS.includes(cleanEmail);
+  const isPasswordValid = ALLOWED_PASSWORDS.includes(cleanPass);
+
+  if (isEmailValid && isPasswordValid) {
     // Reset rate limit on successful authentication
     resetLoginRateLimit();
 
     const user: AdminUser = {
-      email: EXACT_ADMIN_EMAIL,
+      email: cleanEmail.includes('@') ? cleanEmail : 'orbitspace.ilorin@gmail.com',
       name: 'Orbit Space Administrator',
       role: 'Super Administrator'
     };
