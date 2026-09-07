@@ -1,36 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'motion/react';
-import { 
-  Plus, 
-  Award, 
-  CheckCircle2, 
-  AlertOctagon, 
-  Clock, 
-  ArrowRight, 
-  ExternalLink, 
-  Copy, 
-  Search, 
-  Eye, 
-  Edit3,
-  HardDrive,
-  Download,
-  Upload,
-  Database,
-  Check,
-  RefreshCw
-} from 'lucide-react';
-import { 
-  CertificateRecord, 
-  getCertificateStats, 
-  getPublicAuthUrl,
-  getLocalHostingStats,
-  exportLocalDatabaseAsJson,
-  importLocalDatabaseFromJson,
-  getAdminHostingMode,
-  setAdminHostingMode,
-  AdminHostingMode,
-  forceSyncLocalToCloud
-} from '../../services/certificateService';
+import { Plus, Award, CheckCircle2, AlertOctagon, Clock, ArrowRight, ExternalLink, Copy, Search, Eye, Edit3 } from 'lucide-react';
+import { CertificateRecord, getCertificateStats, getPublicAuthUrl } from '../../services/certificateService';
 import { playSound } from '../../utils/soundEffects';
 
 interface AdminDashboardOverviewProps {
@@ -40,7 +11,6 @@ interface AdminDashboardOverviewProps {
   onSelectCertificate: (cert: CertificateRecord) => void;
   onEditCertificate?: (cert: CertificateRecord) => void;
   onOpenPublicPage: (id: string) => void;
-  onRefreshData?: () => void;
 }
 
 export const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({
@@ -49,18 +19,12 @@ export const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({
   onViewAllClick,
   onSelectCertificate,
   onEditCertificate,
-  onOpenPublicPage,
-  onRefreshData
+  onOpenPublicPage
 }) => {
   const stats = getCertificateStats();
   const recentCertificates = certificates.slice(0, 5);
 
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [hostingMode, setHostingMode] = useState<AdminHostingMode>(getAdminHostingMode());
-  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
-  const [isSyncing, setIsSyncing] = useState(false);
-
-  const hostingStats = getLocalHostingStats();
+  const [copiedId, setCopiedId] = React.useState<string | null>(null);
 
   const handleCopy = (id: string) => {
     playSound('sparkle');
@@ -68,78 +32,6 @@ export const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({
     navigator.clipboard.writeText(url);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  const handleHostingModeChange = (mode: AdminHostingMode) => {
-    playSound('toggle');
-    setAdminHostingMode(mode);
-    setHostingMode(mode);
-    setFeedbackMessage(
-      mode === 'local' 
-        ? 'Local Hosting active. All certificates are stored directly on this device.'
-        : 'Cloud Sync mode active. Database will synchronize with cloud storage.'
-    );
-    setTimeout(() => setFeedbackMessage(null), 4000);
-    if (onRefreshData) onRefreshData();
-  };
-
-  const handleExportDatabase = () => {
-    playSound('chime');
-    const json = exportLocalDatabaseAsJson();
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `orbit_space_certificates_local_backup_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    setFeedbackMessage('Local database exported successfully.');
-    setTimeout(() => setFeedbackMessage(null), 4000);
-  };
-
-  const handleImportDatabase = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const content = event.target?.result as string;
-      if (content) {
-        const result = importLocalDatabaseFromJson(content);
-        if (result.success) {
-          playSound('success');
-          setFeedbackMessage(`Successfully imported ${result.importedCount} certificate(s) into local database.`);
-          if (onRefreshData) onRefreshData();
-        } else {
-          playSound('error');
-          alert(`Import failed: ${result.error || 'Invalid file format'}`);
-        }
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-    setTimeout(() => setFeedbackMessage(null), 5000);
-  };
-
-  const handleSyncToCloud = async () => {
-    setIsSyncing(true);
-    playSound('pulse');
-    try {
-      const res = await forceSyncLocalToCloud();
-      if (res.success) {
-        playSound('success');
-        setFeedbackMessage(`Successfully synced ${res.syncedCount} local records to cloud.`);
-      } else {
-        playSound('error');
-        setFeedbackMessage(`Cloud sync notice: ${res.error}`);
-      }
-    } catch (err: any) {
-      setFeedbackMessage(`Sync failed: ${err?.message || 'Network error'}`);
-    } finally {
-      setIsSyncing(false);
-      setTimeout(() => setFeedbackMessage(null), 5000);
-    }
   };
 
   return (
@@ -223,128 +115,6 @@ export const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({
           <p className="text-[11px] text-[#c4c7c8] font-light mt-1">In the last 30 days</p>
         </div>
 
-      </div>
-
-      {/* Local Hosting & Storage Engine Hub */}
-      <div className="bg-[#181524] rounded-[24px] p-6 sm:p-7 border border-[#332d47] shadow-xl relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-5 border-b border-[#332d47]">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <HardDrive className="w-4 h-4 text-emerald-400" />
-              <h2 className="text-base font-serif text-white">Local Hosting & Storage Engine</h2>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 text-[11px] font-mono flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                {hostingMode === 'local' ? '100% On-Device Local Mode' : 'Cloud Sync Mode'}
-              </span>
-            </div>
-            <p className="text-xs text-[#c4c7c8] font-light">
-              Administrative data and certificate issuing are hosted locally on this machine with direct browser persistence and instant speed.
-            </p>
-          </div>
-
-          {/* Mode Switcher Toggle */}
-          <div className="flex items-center gap-2 bg-[#100e17] p-1.5 rounded-xl border border-[#332d47] shrink-0 self-start lg:self-auto">
-            <button
-              onClick={() => handleHostingModeChange('local')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                hostingMode === 'local'
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'text-[#c4c7c8] hover:text-white'
-              }`}
-            >
-              Local Hosting (Active)
-            </button>
-            <button
-              onClick={() => handleHostingModeChange('cloud')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                hostingMode === 'cloud'
-                  ? 'btn-purple text-white shadow-md'
-                  : 'text-[#c4c7c8] hover:text-white'
-              }`}
-            >
-              Cloud Sync
-            </button>
-          </div>
-        </div>
-
-        {/* Local Storage Operations */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-5">
-          {/* Storage Footprint */}
-          <div className="bg-[#100e17] p-4 rounded-xl border border-[#332d47] flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-mono text-[#c4c7c8] block">Database Footprint</span>
-              <span className="text-lg font-mono text-white font-semibold">{hostingStats.storageSizeFormatted}</span>
-              <span className="text-[10px] text-[#c4c7c8] block">{hostingStats.total} certificates stored locally</span>
-            </div>
-            <Database className="w-7 h-7 text-[#a855f7]/70" />
-          </div>
-
-          {/* Backup Export */}
-          <div className="bg-[#100e17] p-4 rounded-xl border border-[#332d47] flex flex-col justify-between gap-3">
-            <div>
-              <span className="text-[11px] font-mono text-[#c4c7c8] block">Export Local Backup</span>
-              <span className="text-xs text-[#e2e8f0]">Download JSON database file</span>
-            </div>
-            <button
-              onClick={handleExportDatabase}
-              className="px-3.5 py-2 rounded-lg bg-[#181524] hover:bg-[#251f38] border border-[#332d47] hover:border-[#a855f7] text-white text-xs font-medium flex items-center justify-center gap-2 transition-all cursor-pointer"
-            >
-              <Download className="w-3.5 h-3.5 text-[#c084fc]" />
-              <span>Export Database (.json)</span>
-            </button>
-          </div>
-
-          {/* Backup Restore */}
-          <div className="bg-[#100e17] p-4 rounded-xl border border-[#332d47] flex flex-col justify-between gap-3">
-            <div>
-              <span className="text-[11px] font-mono text-[#c4c7c8] block">Import Local Backup</span>
-              <span className="text-xs text-[#e2e8f0]">Restore certificates from JSON</span>
-            </div>
-            <label className="px-3.5 py-2 rounded-lg bg-[#181524] hover:bg-[#251f38] border border-[#332d47] hover:border-[#a855f7] text-white text-xs font-medium flex items-center justify-center gap-2 transition-all cursor-pointer">
-              <Upload className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Import Database (.json)</span>
-              <input
-                type="file"
-                accept=".json"
-                onChange={handleImportDatabase}
-                className="hidden"
-              />
-            </label>
-          </div>
-        </div>
-
-        {/* Cloud Sync option if desired */}
-        {hostingMode === 'cloud' && (
-          <div className="mt-4 p-3.5 rounded-xl bg-[#100e17] border border-[#332d47] flex flex-col sm:flex-row items-center justify-between gap-3">
-            <span className="text-xs text-[#c4c7c8]">
-              Push all local offline changes to the Supabase cloud cluster:
-            </span>
-            <button
-              onClick={handleSyncToCloud}
-              disabled={isSyncing}
-              className="btn-purple px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-2 disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-              <span>{isSyncing ? 'Syncing...' : 'Force Sync to Cloud'}</span>
-            </button>
-          </div>
-        )}
-
-        {/* Feedback Banner */}
-        {feedbackMessage && (
-          <div className="mt-4 p-3 rounded-xl bg-emerald-950/60 border border-emerald-700/60 text-emerald-200 text-xs flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-              {feedbackMessage}
-            </span>
-            <button
-              onClick={() => setFeedbackMessage(null)}
-              className="text-emerald-400 hover:text-white px-2 cursor-pointer"
-            >
-              ✕
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Recently Issued Certificates Section */}

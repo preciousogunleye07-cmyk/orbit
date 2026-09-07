@@ -23,16 +23,10 @@ import { WorkspaceModal } from './components/modals/WorkspaceModal';
 import { AboutModal } from './components/modals/AboutModal';
 import { ContactModal } from './components/modals/ContactModal';
 import { CourseDetailModal } from './components/modals/CourseDetailModal';
-import { MoniepointCheckoutModal } from './components/modals/MoniepointCheckoutModal';
 
 import { ActiveModal } from './types';
 import { 
   isAdminAuthenticated, 
-  ADMIN_PATH,
-  ADMIN_LOGIN_PATH, 
-  ADMIN_DASHBOARD_PATH,
-  ADMIN_CERTIFICATES_PATH,
-  ADMIN_CREATE_PATH,
   SECRET_ADMIN_PREFIX, 
   SECRET_ADMIN_LOGIN_PATH, 
   SECRET_ADMIN_DASHBOARD_PATH 
@@ -83,44 +77,24 @@ function parsePathToRoute(path: string): RouteState {
     return { mode: 'main', page: 'home' };
   }
 
-  // Local Admin Paths: /admin, /admin/login, /admin/dashboard, /admin/certificates, etc.
-  if (lowerPath === 'admin') {
-    return isAdminAuthenticated() 
-      ? { mode: 'admin-dashboard', subTab: 'overview' }
-      : { mode: 'admin-login' };
-  }
-
-  if (
-    lowerPath === 'admin/login' || 
-    lowerPath === `${SECRET_ADMIN_PREFIX}/login` || 
-    lowerPath === `${SECRET_ADMIN_PREFIX}`
-  ) {
+  // Secret Admin obfuscated routes (e.g. /portal-auth-x98k72/login or /portal-auth-x98k72/dashboard)
+  if (lowerPath === `${SECRET_ADMIN_PREFIX}/login` || lowerPath === `${SECRET_ADMIN_PREFIX}`) {
     return { mode: 'admin-login' };
   }
 
-  if (
-    lowerPath === 'admin/dashboard' || 
-    lowerPath === 'admin/overview' ||
-    lowerPath === `${SECRET_ADMIN_PREFIX}/dashboard` || 
-    lowerPath === `${SECRET_ADMIN_PREFIX}/admin`
-  ) {
+  if (lowerPath === `${SECRET_ADMIN_PREFIX}/dashboard` || lowerPath === `${SECRET_ADMIN_PREFIX}/admin`) {
     return { mode: 'admin-dashboard', subTab: 'overview' };
   }
 
-  if (
-    lowerPath === 'admin/certificates' || 
-    lowerPath === `${SECRET_ADMIN_PREFIX}/certificates`
-  ) {
+  if (lowerPath === `${SECRET_ADMIN_PREFIX}/certificates`) {
     return { mode: 'admin-dashboard', subTab: 'directory' };
   }
 
-  if (
-    lowerPath === 'admin/certificates/new' || 
-    lowerPath === 'admin/new' || 
-    lowerPath === `${SECRET_ADMIN_PREFIX}/certificates/new`
-  ) {
+  if (lowerPath === `${SECRET_ADMIN_PREFIX}/certificates/new`) {
     return { mode: 'admin-dashboard', subTab: 'create' };
   }
+
+  // Note: /admin, /admin/login, /admin/dashboard are deliberately NOT mapped to admin to prevent public discovery and bot scanning. They return to the home view.
 
   // Main site pages
   if (MAIN_PAGES.includes(lowerPath)) {
@@ -269,7 +243,7 @@ export default function App() {
               className="w-full"
             >
               <AdminLoginPage
-                onSuccess={() => navigateTo(ADMIN_DASHBOARD_PATH)}
+                onSuccess={() => navigateTo(SECRET_ADMIN_DASHBOARD_PATH)}
                 onNavigateHome={() => navigateTo('/')}
               />
             </motion.div>
@@ -288,13 +262,13 @@ export default function App() {
               {isAuthenticated ? (
                 <AdminDashboardLayout
                   initialTab={route.subTab || 'overview'}
-                  onLogout={() => navigateTo(ADMIN_LOGIN_PATH)}
+                  onLogout={() => navigateTo(SECRET_ADMIN_LOGIN_PATH)}
                   onNavigateHome={() => navigateTo('/')}
                   onOpenPublicPage={(id) => navigateTo(`/${id}`)}
                 />
               ) : (
                 <AdminLoginPage
-                  onSuccess={() => navigateTo(ADMIN_DASHBOARD_PATH)}
+                  onSuccess={() => navigateTo(SECRET_ADMIN_DASHBOARD_PATH)}
                   onNavigateHome={() => navigateTo('/')}
                 />
               )}
@@ -370,13 +344,6 @@ export default function App() {
             course={activeModal.course}
             onClose={() => setActiveModal(null)}
             onEnroll={() => setActiveModal({ type: 'enroll', course: activeModal.course })}
-          />
-        )}
-
-        {activeModal?.type === 'moniepoint-checkout' && (
-          <MoniepointCheckoutModal
-            payment={activeModal.payment}
-            onClose={() => setActiveModal(null)}
           />
         )}
       </AnimatePresence>

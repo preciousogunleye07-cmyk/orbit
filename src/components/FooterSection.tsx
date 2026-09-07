@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActiveModal } from '../types';
-import { MapPin, MessageCircle, Instagram, Linkedin, Video, ShieldCheck } from 'lucide-react';
+import { MapPin, MessageCircle, Instagram, Linkedin, Video } from 'lucide-react';
 import { OrbitLogo } from './OrbitLogo';
 import { playSound } from '../utils/soundEffects';
 
@@ -124,7 +124,7 @@ export const FooterSection: React.FC<FooterSectionProps> = ({ setActiveModal, se
                   Contact Us
                 </button>
               </li>
-              <li className="pt-2 border-t border-[#332d47] space-y-2">
+              <li className="pt-2 border-t border-[#332d47]">
                 <a
                   href="/ORB-8F29K2"
                   onClick={(e) => {
@@ -135,18 +135,6 @@ export const FooterSection: React.FC<FooterSectionProps> = ({ setActiveModal, se
                   className="text-[#c084fc] hover:text-[#ffffff] transition-colors font-medium flex items-center gap-1.5"
                 >
                   <span>Verify Certificate</span>
-                </a>
-                <a
-                  href="/admin"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    window.history.pushState({}, '', '/admin');
-                    window.dispatchEvent(new Event('popstate'));
-                  }}
-                  className="text-[#9ca3af] hover:text-[#c084fc] transition-colors flex items-center gap-1.5"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#a855f7]" />
-                  <span>Admin Portal (Local)</span>
                 </a>
               </li>
             </ul>
