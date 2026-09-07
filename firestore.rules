@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Certificates: Publicly readable for instant student & employer verification
+    match /certificates/{certId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+    }
+    
+    // Moniepoint Transactions & Receipts
+    match /moniepoint_payments/{paymentId} {
+      allow read, write: if true;
+    }
+    
+    // Course & SIWES Registrations
+    match /enrollments/{enrollmentId} {
+      allow read, write: if true;
+    }
+  }
+}

@@ -3,6 +3,8 @@ import autoTable from 'jspdf-autotable';
 import { MoniepointPaymentRequest, MoniepointTransactionRecord, PaymentChannel } from '../types';
 import { generateQrCodeDataUrl } from '../utils/qrCode';
 import { getSupabase } from './supabase';
+import { db, isFirebaseConfigured } from './firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 export const MONIEPOINT_CONFIG = {
   apiKey: import.meta.env.VITE_MONIEPOINT_API_KEY || 'mptp_46d76eaed3d246789c6d04bed221eb2e_2d9d39',
@@ -93,7 +95,30 @@ export async function recordMoniepointTransaction(
     console.warn('Failed to save to localStorage:', err);
   }
 
-  // Supabase persistence if available
+  // 1. Firebase Firestore persistence
+  if (isFirebaseConfigured() && db) {
+    try {
+      const paymentPayload: Record<string, any> = {
+        reference: record.reference,
+        payerName: record.payerName,
+        payerEmail: record.payerEmail || '',
+        payerPhone: record.payerPhone,
+        itemTitle: record.itemTitle,
+        itemType: record.itemType,
+        amount: record.amount,
+        channel: record.channel,
+        status: record.status,
+        paidAt: record.paidAt,
+        apiKeyRef: MONIEPOINT_CONFIG.apiKey.slice(0, 15)
+      };
+      await setDoc(doc(db, 'moniepoint_payments', record.reference), paymentPayload);
+      console.log('Moniepoint payment recorded in Firebase Firestore:', record.reference);
+    } catch (fbErr) {
+      console.warn('Firebase payment sync notice:', fbErr);
+    }
+  }
+
+  // 2. Supabase persistence if available
   try {
     const client = getSupabase();
     if (client) {

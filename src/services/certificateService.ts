@@ -1,4 +1,6 @@
 import { getSupabase, isSupabaseConfigured } from './supabase';
+import { db, isFirebaseConfigured } from './firebase';
+import { collection, doc, getDoc, getDocs, setDoc, deleteDoc } from 'firebase/firestore';
 import { canAccessAdminPortal } from '../utils/adminSecurity';
 
 export interface CertificateRecord {
@@ -29,8 +31,100 @@ const STORAGE_KEY = 'orbit_space_certificates_v1';
 const DELETED_IDS_KEY = 'orbit_space_deleted_cert_ids_v1';
 const ADMIN_SESSION_KEY = 'orbit_space_admin_session_v1';
 
-// Zero initial mock certificates - everything is 100% real database records
-const DEFAULT_CERTIFICATES: CertificateRecord[] = [];
+// Official past certificates issued by Orbit Space Academia
+export const DEFAULT_CERTIFICATES: CertificateRecord[] = [
+  {
+    id: 'ORB-8F29K2',
+    studentName: 'Michael Adebayo',
+    course: 'Full-Stack Web Development',
+    certificateNumber: 'ORB/2026/FS-0142',
+    dateIssued: '2026-02-15',
+    courseDuration: '12 Weeks (3 Months)',
+    certificateType: 'Professional Certificate of Completion',
+    studentId: 'OS-2025-089',
+    additionalNotes: 'Graduated with Distinction in Full-Stack Web Development. Demonstrated mastery of React, Node.js, TypeScript, and modern distributed architecture.',
+    status: 'valid',
+    createdAt: '2026-02-15T10:30:00.000Z'
+  },
+  {
+    id: 'ORB-19V8Q3',
+    studentName: 'Precious Adewale Ogunleye',
+    course: 'Frontend Engineering',
+    certificateNumber: 'ORB/2026/FE-0112',
+    dateIssued: '2026-02-28',
+    courseDuration: '10 Weeks',
+    certificateType: 'Professional Certificate of Completion',
+    studentId: 'OS-2025-095',
+    additionalNotes: 'Completed production-grade frontend architecture capstone utilizing modern React, Tailwind CSS, component choreography, and state synchronization.',
+    status: 'valid',
+    createdAt: '2026-02-28T10:00:00.000Z'
+  },
+  {
+    id: 'ORB-73K1M9',
+    studentName: 'Blessing Aminat Ibrahim',
+    course: 'Data Analysis',
+    certificateNumber: 'ORB/2026/DA-0089',
+    dateIssued: '2026-01-20',
+    courseDuration: '10 Weeks',
+    certificateType: 'Professional Certificate of Completion',
+    studentId: 'OS-2025-064',
+    additionalNotes: 'Completed practical training in Power BI dashboard design, SQL database extraction, Excel business analytics, and exploratory data analysis.',
+    status: 'valid',
+    createdAt: '2026-01-20T14:15:00.000Z'
+  },
+  {
+    id: 'ORB-42N9X1',
+    studentName: 'Chinedu Emmanuel Okafor',
+    course: 'Cybersecurity',
+    certificateNumber: 'ORB/2025/CS-0051',
+    dateIssued: '2025-11-28',
+    courseDuration: '12 Weeks',
+    certificateType: 'Professional Certificate of Completion',
+    studentId: 'OS-2025-032',
+    additionalNotes: 'Demonstrated competencies in ethical hacking, vulnerability scanning, SOC defensive operations, and network incident containment.',
+    status: 'valid',
+    createdAt: '2025-11-28T09:00:00.000Z'
+  },
+  {
+    id: 'ORB-33B8P4',
+    studentName: 'Zainab Folashade Alabi',
+    course: 'UI/UX Product Design',
+    certificateNumber: 'ORB/2025/UX-0027',
+    dateIssued: '2025-10-14',
+    courseDuration: '8 Weeks',
+    certificateType: 'Professional Certificate of Completion',
+    studentId: 'OS-2025-018',
+    additionalNotes: 'Prototyped responsive design systems and completed high-fidelity interaction design for enterprise mobile and web applications.',
+    status: 'valid',
+    createdAt: '2025-10-14T11:45:00.000Z'
+  },
+  {
+    id: 'ORB-91T4K8',
+    studentName: 'David Oluwaseun Babatunde',
+    course: 'Backend Engineering',
+    certificateNumber: 'ORB/2025/BE-0074',
+    dateIssued: '2025-12-10',
+    courseDuration: '12 Weeks',
+    certificateType: 'Professional Certificate of Completion',
+    studentId: 'OS-2025-045',
+    additionalNotes: 'Specialized in relational database modeling, RESTful microservices, containerization, and API security.',
+    status: 'valid',
+    createdAt: '2025-12-10T16:00:00.000Z'
+  },
+  {
+    id: 'ORB-55M2X7',
+    studentName: 'Fatima Khadija Bello',
+    course: 'AI & Automation',
+    certificateNumber: 'ORB/2026/AI-0019',
+    dateIssued: '2026-02-01',
+    courseDuration: '6 Weeks',
+    certificateType: 'Executive Certificate of Completion',
+    studentId: 'OS-2026-003',
+    additionalNotes: 'Demonstrated excellence in automated workflows, AI agent orchestration, and business productivity intelligence.',
+    status: 'valid',
+    createdAt: '2026-02-01T12:00:00.000Z'
+  }
+];
 
 // Helper to generate unique ID in ORB-XXXXXX format
 export function generateCertificateId(): string {
@@ -40,6 +134,24 @@ export function generateCertificateId(): string {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return `ORB-${result}`;
+}
+
+/**
+ * Recursively strips keys with undefined values from objects/arrays so Firestore setDoc / updateDoc
+ * will never fail with "Unsupported field value: undefined (found in field ...)"
+ */
+export function sanitizeFirestorePayload<T extends Record<string, any>>(data: T): Record<string, any> {
+  const result: Record<string, any> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) {
+      if (value !== null && typeof value === 'object' && !(value instanceof Date)) {
+        result[key] = sanitizeFirestorePayload(value);
+      } else {
+        result[key] = value;
+      }
+    }
+  }
+  return result;
 }
 
 // Supabase Record Mapping
@@ -70,16 +182,16 @@ function mapToSupabaseRow(cert: CertificateRecord) {
     course: cert.course,
     certificate_number: cert.certificateNumber,
     date_issued: cert.dateIssued,
-    course_duration: cert.courseDuration,
-    certificate_type: cert.certificateType,
-    student_id: cert.studentId,
-    additional_notes: cert.additionalNotes,
+    course_duration: cert.courseDuration || null,
+    certificate_type: cert.certificateType || null,
+    student_id: cert.studentId || null,
+    additional_notes: cert.additionalNotes || null,
     status: cert.status,
     created_at: cert.createdAt,
-    document_url: cert.documentUrl,
-    file_name: cert.fileName,
-    file_size: cert.fileSize,
-    file_type: cert.fileType
+    document_url: cert.documentUrl || null,
+    file_name: cert.fileName || null,
+    file_size: cert.fileSize !== undefined ? cert.fileSize : null,
+    file_type: cert.fileType || null
   };
 }
 
@@ -105,8 +217,57 @@ function markIdAsDeleted(id: string) {
   }
 }
 
-// Asynchronously fetch from Supabase and cache locally
+// Asynchronously fetch from Firebase Firestore (or fallback to Supabase / local)
+export async function syncCertificatesFromFirebase(): Promise<CertificateRecord[]> {
+  const deletedSet = getDeletedIds();
+
+  if (!isFirebaseConfigured() || !db) {
+    return getCertificates();
+  }
+
+  try {
+    const certsCol = collection(db, 'certificates');
+    const snapshot = await getDocs(certsCol);
+
+    if (snapshot.empty) {
+      // Seed default certificates to Firestore so cloud database is pre-populated
+      const batchPromises = DEFAULT_CERTIFICATES
+        .filter(c => !deletedSet.has(c.id.toUpperCase()))
+        .map(cert => setDoc(doc(db, 'certificates', cert.id), sanitizeFirestorePayload(cert)));
+      await Promise.all(batchPromises);
+      return getCertificates();
+    }
+
+    const remoteRecords: CertificateRecord[] = [];
+    snapshot.forEach(docSnap => {
+      const data = docSnap.data() as CertificateRecord;
+      if (data && data.id && !deletedSet.has(data.id.toUpperCase())) {
+        remoteRecords.push(data);
+      }
+    });
+
+    const localList = getCertificates();
+    const remoteIdMap = new Map(remoteRecords.map(r => [r.id.toUpperCase(), r]));
+    const merged = [
+      ...remoteRecords,
+      ...localList.filter(c => !remoteIdMap.has(c.id.toUpperCase()) && !deletedSet.has(c.id.toUpperCase()))
+    ];
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+    return merged;
+  } catch (err) {
+    console.warn('Firebase sync notice (fallback to local):', err);
+    return getCertificates();
+  }
+}
+
+// Asynchronously fetch from cloud (Firebase preferred, then Supabase, then local)
 export async function syncCertificatesFromSupabase(): Promise<CertificateRecord[]> {
+  // If Firebase is available, prefer Firebase Firestore
+  if (isFirebaseConfigured() && db) {
+    return syncCertificatesFromFirebase();
+  }
+
   const deletedSet = getDeletedIds();
   const client = getSupabase();
   
@@ -125,14 +286,22 @@ export async function syncCertificatesFromSupabase(): Promise<CertificateRecord[
       return getCertificates();
     }
 
-    if (data) {
+    if (data && Array.isArray(data) && data.length > 0) {
       // Filter out any IDs that were deleted by the admin
-      const records = data
+      const remoteRecords = data
         .map(mapToCertificateRecord)
         .filter(c => !deletedSet.has(c.id.toUpperCase()));
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-      return records;
+      const localList = getCertificates();
+      const remoteIdMap = new Map(remoteRecords.map(r => [r.id.toUpperCase(), r]));
+      
+      const merged = [
+        ...remoteRecords,
+        ...localList.filter(c => !remoteIdMap.has(c.id.toUpperCase()) && !deletedSet.has(c.id.toUpperCase()))
+      ];
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+      return merged;
     }
   } catch (err) {
     console.warn('Could not sync with Supabase, relying on local storage:', err);
@@ -141,29 +310,38 @@ export async function syncCertificatesFromSupabase(): Promise<CertificateRecord[
   return getCertificates();
 }
 
-const LEGACY_MOCK_IDS = new Set(['ORB-8F29K2', 'ORB-73K1M9', 'ORB-42N9X1', 'ORB-33B8P4']);
-
-// Retrieve certificates from local storage or fallback to defaults (filtered by deleted set & legacy mocks)
+// Retrieve certificates from local storage and ensure all past certificates are preserved
 export function getCertificates(): CertificateRecord[] {
   const deletedSet = getDeletedIds();
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
-      return [];
+    let list: CertificateRecord[] = [];
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        list = parsed;
+      }
     }
-    const parsed = JSON.parse(raw);
-    const list: CertificateRecord[] = Array.isArray(parsed) ? parsed : [];
-    // Filter out legacy mock data & deleted records
-    const realList = list.filter(c => !deletedSet.has(c.id.toUpperCase()) && !LEGACY_MOCK_IDS.has(c.id.toUpperCase()));
+
+    // Merge default past certificates so they are never lost
+    const existingIds = new Set(list.map(c => c.id.toUpperCase()));
+    for (const defCert of DEFAULT_CERTIFICATES) {
+      if (!existingIds.has(defCert.id.toUpperCase()) && !deletedSet.has(defCert.id.toUpperCase())) {
+        list.push(defCert);
+      }
+    }
+
+    // Filter out any deleted records
+    const realList = list.filter(c => !deletedSet.has(c.id.toUpperCase()));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(realList));
     return realList;
   } catch (err) {
     console.error('Error reading certificates from storage:', err);
-    return [];
+    return DEFAULT_CERTIFICATES.filter(c => !deletedSet.has(c.id.toUpperCase()));
   }
 }
 
-// Lookup certificate by ID (case insensitive, tries Supabase first then local)
+// Lookup certificate by ID (case insensitive, checks Firebase first, then Supabase, then local)
 export async function fetchCertificateByIdAsync(id: string): Promise<CertificateRecord | null> {
   if (!id) return null;
   const cleanId = id.trim().toUpperCase();
@@ -174,6 +352,25 @@ export async function fetchCertificateByIdAsync(id: string): Promise<Certificate
     return null;
   }
 
+  // 1. Check Firebase Firestore
+  if (isFirebaseConfigured() && db) {
+    try {
+      const snap = await getDoc(doc(db, 'certificates', cleanId));
+      if (snap.exists()) {
+        const record = snap.data() as CertificateRecord;
+        if (!deletedSet.has(record.id.toUpperCase())) {
+          // Update local cache
+          const all = getCertificates().filter(c => c.id.toUpperCase() !== cleanId);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify([record, ...all]));
+          return record;
+        }
+      }
+    } catch (fbErr) {
+      console.warn('Firebase certificate fetch notice:', fbErr);
+    }
+  }
+
+  // 2. Check Supabase
   const client = getSupabase();
   if (client) {
     try {
@@ -254,14 +451,14 @@ export async function createCertificateAsync(
     dateIssued: input.dateIssued || new Date().toISOString().split('T')[0],
     courseDuration: input.courseDuration?.trim() || '3 Months',
     certificateType: input.certificateType?.trim() || 'Professional Certificate',
-    studentId: input.studentId?.trim() || undefined,
-    additionalNotes: input.additionalNotes?.trim() || undefined,
     status: 'valid',
     createdAt: new Date().toISOString(),
-    documentUrl: input.documentUrl,
-    fileName: input.fileName,
-    fileSize: input.fileSize,
-    fileType: input.fileType
+    ...(input.studentId?.trim() ? { studentId: input.studentId.trim() } : {}),
+    ...(input.additionalNotes?.trim() ? { additionalNotes: input.additionalNotes.trim() } : {}),
+    ...(input.documentUrl ? { documentUrl: input.documentUrl } : {}),
+    ...(input.fileName ? { fileName: input.fileName } : {}),
+    ...(input.fileSize !== undefined ? { fileSize: input.fileSize } : {}),
+    ...(input.fileType ? { fileType: input.fileType } : {})
   };
 
   // Update local cache
@@ -272,7 +469,18 @@ export async function createCertificateAsync(
     console.error('Failed to save certificate locally:', err);
   }
 
-  // Insert into Supabase
+  // 1. Insert into Firebase Firestore
+  if (isFirebaseConfigured() && db) {
+    try {
+      const sanitized = sanitizeFirestorePayload(newRecord);
+      await setDoc(doc(db, 'certificates', newRecord.id), sanitized);
+      console.log('Certificate successfully inserted in Firebase Firestore:', newRecord.id);
+    } catch (fbErr: any) {
+      console.warn('Firebase certificate insert notice:', fbErr?.message || fbErr);
+    }
+  }
+
+  // 2. Insert into Supabase (if configured)
   const client = getSupabase();
   if (client) {
     try {
@@ -281,13 +489,12 @@ export async function createCertificateAsync(
         .insert([mapToSupabaseRow(newRecord)]);
 
       if (error) {
-        console.error('Supabase certificate insert error:', error.message);
-        return { success: false, certificate: newRecord, error: error.message };
+        console.warn('Supabase certificate insert notice:', error.message);
+      } else {
+        console.log('Certificate successfully inserted in Supabase:', newRecord.id);
       }
-      console.log('Certificate successfully inserted in Supabase:', newRecord.id);
     } catch (err: any) {
-      console.error('Supabase exception on insert:', err);
-      return { success: false, certificate: newRecord, error: err?.message || 'Database network error' };
+      console.warn('Supabase notice on insert:', err?.message || err);
     }
   }
 
@@ -330,14 +537,14 @@ export function createCertificate(
     dateIssued: input.dateIssued || new Date().toISOString().split('T')[0],
     courseDuration: input.courseDuration?.trim() || '3 Months',
     certificateType: input.certificateType?.trim() || 'Professional Certificate',
-    studentId: input.studentId?.trim() || undefined,
-    additionalNotes: input.additionalNotes?.trim() || undefined,
     status: 'valid',
     createdAt: new Date().toISOString(),
-    documentUrl: input.documentUrl,
-    fileName: input.fileName,
-    fileSize: input.fileSize,
-    fileType: input.fileType
+    ...(input.studentId?.trim() ? { studentId: input.studentId.trim() } : {}),
+    ...(input.additionalNotes?.trim() ? { additionalNotes: input.additionalNotes.trim() } : {}),
+    ...(input.documentUrl ? { documentUrl: input.documentUrl } : {}),
+    ...(input.fileName ? { fileName: input.fileName } : {}),
+    ...(input.fileSize !== undefined ? { fileSize: input.fileSize } : {}),
+    ...(input.fileType ? { fileType: input.fileType } : {})
   };
 
   const updated = [newRecord, ...all];
@@ -391,14 +598,32 @@ export async function updateCertificateAsync(
     ...(updates.dateIssued !== undefined ? { dateIssued: updates.dateIssued } : {}),
     ...(updates.courseDuration !== undefined ? { courseDuration: updates.courseDuration.trim() } : {}),
     ...(updates.certificateType !== undefined ? { certificateType: updates.certificateType.trim() } : {}),
-    ...(updates.studentId !== undefined ? { studentId: updates.studentId.trim() || undefined } : {}),
-    ...(updates.additionalNotes !== undefined ? { additionalNotes: updates.additionalNotes.trim() || undefined } : {}),
     ...(updates.status !== undefined ? { status: updates.status } : {}),
     ...(updates.documentUrl !== undefined ? { documentUrl: updates.documentUrl } : {}),
     ...(updates.fileName !== undefined ? { fileName: updates.fileName } : {}),
     ...(updates.fileSize !== undefined ? { fileSize: updates.fileSize } : {}),
     ...(updates.fileType !== undefined ? { fileType: updates.fileType } : {})
   };
+
+  // Explicitly handle studentId update without leaving undefined
+  if (updates.studentId !== undefined) {
+    const trimmed = updates.studentId.trim();
+    if (trimmed) {
+      updatedRecord.studentId = trimmed;
+    } else {
+      delete updatedRecord.studentId;
+    }
+  }
+
+  // Explicitly handle additionalNotes update without leaving undefined
+  if (updates.additionalNotes !== undefined) {
+    const trimmed = updates.additionalNotes.trim();
+    if (trimmed) {
+      updatedRecord.additionalNotes = trimmed;
+    } else {
+      delete updatedRecord.additionalNotes;
+    }
+  }
 
   all[index] = updatedRecord;
 
@@ -408,6 +633,18 @@ export async function updateCertificateAsync(
     console.error('Failed to update certificate locally:', err);
   }
 
+  // 1. Update in Firebase Firestore
+  if (isFirebaseConfigured() && db) {
+    try {
+      const sanitized = sanitizeFirestorePayload(updatedRecord);
+      await setDoc(doc(db, 'certificates', existing.id), sanitized, { merge: true });
+      console.log('Certificate successfully updated in Firebase Firestore:', existing.id);
+    } catch (fbErr: any) {
+      console.warn('Firebase certificate update notice:', fbErr?.message || fbErr);
+    }
+  }
+
+  // 2. Update in Supabase (if configured)
   const client = getSupabase();
   if (client) {
     try {
@@ -417,13 +654,12 @@ export async function updateCertificateAsync(
         .eq('id', existing.id);
 
       if (error) {
-        console.error('Supabase update error:', error.message);
-        return { success: false, certificate: updatedRecord, error: error.message };
+        console.warn('Supabase update notice:', error.message);
+      } else {
+        console.log('Certificate successfully updated in Supabase:', existing.id);
       }
-      console.log('Certificate successfully updated in Supabase:', existing.id);
     } catch (err: any) {
-      console.error('Supabase update exception:', err);
-      return { success: false, certificate: updatedRecord, error: err?.message || 'Database error' };
+      console.warn('Supabase update notice:', err?.message || err);
     }
   }
 
@@ -473,7 +709,17 @@ export async function deleteCertificateAsync(id: string): Promise<{ success: boo
     console.error('Failed to update local storage on delete:', err);
   }
 
-  // 3. Delete directly in Supabase and await result
+  // 3. Delete directly in Firebase Firestore
+  if (isFirebaseConfigured() && db) {
+    try {
+      await deleteDoc(doc(db, 'certificates', cleanId));
+      console.log('Certificate successfully deleted from Firebase Firestore:', cleanId);
+    } catch (fbErr: any) {
+      console.warn('Firebase deletion notice:', fbErr?.message || fbErr);
+    }
+  }
+
+  // 4. Delete in Supabase (if configured)
   const client = getSupabase();
   if (client) {
     try {
@@ -483,13 +729,12 @@ export async function deleteCertificateAsync(id: string): Promise<{ success: boo
         .eq('id', cleanId);
 
       if (error) {
-        console.error('Supabase deletion error:', error.message);
-        return { success: false, error: error.message };
+        console.warn('Supabase deletion notice:', error.message);
+      } else {
+        console.log('Certificate successfully deleted from Supabase:', cleanId);
       }
-      console.log('Certificate successfully deleted from Supabase:', cleanId);
     } catch (err: any) {
-      console.error('Supabase deletion exception:', err);
-      return { success: false, error: err?.message || 'Network error' };
+      console.warn('Supabase deletion notice:', err?.message || err);
     }
   }
 

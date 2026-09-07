@@ -14,7 +14,7 @@ interface HeroSectionProps {
 
 export const HeroSection: React.FC<HeroSectionProps> = ({ setActiveModal, onExploreCourses }) => {
   return (
-    <section id="hero" className="relative pt-28 pb-16 overflow-visible bg-[#100e17]">
+    <section id="hero" className="relative pt-24 sm:pt-28 pb-12 sm:pb-16 overflow-visible bg-[#100e17]">
       <TextCursor
         text="✦ Orbit"
         spacing={70}
@@ -44,13 +44,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ setActiveModal, onExpl
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 relative z-10">
         
         {/* Main Hero Content Area */}
-        <div className="pt-6 sm:pt-8 pb-10 sm:pb-14 max-w-4xl mx-auto text-center flex flex-col items-center justify-center gap-5 sm:gap-6">
+        <div className="pt-4 sm:pt-8 pb-8 sm:pb-14 max-w-4xl mx-auto text-center flex flex-col items-center justify-center gap-4 sm:gap-6">
 
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-normal text-[#ffffff] font-serif leading-[1.2] tracking-tight flex flex-wrap items-center justify-center gap-x-3 gap-y-2.5 max-w-full text-center">
-            <span>Launch Your Career</span>
+          <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-normal text-[#ffffff] font-serif leading-[1.25] tracking-tight flex flex-wrap items-center justify-center gap-x-2.5 sm:gap-x-3 gap-y-2 max-w-full text-center px-1">
+            <span className="shrink-0">Launch Your Career</span>
             <RotatingText
               texts={['Into Tech.', 'Into Software.', 'Into Cybersecurity.', 'Into AI & Data.']}
-              mainClassName="px-3.5 sm:px-5 py-1 sm:py-1.5 bg-gradient-to-r from-[#a855f7] via-[#c084fc] to-[#e879f9] text-[#100e17] font-sans font-semibold rounded-xl overflow-hidden shadow-lg inline-flex items-center justify-center text-2xl sm:text-4xl md:text-5xl max-w-full text-center whitespace-nowrap min-h-[44px] sm:min-h-[58px]"
+              mainClassName="px-3 sm:px-5 py-1 sm:py-1.5 bg-gradient-to-r from-[#a855f7] via-[#c084fc] to-[#e879f9] text-[#100e17] font-sans font-semibold rounded-xl overflow-hidden shadow-lg inline-flex items-center justify-center text-xl sm:text-3xl md:text-5xl max-w-full text-center whitespace-nowrap min-h-[38px] sm:min-h-[58px]"
               staggerFrom="last"
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
@@ -62,18 +62,18 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ setActiveModal, onExpl
             />
           </h1>
 
-          <p className="text-[#c4c7c8] text-sm sm:text-base md:text-lg font-light leading-relaxed max-w-2xl mx-auto text-center px-2">
+          <p className="text-[#c4c7c8] text-xs sm:text-base md:text-lg font-light leading-relaxed max-w-2xl mx-auto text-center px-3 sm:px-2">
             Orbit Space is a tech academy in Ilorin focused on practical, hands-on learning. We bridge the gap between theoretical computer science and production software engineering.
           </p>
 
           {/* Action CTAs */}
-          <div className="flex flex-wrap items-center justify-center gap-3.5 pt-2 w-full max-w-md sm:max-w-none mx-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 pt-2 w-full max-w-xs sm:max-w-none mx-auto">
             <button
               onClick={() => {
                 playSound('sparkle');
                 setActiveModal({ type: 'contact' });
               }}
-              className="w-full sm:w-auto btn-purple text-sm font-semibold px-8 py-3.5 rounded-full flex items-center justify-center gap-2 group shadow-lg min-h-[44px]"
+              className="w-full sm:w-auto btn-purple text-sm font-semibold px-8 py-3.5 rounded-full flex items-center justify-center gap-2 group shadow-lg min-h-[46px] active:scale-[0.98]"
               id="btn-learn-more-hero"
             >
               <span>Contact Us</span>
@@ -85,7 +85,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ setActiveModal, onExpl
                 playSound('pulse');
                 onExploreCourses();
               }}
-              className="w-full sm:w-auto bg-[#1f1b2e] text-[#e2e8f0] border border-[#332d47] text-sm font-medium px-8 py-3.5 rounded-full hover:bg-[#332d47] hover:text-[#ffffff] hover:border-[#8b5cf6]/50 transition-all text-center min-h-[44px]"
+              className="w-full sm:w-auto bg-[#1f1b2e] text-[#e2e8f0] border border-[#332d47] text-sm font-medium px-8 py-3.5 rounded-full hover:bg-[#332d47] hover:text-[#ffffff] hover:border-[#8b5cf6]/50 transition-all text-center min-h-[46px] active:scale-[0.98]"
               id="btn-explore-courses-hero"
             >
               <span>Explore Programs</span>

@@ -119,7 +119,7 @@ const TextCursor: React.FC<TextCursorProps> = ({
   return (
     <div ref={containerRef} className={`text-cursor-container ${className}`}>
       {children}
-      <div className="text-cursor-inner">
+      <div className="text-cursor-inner hidden sm:block pointer-events-none">
         <AnimatePresence>
           {trail.map(item => (
             <motion.div

@@ -23,7 +23,7 @@ const sectionVariant: Variants = {
 
 export const HomePage: React.FC<HomePageProps> = ({ setActiveModal, setCurrentPage }) => {
   return (
-    <div className="space-y-12 overflow-hidden">
+    <div className="space-y-12 sm:space-y-20 overflow-hidden w-full max-w-full">
       {/* Hero Banner */}
       <motion.div
         initial="hidden"

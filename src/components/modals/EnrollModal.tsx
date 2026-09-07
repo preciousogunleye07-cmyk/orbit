@@ -6,6 +6,8 @@ import { Course, MoniepointPaymentRequest } from '../../types';
 import { COURSES_DATA } from '../../data/coursesData';
 import { playSound } from '../../utils/soundEffects';
 import { MoniepointCheckoutModal } from './MoniepointCheckoutModal';
+import { db, isFirebaseConfigured } from '../../services/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 interface EnrollModalProps {
   course?: Course;
@@ -49,6 +51,29 @@ export const EnrollModal: React.FC<EnrollModalProps> = ({ course: initialCourse,
     }
     playSound('toggle');
     setShowMoniepointCheckout(true);
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    if (isFirebaseConfigured() && db) {
+      try {
+        const regId = `ENR-${Date.now()}`;
+        setDoc(doc(db, 'enrollments', regId), {
+          id: regId,
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          course: activeCourse.title,
+          courseId: activeCourse.id,
+          learningMode: formData.learningMode,
+          paymentPlan,
+          status: 'pending',
+          createdAt: new Date().toISOString()
+        }).catch((err) => console.debug('Firebase enrollment save notice:', err));
+      } catch (fbErr) {
+        console.debug('Firebase enrollment save notice:', fbErr);
+      }
+    }
+    return handleSubmit(e);
   };
 
   const moniepointPaymentRequest: MoniepointPaymentRequest = {
@@ -121,7 +146,7 @@ export const EnrollModal: React.FC<EnrollModalProps> = ({ course: initialCourse,
               Start your practical tech journey at our Ilorin campus with Moniepoint payment or offline reservation.
             </p>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleFormSubmit} className="space-y-4">
               <input type="hidden" name="_subject" value={`Orbit Academy Enrollment: ${activeCourse.title}`} />
               <input type="hidden" name="learningMode" value={formData.learningMode} />
               <input type="hidden" name="paymentPlan" value={paymentPlan} />

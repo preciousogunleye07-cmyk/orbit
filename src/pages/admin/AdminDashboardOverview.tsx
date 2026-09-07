@@ -21,7 +21,19 @@ export const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({
   onEditCertificate,
   onOpenPublicPage
 }) => {
-  const stats = getCertificateStats();
+  const stats = React.useMemo(() => {
+    const total = certificates.length;
+    const active = certificates.filter(c => c.status === 'valid').length;
+    const revoked = certificates.filter(c => c.status === 'revoked').length;
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const recent = certificates.filter(c => {
+      const issueDate = new Date(c.dateIssued);
+      return issueDate >= thirtyDaysAgo;
+    }).length;
+    return { total, active, revoked, recent };
+  }, [certificates]);
+
   const recentCertificates = certificates.slice(0, 5);
 
   const [copiedId, setCopiedId] = React.useState<string | null>(null);
