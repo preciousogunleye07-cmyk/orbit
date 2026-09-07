@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { ShieldCheck, Eye, EyeOff, Lock, Mail, ArrowRight, Loader2, AlertCircle, AlertTriangle, ShieldAlert, Timer, Laptop } from 'lucide-react';
-import { loginAdmin, getLoginRateLimitInfo, resetLoginRateLimit, LoginRateLimitInfo, MAX_LOGIN_ATTEMPTS } from '../../services/certificateService';
+import { ShieldCheck, Eye, EyeOff, Lock, Mail, ArrowRight, Loader2, AlertCircle, AlertTriangle, ShieldAlert, Timer } from 'lucide-react';
+import { loginAdmin, getLoginRateLimitInfo, LoginRateLimitInfo, MAX_LOGIN_ATTEMPTS } from '../../services/certificateService';
 import { OrbitLogo } from '../../components/OrbitLogo';
 import { playSound } from '../../utils/soundEffects';
 
@@ -93,15 +93,9 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onNav
             </div>
           </button>
 
-          <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1f1b2e] border border-[#332d47] text-[#c084fc] text-xs font-mono">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#a855f7]" />
-              <span>Admin Portal</span>
-            </div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/50 border border-emerald-700/50 text-emerald-300 text-[11px] font-mono">
-              <Laptop className="w-3 h-3 text-emerald-400" />
-              <span>Laptop / Localhost Restricted</span>
-            </div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1f1b2e] border border-[#332d47] text-[#c084fc] text-xs font-mono mb-3">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#a855f7]" />
+            <span>Admin Portal</span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-serif text-[#ffffff] font-normal tracking-tight">
@@ -138,22 +132,9 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onNav
                   <Timer className="w-3.5 h-3.5" />
                   Time remaining:
                 </span>
-                <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-1 rounded-md bg-black/40 font-bold text-rose-300 tracking-wider">
-                    {formatLockoutTime(rateLimit.remainingLockoutSeconds)}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      resetLoginRateLimit();
-                      setRateLimit(getLoginRateLimitInfo());
-                      setError(null);
-                    }}
-                    className="px-2.5 py-1 rounded-md bg-rose-900/60 hover:bg-rose-800 text-rose-200 text-[10px] font-sans font-medium transition-colors cursor-pointer"
-                  >
-                    Reset Lockout
-                  </button>
-                </div>
+                <span className="px-2.5 py-1 rounded-md bg-black/40 font-bold text-rose-300 tracking-wider">
+                  {formatLockoutTime(rateLimit.remainingLockoutSeconds)}
+                </span>
               </div>
             </motion.div>
           ) : error ? (
@@ -190,12 +171,12 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onNav
               <div className="relative">
                 <Mail className="w-4 h-4 text-[#a855f7] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
-                  type="text"
+                  type="email"
                   required
                   disabled={rateLimit.isLocked || loading}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="orbitspace.ilorin@gmail.com"
+                  placeholder="admin@orbitspace.academy"
                   className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7] text-[#ffffff] text-sm rounded-xl pl-10 pr-4 py-3 transition-colors outline-none font-sans disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
@@ -274,22 +255,6 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onNav
                 </>
               )}
             </button>
-
-            {/* Quick Fill Helper */}
-            <div className="pt-3 border-t border-[#332d47]/60 flex items-center justify-between text-xs text-[#c4c7c8]">
-              <span className="text-[11px] text-[#c4c7c8]/80">Admin Demo Access</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('orbitspace.ilorin@gmail.com');
-                  setPassword('Amazing@3');
-                  setError(null);
-                }}
-                className="text-[11px] text-[#c084fc] hover:text-white font-medium cursor-pointer hover:underline"
-              >
-                Auto-Fill Credentials
-              </button>
-            </div>
           </form>
         </motion.div>
 

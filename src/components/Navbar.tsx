@@ -5,7 +5,7 @@ import { ActiveModal } from '../types';
 import { GooeyNav, GooeyNavItem } from './GooeyNav';
 import { OrbitLogo } from './OrbitLogo';
 import { playSound, toggleSound, getSoundStatus } from '../utils/soundEffects';
-import { isLocalAdminEnvironment } from '../utils/environment';
+import { canAccessAdminPortal } from '../utils/adminSecurity';
 
 interface NavbarProps {
   setActiveModal: (modal: ActiveModal) => void;
@@ -65,7 +65,7 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
       }`}
     >
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between px-4 sm:px-6 py-2.5 rounded-2xl border border-[#332d47] bg-[#100e17]/85 backdrop-blur-md shadow-lg shadow-black/20 transition-all">
+        <div className="flex items-center justify-between bg-[#141313]/60 backdrop-blur-md border border-[#332d47]/40 rounded-2xl sm:rounded-full px-4 sm:px-6 py-2.5 shadow-lg shadow-black/20 transition-all duration-300" id="navbar-container">
           
           {/* Logo */}
           <button
@@ -100,14 +100,15 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
 
           {/* Action CTAs */}
           <div className="hidden lg:flex items-center gap-2.5">
-            {isLocalAdminEnvironment() && (
+            {canAccessAdminPortal() && (
               <button
                 onClick={() => handleNavClick('admin')}
-                className="p-2 rounded-full text-[#c4c7c8] hover:text-[#ffffff] bg-[#1f1b2e] hover:bg-[#2b253f] border border-[#332d47] transition-all min-h-[40px] min-w-[40px] flex items-center justify-center cursor-pointer"
-                title="Administrator Portal (Laptop / Localhost Only)"
-                aria-label="Admin Portal"
+                className="p-2 rounded-full text-[#c084fc] hover:text-[#ffffff] bg-[#1f1b2e] hover:bg-[#2b253f] border border-purple-800/50 transition-all min-h-[40px] min-w-[40px] flex items-center justify-center cursor-pointer"
+                title="Admin Console (Local Workstation)"
+                aria-label="Open Local Admin Console"
+                id="nav-admin-quickbtn"
               >
-                <Shield className="w-4 h-4 text-[#a855f7]" />
+                <Shield className="w-4 h-4 text-[#c084fc]" />
               </button>
             )}
             <button
@@ -166,6 +167,7 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
               { id: 'quiz', label: 'Career Advisor' },
               { id: 'about', label: 'About Orbit Space' },
               { id: 'contact', label: 'Contact & Location' },
+              ...(canAccessAdminPortal() ? [{ id: 'admin', label: '🔒 Admin Console (Local)' }] : []),
             ].map((item, idx) => (
               <motion.button
                 key={item.id}
@@ -180,19 +182,6 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
                 {item.label}
               </motion.button>
             ))}
-
-            {isLocalAdminEnvironment() && (
-              <motion.button
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.25, duration: 0.2 }}
-                onClick={() => handleNavClick('admin')}
-                className="block w-full text-left px-4 py-2.5 rounded-lg font-medium text-xs text-[#a855f7] hover:bg-[#201f1f] flex items-center gap-2"
-              >
-                <Shield className="w-3.5 h-3.5 text-[#a855f7]" />
-                <span>Admin Portal (Localhost Only)</span>
-              </motion.button>
-            )}
 
             <div className="pt-3 border-t border-[#353434] flex flex-col gap-2">
               <button

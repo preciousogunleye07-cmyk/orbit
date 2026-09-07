@@ -39,6 +39,38 @@ export interface FAQItem {
   category: 'courses' | 'siwes' | 'workspace' | 'general';
 }
 
+export type PaymentChannel = 'bank_transfer' | 'card' | 'ussd' | 'pos_qr';
+
+export interface MoniepointPaymentRequest {
+  title: string;
+  subtitle: string;
+  itemType: 'course' | 'workspace' | 'siwes' | 'service';
+  itemId: string;
+  amount: number;
+  formattedAmount: string;
+  customerName: string;
+  customerEmail?: string;
+  customerPhone: string;
+  meta?: Record<string, string>;
+}
+
+export interface MoniepointTransactionRecord {
+  reference: string;
+  apiKeyPrefix: string;
+  amount: number;
+  currency: string;
+  payerName: string;
+  payerEmail?: string;
+  payerPhone: string;
+  itemTitle: string;
+  itemType: string;
+  channel: PaymentChannel;
+  status: 'successful' | 'pending' | 'failed';
+  paidAt: string;
+  moniepointTerminal: string;
+  moniepointSessionId: string;
+}
+
 export type ActiveModal = 
   | { type: 'enroll'; course?: Course }
   | { type: 'siwes' }
@@ -46,4 +78,5 @@ export type ActiveModal =
   | { type: 'about' }
   | { type: 'contact' }
   | { type: 'course-detail'; course: Course }
+  | { type: 'moniepoint-checkout'; payment: MoniepointPaymentRequest }
   | null;

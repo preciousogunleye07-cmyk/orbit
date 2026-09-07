@@ -3,7 +3,7 @@ import { ActiveModal } from '../types';
 import { MapPin, MessageCircle, Instagram, Linkedin, Video, Shield } from 'lucide-react';
 import { OrbitLogo } from './OrbitLogo';
 import { playSound } from '../utils/soundEffects';
-import { isLocalAdminEnvironment } from '../utils/environment';
+import { canAccessAdminPortal } from '../utils/adminSecurity';
 
 interface FooterSectionProps {
   setActiveModal: (modal: ActiveModal) => void;
@@ -138,6 +138,19 @@ export const FooterSection: React.FC<FooterSectionProps> = ({ setActiveModal, se
                   <span>Verify Certificate</span>
                 </a>
               </li>
+              {canAccessAdminPortal() && (
+                <li className="pt-1">
+                  <button
+                    onClick={() => navigateToPage('admin')}
+                    className="text-zinc-500 hover:text-purple-300 transition-colors text-[11px] font-mono flex items-center gap-1.5 cursor-pointer"
+                    id="btn-footer-admin-link"
+                    title="Accessible only on localhost (127.0.0.1) and authorized dev environment"
+                  >
+                    <Shield className="w-3.5 h-3.5 text-[#a855f7]" />
+                    <span>Admin Portal (Local)</span>
+                  </button>
+                </li>
+              )}
             </ul>
           </div>
 
@@ -216,23 +229,8 @@ export const FooterSection: React.FC<FooterSectionProps> = ({ setActiveModal, se
         {/* Bottom Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#c4c7c8] font-light">
           <p>© {new Date().getFullYear()} Orbit Space Tech Academy. All rights reserved.</p>
-          <div className="flex items-center gap-4">
-            {isLocalAdminEnvironment() && (
-              <>
-                <button
-                  onClick={() => navigateToPage('admin')}
-                  className="flex items-center gap-1.5 text-[11px] text-[#7c7595] hover:text-[#c084fc] transition-colors font-mono cursor-pointer"
-                  title="Local Administrator Portal (Laptop Only)"
-                >
-                  <Shield className="w-3.5 h-3.5 text-[#a855f7]" />
-                  <span>Admin Portal (Local)</span>
-                </button>
-                <span className="hidden sm:inline text-[#332d47]">|</span>
-              </>
-            )}
-            <div className="flex items-center gap-1 text-[#a855f7]">
-              <span>Practical Learning Hub in Ilorin, Kwara State</span>
-            </div>
+          <div className="flex items-center gap-1 text-[#a855f7]">
+            <span>Practical Learning Hub in Ilorin, Kwara State</span>
           </div>
         </div>
 

@@ -1,4 +1,5 @@
 import { getSupabase, isSupabaseConfigured } from './supabase';
+import { canAccessAdminPortal } from '../utils/adminSecurity';
 
 export interface CertificateRecord {
   id: string; // Public authentication ID, e.g. "ORB-8F29K2"
@@ -224,6 +225,14 @@ export async function createCertificateAsync(
     fileType?: string;
   }
 ): Promise<{ success: boolean; certificate?: CertificateRecord; error?: string }> {
+  // Security enforcement: Administrative writes are strictly restricted to local machine
+  if (!canAccessAdminPortal()) {
+    return { 
+      success: false, 
+      error: 'Security Policy Violation: Certificate issuance is restricted to the local admin workstation (127.0.0.1 / localhost).' 
+    };
+  }
+
   const all = getCertificates();
   
   // Ensure unique ID
@@ -659,6 +668,11 @@ export function getAdminSession(): AdminUser | null {
 }
 
 export async function loginAdmin(email: string, pass: string): Promise<AdminUser> {
+  // 0. Enforce local loopback execution
+  if (!canAccessAdminPortal()) {
+    throw new Error('Security Policy: Administrative authentication is strictly restricted to local machine access (127.0.0.1 / localhost).');
+  }
+
   // 1. Check rate limiting before processing
   const rateLimit = getLoginRateLimitInfo();
   if (rateLimit.isLocked) {
@@ -669,35 +683,21 @@ export async function loginAdmin(email: string, pass: string): Promise<AdminUser
   }
 
   const cleanEmail = email.trim().toLowerCase();
-  const cleanPass = pass.trim();
   
-  if (!cleanEmail || !cleanPass) {
+  if (!cleanEmail || !pass) {
     throw new Error('Please enter both email and password.');
   }
 
-  const ALLOWED_ADMIN_EMAILS = [
-    'orbitspace.ilorin@gmail.com',
-    'admin@orbitspace.academy',
-    'preciousogunleye07@gmail.com',
-    'admin'
-  ];
+  const EXACT_ADMIN_EMAIL = 'orbitspace.ilorin@gmail.com';
+  const EXACT_ADMIN_PASSWORD = 'Amazing@3';
 
-  const ALLOWED_PASSWORDS = [
-    'Amazing@3',
-    'amazing@3',
-    'Admin@123',
-    'admin'
-  ];
-
-  const isEmailValid = ALLOWED_ADMIN_EMAILS.includes(cleanEmail);
-  const isPasswordValid = ALLOWED_PASSWORDS.includes(cleanPass);
-
-  if (isEmailValid && isPasswordValid) {
+  // Strict check: only orbitspace.ilorin@gmail.com and Amazing@3 are authorized
+  if (cleanEmail === EXACT_ADMIN_EMAIL && pass === EXACT_ADMIN_PASSWORD) {
     // Reset rate limit on successful authentication
     resetLoginRateLimit();
 
     const user: AdminUser = {
-      email: cleanEmail.includes('@') ? cleanEmail : 'orbitspace.ilorin@gmail.com',
+      email: EXACT_ADMIN_EMAIL,
       name: 'Orbit Space Administrator',
       role: 'Super Administrator'
     };
@@ -722,6 +722,11 @@ export function logoutAdmin() {
 export const SECRET_ADMIN_PREFIX = 'portal-auth-x98k72';
 export const SECRET_ADMIN_LOGIN_PATH = `/${SECRET_ADMIN_PREFIX}/login`;
 export const SECRET_ADMIN_DASHBOARD_PATH = `/${SECRET_ADMIN_PREFIX}/dashboard`;
+
+// Canonical local administrator paths
+export const LOCAL_ADMIN_PATH = '/admin';
+export const LOCAL_ADMIN_LOGIN_PATH = '/admin/login';
+export const LOCAL_ADMIN_DASHBOARD_PATH = '/admin/dashboard';
 
 // Generate canonical public authentication URL
 export function getPublicAuthUrl(certificateId: string): string {

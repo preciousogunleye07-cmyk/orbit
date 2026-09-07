@@ -23,15 +23,20 @@ import { WorkspaceModal } from './components/modals/WorkspaceModal';
 import { AboutModal } from './components/modals/AboutModal';
 import { ContactModal } from './components/modals/ContactModal';
 import { CourseDetailModal } from './components/modals/CourseDetailModal';
+import { MoniepointCheckoutModal } from './components/modals/MoniepointCheckoutModal';
 
 import { ActiveModal } from './types';
 import { 
   isAdminAuthenticated, 
   SECRET_ADMIN_PREFIX, 
   SECRET_ADMIN_LOGIN_PATH, 
-  SECRET_ADMIN_DASHBOARD_PATH 
+  SECRET_ADMIN_DASHBOARD_PATH,
+  LOCAL_ADMIN_PATH,
+  LOCAL_ADMIN_LOGIN_PATH,
+  LOCAL_ADMIN_DASHBOARD_PATH
 } from './services/certificateService';
-import { isLocalAdminEnvironment } from './utils/environment';
+import { canAccessAdminPortal } from './utils/adminSecurity';
+import { LocalAdminSecurityGate } from './components/admin/LocalAdminSecurityGate';
 
 const MAIN_PAGES = ['home', 'courses', 'timetable', 'siwes', 'workspace', 'quiz', 'about', 'contact'];
 
@@ -39,6 +44,7 @@ type RouteState =
   | { mode: 'main'; page: string }
   | { mode: 'admin-login' }
   | { mode: 'admin-dashboard'; subTab?: 'overview' | 'directory' | 'create' }
+  | { mode: 'admin-blocked' }
   | { mode: 'public-certificate'; authId: string };
 
 function getCurrentLocationPath(): string {
@@ -78,50 +84,50 @@ function parsePathToRoute(path: string): RouteState {
     return { mode: 'main', page: 'home' };
   }
 
-  // Admin & Portal routes (Restricted exclusively to local administrator workstations)
-  const isAdminPath =
+  // Check for admin routes (both local /admin and /portal-auth-x98k72)
+  const isAdminPath = 
     lowerPath === 'admin' ||
     lowerPath === 'admin/login' ||
-    lowerPath === 'login' ||
-    lowerPath === 'portal' ||
-    lowerPath.startsWith('admin/') ||
-    lowerPath.startsWith(SECRET_ADMIN_PREFIX);
+    lowerPath === 'admin/dashboard' ||
+    lowerPath === 'admin/certificates' ||
+    lowerPath === 'admin/certificates/new' ||
+    lowerPath === `${SECRET_ADMIN_PREFIX}` ||
+    lowerPath === `${SECRET_ADMIN_PREFIX}/login` ||
+    lowerPath === `${SECRET_ADMIN_PREFIX}/dashboard` ||
+    lowerPath === `${SECRET_ADMIN_PREFIX}/admin` ||
+    lowerPath === `${SECRET_ADMIN_PREFIX}/certificates` ||
+    lowerPath === `${SECRET_ADMIN_PREFIX}/certificates/new`;
 
   if (isAdminPath) {
-    // If not accessed locally on administrator's machine, block and redirect to home
-    if (!isLocalAdminEnvironment()) {
-      return { mode: 'main', page: 'home' };
+    // If accessed from non-localhost (public domain or external Wi-Fi IP), block access
+    if (!canAccessAdminPortal()) {
+      return { mode: 'admin-blocked' };
     }
 
     if (
-      lowerPath === 'admin' ||
-      lowerPath === 'admin/login' ||
-      lowerPath === 'login' ||
-      lowerPath === 'portal' ||
-      lowerPath === `${SECRET_ADMIN_PREFIX}/login` || 
-      lowerPath === `${SECRET_ADMIN_PREFIX}`
-    ) {
-      if (isAdminAuthenticated()) {
-        return { mode: 'admin-dashboard', subTab: 'overview' };
-      }
-      return { mode: 'admin-login' };
-    }
-
-    if (
-      lowerPath === 'admin/dashboard' ||
+      lowerPath === 'admin/dashboard' || 
       lowerPath === `${SECRET_ADMIN_PREFIX}/dashboard` || 
       lowerPath === `${SECRET_ADMIN_PREFIX}/admin`
     ) {
       return { mode: 'admin-dashboard', subTab: 'overview' };
     }
 
-    if (lowerPath === 'admin/certificates' || lowerPath === `${SECRET_ADMIN_PREFIX}/certificates`) {
+    if (
+      lowerPath === 'admin/certificates' || 
+      lowerPath === `${SECRET_ADMIN_PREFIX}/certificates`
+    ) {
       return { mode: 'admin-dashboard', subTab: 'directory' };
     }
 
-    if (lowerPath === 'admin/certificates/new' || lowerPath === `${SECRET_ADMIN_PREFIX}/certificates/new`) {
+    if (
+      lowerPath === 'admin/certificates/new' || 
+      lowerPath === `${SECRET_ADMIN_PREFIX}/certificates/new`
+    ) {
       return { mode: 'admin-dashboard', subTab: 'create' };
     }
+
+    // Default to admin login
+    return { mode: 'admin-login' };
   }
 
   // Main site pages
@@ -260,7 +266,24 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* 2. Admin Login Page */}
+          {/* 2. Admin Blocked Route (When accessed non-locally) */}
+          {route.mode === 'admin-blocked' && (
+            <motion.div
+              key="admin-blocked"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="w-full"
+            >
+              <LocalAdminSecurityGate
+                onNavigateHome={() => navigateTo('/')}
+                onUnlocked={() => navigateTo(LOCAL_ADMIN_PATH)}
+              />
+            </motion.div>
+          )}
+
+          {/* 3. Admin Login Page (Localhost Only) */}
           {route.mode === 'admin-login' && (
             <motion.div
               key="admin-login"
@@ -270,14 +293,21 @@ export default function App() {
               transition={{ duration: 0.3 }}
               className="w-full"
             >
-              <AdminLoginPage
-                onSuccess={() => navigateTo(SECRET_ADMIN_DASHBOARD_PATH)}
-                onNavigateHome={() => navigateTo('/')}
-              />
+              {!canAccessAdminPortal() ? (
+                <LocalAdminSecurityGate
+                  onNavigateHome={() => navigateTo('/')}
+                  onUnlocked={() => navigateTo(LOCAL_ADMIN_PATH)}
+                />
+              ) : (
+                <AdminLoginPage
+                  onSuccess={() => navigateTo(LOCAL_ADMIN_DASHBOARD_PATH)}
+                  onNavigateHome={() => navigateTo('/')}
+                />
+              )}
             </motion.div>
           )}
 
-          {/* 3. Admin Dashboard (Protected Route) */}
+          {/* 4. Admin Dashboard (Protected Route - Localhost Only) */}
           {route.mode === 'admin-dashboard' && (
             <motion.div
               key="admin-dashboard"
@@ -287,16 +317,21 @@ export default function App() {
               transition={{ duration: 0.3 }}
               className="w-full"
             >
-              {isAuthenticated ? (
+              {!canAccessAdminPortal() ? (
+                <LocalAdminSecurityGate
+                  onNavigateHome={() => navigateTo('/')}
+                  onUnlocked={() => navigateTo(LOCAL_ADMIN_PATH)}
+                />
+              ) : isAuthenticated ? (
                 <AdminDashboardLayout
                   initialTab={route.subTab || 'overview'}
-                  onLogout={() => navigateTo(SECRET_ADMIN_LOGIN_PATH)}
+                  onLogout={() => navigateTo(LOCAL_ADMIN_LOGIN_PATH)}
                   onNavigateHome={() => navigateTo('/')}
                   onOpenPublicPage={(id) => navigateTo(`/${id}`)}
                 />
               ) : (
                 <AdminLoginPage
-                  onSuccess={() => navigateTo(SECRET_ADMIN_DASHBOARD_PATH)}
+                  onSuccess={() => navigateTo(LOCAL_ADMIN_DASHBOARD_PATH)}
                   onNavigateHome={() => navigateTo('/')}
                 />
               )}
@@ -372,6 +407,13 @@ export default function App() {
             course={activeModal.course}
             onClose={() => setActiveModal(null)}
             onEnroll={() => setActiveModal({ type: 'enroll', course: activeModal.course })}
+          />
+        )}
+
+        {activeModal?.type === 'moniepoint-checkout' && (
+          <MoniepointCheckoutModal
+            payment={activeModal.payment}
+            onClose={() => setActiveModal(null)}
           />
         )}
       </AnimatePresence>
