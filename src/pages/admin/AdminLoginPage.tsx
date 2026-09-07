@@ -93,16 +93,17 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onNav
             </div>
           </button>
 
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1f1b2e] border border-[#332d47] text-[#c084fc] text-xs font-mono mb-3">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#a855f7]" />
-            <span>Admin Portal</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-700/60 text-emerald-300 text-xs font-mono mb-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Local Admin Hosting Active</span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-serif text-[#ffffff] font-normal tracking-tight">
             Certificate Authentication
           </h1>
           <p className="text-xs sm:text-sm text-[#c4c7c8] font-light mt-2 max-w-xs mx-auto leading-relaxed">
-            Sign in to manage and verify official certificates issued by Orbit Space.
+            Local hosting portal to securely manage and verify official certificates issued by Orbit Space.
           </p>
         </div>
 
@@ -255,6 +256,25 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onNav
                 </>
               )}
             </button>
+
+            {/* Local Hosting Credentials Helper */}
+            <div className="pt-2 border-t border-[#332d47]/80 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-[#c4c7c8]/80">
+              <span className="font-mono flex items-center gap-1.5 text-emerald-400/90">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                Local Hosting Engine Ready
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('orbitspace.ilorin@gmail.com');
+                  setPassword('Amazing@3');
+                  playSound('droplet');
+                }}
+                className="text-[#c084fc] hover:text-white underline font-mono text-[10px] transition-colors"
+              >
+                Auto-fill Admin Credentials
+              </button>
+            </div>
           </form>
         </motion.div>
 

@@ -104,8 +104,37 @@ function markIdAsDeleted(id: string) {
   }
 }
 
-// Asynchronously fetch from Supabase and cache locally
+// Admin Hosting Mode Management: 'local' (Device/Local Storage) or 'cloud' (Supabase Hybrid)
+export type AdminHostingMode = 'local' | 'cloud';
+const ADMIN_HOSTING_MODE_KEY = 'orbit_admin_hosting_mode_v1';
+
+export function getAdminHostingMode(): AdminHostingMode {
+  try {
+    const saved = localStorage.getItem(ADMIN_HOSTING_MODE_KEY);
+    if (saved === 'cloud' || saved === 'local') return saved;
+    return 'local'; // Default to local hosting mode
+  } catch {
+    return 'local';
+  }
+}
+
+export function setAdminHostingMode(mode: AdminHostingMode): void {
+  try {
+    localStorage.setItem(ADMIN_HOSTING_MODE_KEY, mode);
+  } catch (err) {
+    console.error('Failed to set admin hosting mode:', err);
+  }
+}
+
+// Asynchronously fetch from Supabase (or return local data directly if hosting is local)
 export async function syncCertificatesFromSupabase(): Promise<CertificateRecord[]> {
+  const mode = getAdminHostingMode();
+  
+  // In Local Hosting mode, local device storage is the source of truth
+  if (mode === 'local') {
+    return getCertificates();
+  }
+
   const deletedSet = getDeletedIds();
   const client = getSupabase();
   
@@ -138,6 +167,103 @@ export async function syncCertificatesFromSupabase(): Promise<CertificateRecord[
   }
 
   return getCertificates();
+}
+
+// Force manual sync to Cloud (if requested by administrator)
+export async function forceSyncLocalToCloud(): Promise<{ success: boolean; syncedCount: number; error?: string }> {
+  const client = getSupabase();
+  if (!client) {
+    return { success: false, syncedCount: 0, error: 'Supabase client is not connected.' };
+  }
+
+  const certs = getCertificates();
+  try {
+    const rows = certs.map(mapToSupabaseRow);
+    const { error } = await client
+      .from('certificates')
+      .upsert(rows, { onConflict: 'id' });
+
+    if (error) {
+      return { success: false, syncedCount: 0, error: error.message };
+    }
+
+    return { success: true, syncedCount: certs.length };
+  } catch (err: any) {
+    return { success: false, syncedCount: 0, error: err?.message || 'Failed to sync to cloud.' };
+  }
+}
+
+// Local Database Export / Backup
+export function exportLocalDatabaseAsJson(): string {
+  const certs = getCertificates();
+  return JSON.stringify({
+    version: '1.0',
+    exportDate: new Date().toISOString(),
+    source: 'Orbit Space Local Admin Hosting Engine',
+    totalRecords: certs.length,
+    certificates: certs
+  }, null, 2);
+}
+
+// Local Database Import / Restore
+export function importLocalDatabaseFromJson(jsonString: string): { success: boolean; importedCount: number; error?: string } {
+  try {
+    const parsed = JSON.parse(jsonString);
+    let records: CertificateRecord[] = [];
+    if (Array.isArray(parsed)) {
+      records = parsed;
+    } else if (parsed && Array.isArray(parsed.certificates)) {
+      records = parsed.certificates;
+    } else {
+      return { success: false, importedCount: 0, error: 'Invalid JSON file. Expected an array of certificates or a valid Orbit Space export file.' };
+    }
+
+    if (records.length === 0) {
+      return { success: false, importedCount: 0, error: 'The file contains no certificate records.' };
+    }
+
+    const current = getCertificates();
+    const existingIds = new Set(current.map(c => c.id.toUpperCase()));
+    const merged = [...current];
+    let count = 0;
+
+    for (const r of records) {
+      if (r && r.id && r.studentName && r.course) {
+        if (!existingIds.has(r.id.toUpperCase())) {
+          merged.push(r);
+          existingIds.add(r.id.toUpperCase());
+          count++;
+        }
+      }
+    }
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+    return { success: true, importedCount: count };
+  } catch (err: any) {
+    return { success: false, importedCount: 0, error: err?.message || 'Failed to parse JSON backup file.' };
+  }
+}
+
+// Local Storage Footprint & Stats
+export function getLocalHostingStats(): {
+  total: number;
+  storageSizeBytes: number;
+  storageSizeFormatted: string;
+  hostingMode: AdminHostingMode;
+} {
+  const certs = getCertificates();
+  const raw = localStorage.getItem(STORAGE_KEY) || '[]';
+  const sizeBytes = new Blob([raw]).size;
+  const formatted = sizeBytes > 1024 * 1024 
+    ? `${(sizeBytes / (1024 * 1024)).toFixed(2)} MB` 
+    : `${(sizeBytes / 1024).toFixed(1)} KB`;
+
+  return {
+    total: certs.length,
+    storageSizeBytes: sizeBytes,
+    storageSizeFormatted: formatted,
+    hostingMode: getAdminHostingMode()
+  };
 }
 
 const LEGACY_MOCK_IDS = new Set(['ORB-8F29K2', 'ORB-73K1M9', 'ORB-42N9X1', 'ORB-33B8P4']);
@@ -704,10 +830,17 @@ export function logoutAdmin() {
   }
 }
 
-// Secret Admin Route Path Slugs (obfuscated against guessing/bots)
+// Local Admin Route Paths (Standard Local Hosting)
+export const ADMIN_PATH = '/admin';
+export const ADMIN_LOGIN_PATH = '/admin/login';
+export const ADMIN_DASHBOARD_PATH = '/admin/dashboard';
+export const ADMIN_CERTIFICATES_PATH = '/admin/certificates';
+export const ADMIN_CREATE_PATH = '/admin/certificates/new';
+
+// Legacy compatibility routes
 export const SECRET_ADMIN_PREFIX = 'portal-auth-x98k72';
-export const SECRET_ADMIN_LOGIN_PATH = `/${SECRET_ADMIN_PREFIX}/login`;
-export const SECRET_ADMIN_DASHBOARD_PATH = `/${SECRET_ADMIN_PREFIX}/dashboard`;
+export const SECRET_ADMIN_LOGIN_PATH = '/admin/login';
+export const SECRET_ADMIN_DASHBOARD_PATH = '/admin/dashboard';
 
 // Generate canonical public authentication URL
 export function getPublicAuthUrl(certificateId: string): string {

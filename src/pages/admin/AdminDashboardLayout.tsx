@@ -128,14 +128,18 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
             <div className="h-8 w-[1px] bg-[#332d47]" />
 
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <ShieldCheck className="w-4 h-4 text-[#a855f7]" />
                 <span className="text-sm font-semibold text-[#ffffff] font-sans tracking-tight">
                   Certificate Authentication
                 </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-950/70 border border-emerald-700/60 text-emerald-300 text-[10px] font-mono">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Local Hosting
+                </span>
               </div>
               <p className="text-[11px] text-[#c4c7c8] font-light hidden sm:block">
-                Manage student certificates and generate secure authentication links.
+                Manage student certificates with on-device local storage and instant authentication links.
               </p>
             </div>
           </div>
@@ -229,6 +233,7 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
               onSelectCertificate={(cert) => setSelectedCertificate(cert)}
               onEditCertificate={(cert) => setCertificateToEdit(cert)}
               onOpenPublicPage={onOpenPublicPage}
+              onRefreshData={refreshData}
             />
           )}
 
