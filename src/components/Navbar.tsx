@@ -5,6 +5,7 @@ import { ActiveModal } from '../types';
 import { GooeyNav, GooeyNavItem } from './GooeyNav';
 import { OrbitLogo } from './OrbitLogo';
 import { playSound, toggleSound, getSoundStatus } from '../utils/soundEffects';
+import { isLocalAdminEnvironment } from '../utils/environment';
 
 interface NavbarProps {
   setActiveModal: (modal: ActiveModal) => void;
@@ -99,14 +100,16 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
 
           {/* Action CTAs */}
           <div className="hidden lg:flex items-center gap-2.5">
-            <button
-              onClick={() => handleNavClick('admin')}
-              className="p-2 rounded-full text-[#c4c7c8] hover:text-[#ffffff] bg-[#1f1b2e] hover:bg-[#2b253f] border border-[#332d47] transition-all min-h-[40px] min-w-[40px] flex items-center justify-center cursor-pointer"
-              title="Administrator Portal"
-              aria-label="Admin Portal"
-            >
-              <Shield className="w-4 h-4 text-[#a855f7]" />
-            </button>
+            {isLocalAdminEnvironment() && (
+              <button
+                onClick={() => handleNavClick('admin')}
+                className="p-2 rounded-full text-[#c4c7c8] hover:text-[#ffffff] bg-[#1f1b2e] hover:bg-[#2b253f] border border-[#332d47] transition-all min-h-[40px] min-w-[40px] flex items-center justify-center cursor-pointer"
+                title="Administrator Portal (Laptop / Localhost Only)"
+                aria-label="Admin Portal"
+              >
+                <Shield className="w-4 h-4 text-[#a855f7]" />
+              </button>
+            )}
             <button
               onClick={handleToggleAudio}
               className="p-2 rounded-full text-[#c4c7c8] hover:text-[#ffffff] bg-[#1f1b2e] hover:bg-[#2b253f] border border-[#332d47] transition-all min-h-[40px] min-w-[40px] flex items-center justify-center"
@@ -178,16 +181,18 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
               </motion.button>
             ))}
 
-            <motion.button
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.25, duration: 0.2 }}
-              onClick={() => handleNavClick('admin')}
-              className="block w-full text-left px-4 py-2.5 rounded-lg font-medium text-xs text-[#a855f7] hover:bg-[#201f1f] flex items-center gap-2"
-            >
-              <Shield className="w-3.5 h-3.5 text-[#a855f7]" />
-              <span>Admin Portal Login</span>
-            </motion.button>
+            {isLocalAdminEnvironment() && (
+              <motion.button
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.25, duration: 0.2 }}
+                onClick={() => handleNavClick('admin')}
+                className="block w-full text-left px-4 py-2.5 rounded-lg font-medium text-xs text-[#a855f7] hover:bg-[#201f1f] flex items-center gap-2"
+              >
+                <Shield className="w-3.5 h-3.5 text-[#a855f7]" />
+                <span>Admin Portal (Localhost Only)</span>
+              </motion.button>
+            )}
 
             <div className="pt-3 border-t border-[#353434] flex flex-col gap-2">
               <button

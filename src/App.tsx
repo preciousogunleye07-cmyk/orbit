@@ -31,6 +31,7 @@ import {
   SECRET_ADMIN_LOGIN_PATH, 
   SECRET_ADMIN_DASHBOARD_PATH 
 } from './services/certificateService';
+import { isLocalAdminEnvironment } from './utils/environment';
 
 const MAIN_PAGES = ['home', 'courses', 'timetable', 'siwes', 'workspace', 'quiz', 'about', 'contact'];
 
@@ -77,35 +78,50 @@ function parsePathToRoute(path: string): RouteState {
     return { mode: 'main', page: 'home' };
   }
 
-  // Admin & Portal routes (both direct /admin, /login and obfuscated URLs)
-  if (
+  // Admin & Portal routes (Restricted exclusively to local administrator workstations)
+  const isAdminPath =
     lowerPath === 'admin' ||
     lowerPath === 'admin/login' ||
     lowerPath === 'login' ||
     lowerPath === 'portal' ||
-    lowerPath === `${SECRET_ADMIN_PREFIX}/login` || 
-    lowerPath === `${SECRET_ADMIN_PREFIX}`
-  ) {
-    if (isAdminAuthenticated()) {
+    lowerPath.startsWith('admin/') ||
+    lowerPath.startsWith(SECRET_ADMIN_PREFIX);
+
+  if (isAdminPath) {
+    // If not accessed locally on administrator's machine, block and redirect to home
+    if (!isLocalAdminEnvironment()) {
+      return { mode: 'main', page: 'home' };
+    }
+
+    if (
+      lowerPath === 'admin' ||
+      lowerPath === 'admin/login' ||
+      lowerPath === 'login' ||
+      lowerPath === 'portal' ||
+      lowerPath === `${SECRET_ADMIN_PREFIX}/login` || 
+      lowerPath === `${SECRET_ADMIN_PREFIX}`
+    ) {
+      if (isAdminAuthenticated()) {
+        return { mode: 'admin-dashboard', subTab: 'overview' };
+      }
+      return { mode: 'admin-login' };
+    }
+
+    if (
+      lowerPath === 'admin/dashboard' ||
+      lowerPath === `${SECRET_ADMIN_PREFIX}/dashboard` || 
+      lowerPath === `${SECRET_ADMIN_PREFIX}/admin`
+    ) {
       return { mode: 'admin-dashboard', subTab: 'overview' };
     }
-    return { mode: 'admin-login' };
-  }
 
-  if (
-    lowerPath === 'admin/dashboard' ||
-    lowerPath === `${SECRET_ADMIN_PREFIX}/dashboard` || 
-    lowerPath === `${SECRET_ADMIN_PREFIX}/admin`
-  ) {
-    return { mode: 'admin-dashboard', subTab: 'overview' };
-  }
+    if (lowerPath === 'admin/certificates' || lowerPath === `${SECRET_ADMIN_PREFIX}/certificates`) {
+      return { mode: 'admin-dashboard', subTab: 'directory' };
+    }
 
-  if (lowerPath === 'admin/certificates' || lowerPath === `${SECRET_ADMIN_PREFIX}/certificates`) {
-    return { mode: 'admin-dashboard', subTab: 'directory' };
-  }
-
-  if (lowerPath === 'admin/certificates/new' || lowerPath === `${SECRET_ADMIN_PREFIX}/certificates/new`) {
-    return { mode: 'admin-dashboard', subTab: 'create' };
+    if (lowerPath === 'admin/certificates/new' || lowerPath === `${SECRET_ADMIN_PREFIX}/certificates/new`) {
+      return { mode: 'admin-dashboard', subTab: 'create' };
+    }
   }
 
   // Main site pages

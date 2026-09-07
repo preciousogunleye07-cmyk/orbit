@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { ShieldCheck, Eye, EyeOff, Lock, Mail, ArrowRight, Loader2, AlertCircle, AlertTriangle, ShieldAlert, Timer } from 'lucide-react';
+import { ShieldCheck, Eye, EyeOff, Lock, Mail, ArrowRight, Loader2, AlertCircle, AlertTriangle, ShieldAlert, Timer, Laptop } from 'lucide-react';
 import { loginAdmin, getLoginRateLimitInfo, resetLoginRateLimit, LoginRateLimitInfo, MAX_LOGIN_ATTEMPTS } from '../../services/certificateService';
 import { OrbitLogo } from '../../components/OrbitLogo';
 import { playSound } from '../../utils/soundEffects';
@@ -93,9 +93,15 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onNav
             </div>
           </button>
 
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1f1b2e] border border-[#332d47] text-[#c084fc] text-xs font-mono mb-3">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#a855f7]" />
-            <span>Admin Portal</span>
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1f1b2e] border border-[#332d47] text-[#c084fc] text-xs font-mono">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#a855f7]" />
+              <span>Admin Portal</span>
+            </div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/50 border border-emerald-700/50 text-emerald-300 text-[11px] font-mono">
+              <Laptop className="w-3 h-3 text-emerald-400" />
+              <span>Laptop / Localhost Restricted</span>
+            </div>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-serif text-[#ffffff] font-normal tracking-tight">

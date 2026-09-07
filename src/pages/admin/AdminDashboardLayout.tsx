@@ -8,7 +8,8 @@ import {
   LayoutDashboard, 
   User, 
   ExternalLink,
-  ArrowLeft
+  ArrowLeft,
+  Laptop
 } from 'lucide-react';
 import { 
   CertificateRecord, 
@@ -132,6 +133,10 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
                 <ShieldCheck className="w-4 h-4 text-[#a855f7]" />
                 <span className="text-sm font-semibold text-[#ffffff] font-sans tracking-tight">
                   Certificate Authentication
+                </span>
+                <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-950/60 border border-emerald-700/50 text-emerald-300 text-[10px] font-mono">
+                  <Laptop className="w-2.5 h-2.5 text-emerald-400" />
+                  Local Workstation Only
                 </span>
               </div>
               <p className="text-[11px] text-[#c4c7c8] font-light hidden sm:block">
