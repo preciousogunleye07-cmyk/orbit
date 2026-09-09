@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { X, CheckCircle2, Building, ArrowRight, Loader2, CreditCard, ShieldCheck } from 'lucide-react';
+import { X, CheckCircle2, Building, ArrowRight, Loader2 } from 'lucide-react';
 import { useForm, ValidationError } from '@formspree/react';
 import { WORKSPACE_PLANS } from '../../data/workspaceData';
 import { playSound } from '../../utils/soundEffects';
-import { MoniepointPaymentRequest } from '../../types';
-import { MoniepointCheckoutModal } from './MoniepointCheckoutModal';
 
 interface WorkspaceModalProps {
   planId?: string;
@@ -15,7 +13,6 @@ interface WorkspaceModalProps {
 export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({ planId: initialPlanId, onClose }) => {
   const [state, handleSubmit] = useForm('xzepdwwp');
   const [selectedPlanId, setSelectedPlanId] = useState<string>(initialPlanId || WORKSPACE_PLANS[0].id);
-  const [showMoniepointCheckout, setShowMoniepointCheckout] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -41,41 +38,6 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({ planId: initialP
     setSelectedPlanId(id);
   };
 
-  const handleLaunchMoniepoint = () => {
-    if (!formData.fullName.trim() || !formData.phone.trim()) {
-      playSound('error');
-      const nameInput = document.getElementById('workspace-fullname');
-      if (nameInput) nameInput.focus();
-      return;
-    }
-    playSound('toggle');
-    setShowMoniepointCheckout(true);
-  };
-
-  const moniepointPaymentRequest: MoniepointPaymentRequest = {
-    title: `Orbit Space ${activePlan.name} Pass`,
-    subtitle: `Starts: ${formData.startDate} · Power & High-Speed Wifi`,
-    itemType: 'workspace',
-    itemId: activePlan.id,
-    amount: activePlan.price,
-    formattedAmount: activePlan.formattedPrice,
-    customerName: formData.fullName,
-    customerPhone: formData.phone,
-    meta: {
-      planId: activePlan.id,
-      startDate: formData.startDate
-    }
-  };
-
-  if (showMoniepointCheckout) {
-    return (
-      <MoniepointCheckoutModal
-        payment={moniepointPaymentRequest}
-        onClose={() => setShowMoniepointCheckout(false)}
-      />
-    );
-  }
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -90,10 +52,10 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({ planId: initialP
         transition={{ type: 'spring', damping: 25, stiffness: 350 }}
         className="liquid-glass-card rounded-[24px] w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 relative shadow-2xl"
       >
-        
         <button
           onClick={handleClose}
           className="absolute top-5 right-5 p-2 rounded-full bg-[#201f1f] text-[#c4c7c8] hover:text-[#ffffff] hover:bg-[#353434] transition-all"
+          aria-label="Close modal"
         >
           <X className="w-5 h-5" />
         </button>
@@ -113,7 +75,7 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({ planId: initialP
               Reserve Your Workspace Desk
             </h3>
             <p className="text-xs text-[#c4c7c8] font-light mb-6">
-              A space built for work in Ilorin with reliable power, air-conditioning & high-speed internet.
+              A space built for work in Ilorin with reliable 24/7 power, air-conditioning & high-speed fiber internet.
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -203,51 +165,31 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({ planId: initialP
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-[#c4c7c8] font-light">Included Amenities:</span>
-                  <span className="text-emerald-400 font-medium">24/7 Power, Fiber Wifi, AC</span>
+                  <span className="text-emerald-400 font-medium">24/7 Power, Fiber Wifi, AC, Ergonomic Seating</span>
                 </div>
                 <div className="flex items-center justify-between text-xs pt-2 border-t border-[#353434]">
-                  <span className="font-light text-[#c4c7c8]">Total Price:</span>
+                  <span className="font-light text-[#c4c7c8]">Access Rate:</span>
                   <span className="text-base font-serif text-[#ffffff]">{activePlan.formattedPrice}</span>
                 </div>
               </div>
 
-              {/* Moniepoint Direct Pay CTA Banner */}
-              <div className="p-4 bg-gradient-to-r from-[#172554]/30 via-[#1f1b2e] to-[#2e1065]/30 rounded-[18px] border border-[#3b82f6]/40 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-[#60a5fa]" />
-                    <span className="text-xs font-semibold text-white">Moniepoint Instant Pass Checkout</span>
-                  </div>
-                  <span className="text-xs font-serif font-bold text-[#60a5fa]">{activePlan.formattedPrice}</span>
-                </div>
-                <p className="text-[11px] text-[#9ca3af] font-light leading-relaxed">
-                  Pay instantly via Transfer, Card, USSD (*5573#) or POS and get your digital access receipt.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleLaunchMoniepoint}
-                  className="w-full py-3 rounded-full bg-gradient-to-r from-[#2563eb] to-[#7c3aed] hover:from-[#1d4ed8] hover:to-[#6d28d9] text-white font-semibold text-xs shadow-lg shadow-blue-900/30 transition-all flex items-center justify-center gap-2"
-                >
-                  <CreditCard className="w-4 h-4" />
-                  <span>Pay {activePlan.formattedPrice} with Moniepoint</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Secondary Submit Button */}
-              <div className="pt-1 text-center">
+              {/* Primary Submit Button */}
+              <div className="pt-2 text-center">
                 <button
                   type="submit"
                   disabled={state.submitting}
-                  className="w-full py-3 rounded-full bg-[#201f1f] hover:bg-[#2e2d2d] border border-[#353434] text-[#c4c7c8] hover:text-white font-medium text-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="w-full py-3.5 rounded-full bg-[#ffffff] hover:bg-[#eae8e8] text-[#141313] font-semibold text-xs shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {state.submitting ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Reserving Offline Pass...</span>
+                      <Loader2 className="w-4 h-4 animate-spin text-[#141313]" />
+                      <span>Reserving Workspace Pass...</span>
                     </>
                   ) : (
-                    <span>Reserve Pass & Pay Later at Hub Desk</span>
+                    <>
+                      <span>Reserve Workspace Pass</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
                   )}
                 </button>
               </div>
@@ -263,26 +205,18 @@ export const WorkspaceModal: React.FC<WorkspaceModalProps> = ({ planId: initialP
               Workspace Pass Reserved!
             </h3>
             <p className="text-xs text-[#c4c7c8] font-light mb-6 max-w-md mx-auto leading-relaxed">
-              Your <strong className="text-[#ffffff]">{activePlan.name}</strong> ({activePlan.formattedPrice}) reservation has been logged for <strong className="text-[#ffffff]">{formData.startDate}</strong>. Show up at Orbit Space Ilorin and pay at front desk or via transfer!
+              Your <strong className="text-[#ffffff]">{activePlan.name}</strong> reservation has been scheduled for <strong className="text-[#ffffff]">{formData.startDate}</strong>. Show up at Orbit Space Ilorin and our front desk concierge will have your space ready.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <button
-                onClick={handleLaunchMoniepoint}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-full btn-purple font-semibold text-xs flex items-center justify-center gap-1.5"
-              >
-                <CreditCard className="w-4 h-4" />
-                <span>Pay Fee via Moniepoint</span>
-              </button>
+            <div className="flex items-center justify-center">
               <button
                 onClick={handleClose}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-[#201f1f] hover:bg-[#353434] text-[#c4c7c8] text-xs"
+                className="px-8 py-2.5 rounded-full bg-[#201f1f] hover:bg-[#353434] text-[#c4c7c8] text-xs font-medium border border-[#353434] transition-all"
               >
                 Done
               </button>
             </div>
           </div>
         )}
-
       </motion.div>
     </motion.div>
   );

@@ -23,7 +23,6 @@ import { WorkspaceModal } from './components/modals/WorkspaceModal';
 import { AboutModal } from './components/modals/AboutModal';
 import { ContactModal } from './components/modals/ContactModal';
 import { CourseDetailModal } from './components/modals/CourseDetailModal';
-import { MoniepointCheckoutModal } from './components/modals/MoniepointCheckoutModal';
 
 import { ActiveModal } from './types';
 import { 
@@ -407,13 +406,6 @@ export default function App() {
             course={activeModal.course}
             onClose={() => setActiveModal(null)}
             onEnroll={() => setActiveModal({ type: 'enroll', course: activeModal.course })}
-          />
-        )}
-
-        {activeModal?.type === 'moniepoint-checkout' && (
-          <MoniepointCheckoutModal
-            payment={activeModal.payment}
-            onClose={() => setActiveModal(null)}
           />
         )}
       </AnimatePresence>

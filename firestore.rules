@@ -7,13 +7,13 @@ service cloud.firestore {
       allow create, update, delete: if true;
     }
     
-    // Moniepoint Transactions & Receipts
-    match /moniepoint_payments/{paymentId} {
+    // Course & SIWES Registrations
+    match /enrollments/{enrollmentId} {
       allow read, write: if true;
     }
     
-    // Course & SIWES Registrations
-    match /enrollments/{enrollmentId} {
+    // Weekly Timetable Slots
+    match /timetable/{slotId} {
       allow read, write: if true;
     }
   }

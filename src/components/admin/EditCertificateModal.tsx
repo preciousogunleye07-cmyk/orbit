@@ -15,12 +15,14 @@ import {
   CheckCircle2, 
   AlertCircle,
   AlertOctagon,
-  Edit3
+  Edit3,
+  Mail
 } from 'lucide-react';
 import { 
   CertificateRecord, 
   updateCertificateAsync, 
-  CertificateUpdateInput 
+  CertificateUpdateInput,
+  getStudentEmail
 } from '../../services/certificateService';
 import { playSound } from '../../utils/soundEffects';
 
@@ -60,10 +62,12 @@ export const EditCertificateModal: React.FC<EditCertificateModalProps> = ({
 
   // Form State initialized from certificate
   const [studentName, setStudentName] = useState(certificate.studentName);
+  const [studentEmail, setStudentEmail] = useState(certificate.studentEmail || getStudentEmail(certificate));
   const [selectedCourse, setSelectedCourse] = useState(isKnownCourse ? certificate.course : 'Other');
   const [customCourse, setCustomCourse] = useState(isKnownCourse ? '' : certificate.course);
   const [certificateNumber, setCertificateNumber] = useState(certificate.certificateNumber || '');
   const [dateIssued, setDateIssued] = useState(certificate.dateIssued || '');
+  const [completionDate, setCompletionDate] = useState(certificate.completionDate || '');
   const [courseDuration, setCourseDuration] = useState(certificate.courseDuration || '3 Months');
   const [certificateType, setCertificateType] = useState(certificate.certificateType || 'Professional Certificate');
   const [studentId, setStudentId] = useState(certificate.studentId || '');
@@ -170,9 +174,11 @@ export const EditCertificateModal: React.FC<EditCertificateModalProps> = ({
 
     const updates: CertificateUpdateInput = {
       studentName: studentName.trim(),
+      studentEmail: studentEmail.trim() || undefined,
       course: finalCourse,
       certificateNumber: certificateNumber.trim() || undefined,
       dateIssued: dateIssued || new Date().toISOString().split('T')[0],
+      completionDate: completionDate.trim() || undefined,
       courseDuration: courseDuration.trim() || '3 Months',
       certificateType: certificateType.trim() || 'Professional Certificate',
       studentId: studentId.trim() || undefined,
@@ -258,7 +264,7 @@ export const EditCertificateModal: React.FC<EditCertificateModalProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             
             {/* Student Full Name */}
-            <div className="space-y-1.5 md:col-span-2">
+            <div className="space-y-1.5">
               <label className="text-[11px] font-semibold text-[#ffffff] uppercase font-mono tracking-wider flex items-center gap-1.5">
                 <User className="w-3.5 h-3.5 text-[#a855f7]" />
                 Student Full Name <span className="text-rose-400">*</span>
@@ -269,6 +275,21 @@ export const EditCertificateModal: React.FC<EditCertificateModalProps> = ({
                 value={studentName}
                 onChange={(e) => setStudentName(e.target.value)}
                 placeholder="e.g. John Doe"
+                className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7] text-[#ffffff] text-sm rounded-xl px-4 py-2.5 transition-colors outline-none font-sans"
+              />
+            </div>
+
+            {/* Student Email */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-[#ffffff] uppercase font-mono tracking-wider flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5 text-[#a855f7]" />
+                Student Email
+              </label>
+              <input
+                type="email"
+                value={studentEmail}
+                onChange={(e) => setStudentEmail(e.target.value)}
+                placeholder="e.g. john.doe@example.com"
                 className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7] text-[#ffffff] text-sm rounded-xl px-4 py-2.5 transition-colors outline-none font-sans"
               />
             </div>
@@ -354,6 +375,20 @@ export const EditCertificateModal: React.FC<EditCertificateModalProps> = ({
                 required
                 value={dateIssued}
                 onChange={(e) => setDateIssued(e.target.value)}
+                className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7] text-[#ffffff] text-xs rounded-xl px-3 py-2.5 transition-colors outline-none"
+              />
+            </div>
+
+            {/* Course Completion Date */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-[#ffffff] uppercase font-mono tracking-wider flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-[#a855f7]" />
+                Completion Date <span className="text-[10px] text-[#c4c7c8] font-light">(Optional)</span>
+              </label>
+              <input
+                type="date"
+                value={completionDate}
+                onChange={(e) => setCompletionDate(e.target.value)}
                 className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7] text-[#ffffff] text-xs rounded-xl px-3 py-2.5 transition-colors outline-none"
               />
             </div>

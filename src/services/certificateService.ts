@@ -6,12 +6,14 @@ import { canAccessAdminPortal } from '../utils/adminSecurity';
 export interface CertificateRecord {
   id: string; // Public authentication ID, e.g. "ORB-8F29K2"
   studentName: string;
+  studentEmail?: string; // Student contact email
   course: string;
   certificateNumber: string; // e.g. "ORB/2026/FS-0142"
   dateIssued: string; // YYYY-MM-DD
   courseDuration?: string;
   certificateType?: string;
   studentId?: string;
+  completionDate?: string; // Optional completion/graduation date
   additionalNotes?: string;
   status: 'valid' | 'revoked';
   createdAt: string;
@@ -36,12 +38,14 @@ export const DEFAULT_CERTIFICATES: CertificateRecord[] = [
   {
     id: 'ORB-8F29K2',
     studentName: 'Michael Adebayo',
+    studentEmail: 'michael.adebayo@gmail.com',
     course: 'Full-Stack Web Development',
     certificateNumber: 'ORB/2026/FS-0142',
     dateIssued: '2026-02-15',
     courseDuration: '12 Weeks (3 Months)',
     certificateType: 'Professional Certificate of Completion',
     studentId: 'OS-2025-089',
+    completionDate: '2026-02-10',
     additionalNotes: 'Graduated with Distinction in Full-Stack Web Development. Demonstrated mastery of React, Node.js, TypeScript, and modern distributed architecture.',
     status: 'valid',
     createdAt: '2026-02-15T10:30:00.000Z'
@@ -49,12 +53,14 @@ export const DEFAULT_CERTIFICATES: CertificateRecord[] = [
   {
     id: 'ORB-19V8Q3',
     studentName: 'Precious Adewale Ogunleye',
+    studentEmail: 'preciousogunleye07@gmail.com',
     course: 'Frontend Engineering',
     certificateNumber: 'ORB/2026/FE-0112',
     dateIssued: '2026-02-28',
     courseDuration: '10 Weeks',
     certificateType: 'Professional Certificate of Completion',
     studentId: 'OS-2025-095',
+    completionDate: '2026-02-25',
     additionalNotes: 'Completed production-grade frontend architecture capstone utilizing modern React, Tailwind CSS, component choreography, and state synchronization.',
     status: 'valid',
     createdAt: '2026-02-28T10:00:00.000Z'
@@ -62,12 +68,14 @@ export const DEFAULT_CERTIFICATES: CertificateRecord[] = [
   {
     id: 'ORB-73K1M9',
     studentName: 'Blessing Aminat Ibrahim',
+    studentEmail: 'blessing.aminat@gmail.com',
     course: 'Data Analysis',
     certificateNumber: 'ORB/2026/DA-0089',
     dateIssued: '2026-01-20',
     courseDuration: '10 Weeks',
     certificateType: 'Professional Certificate of Completion',
     studentId: 'OS-2025-064',
+    completionDate: '2026-01-18',
     additionalNotes: 'Completed practical training in Power BI dashboard design, SQL database extraction, Excel business analytics, and exploratory data analysis.',
     status: 'valid',
     createdAt: '2026-01-20T14:15:00.000Z'
@@ -75,12 +83,14 @@ export const DEFAULT_CERTIFICATES: CertificateRecord[] = [
   {
     id: 'ORB-42N9X1',
     studentName: 'Chinedu Emmanuel Okafor',
+    studentEmail: 'chinedu.okafor@gmail.com',
     course: 'Cybersecurity',
     certificateNumber: 'ORB/2025/CS-0051',
     dateIssued: '2025-11-28',
     courseDuration: '12 Weeks',
     certificateType: 'Professional Certificate of Completion',
     studentId: 'OS-2025-032',
+    completionDate: '2025-11-25',
     additionalNotes: 'Demonstrated competencies in ethical hacking, vulnerability scanning, SOC defensive operations, and network incident containment.',
     status: 'valid',
     createdAt: '2025-11-28T09:00:00.000Z'
@@ -88,12 +98,14 @@ export const DEFAULT_CERTIFICATES: CertificateRecord[] = [
   {
     id: 'ORB-33B8P4',
     studentName: 'Zainab Folashade Alabi',
+    studentEmail: 'zainab.alabi@gmail.com',
     course: 'UI/UX Product Design',
     certificateNumber: 'ORB/2025/UX-0027',
     dateIssued: '2025-10-14',
     courseDuration: '8 Weeks',
     certificateType: 'Professional Certificate of Completion',
     studentId: 'OS-2025-018',
+    completionDate: '2025-10-10',
     additionalNotes: 'Prototyped responsive design systems and completed high-fidelity interaction design for enterprise mobile and web applications.',
     status: 'valid',
     createdAt: '2025-10-14T11:45:00.000Z'
@@ -101,12 +113,14 @@ export const DEFAULT_CERTIFICATES: CertificateRecord[] = [
   {
     id: 'ORB-91T4K8',
     studentName: 'David Oluwaseun Babatunde',
+    studentEmail: 'david.babatunde@gmail.com',
     course: 'Backend Engineering',
     certificateNumber: 'ORB/2025/BE-0074',
     dateIssued: '2025-12-10',
     courseDuration: '12 Weeks',
     certificateType: 'Professional Certificate of Completion',
     studentId: 'OS-2025-045',
+    completionDate: '2025-12-05',
     additionalNotes: 'Specialized in relational database modeling, RESTful microservices, containerization, and API security.',
     status: 'valid',
     createdAt: '2025-12-10T16:00:00.000Z'
@@ -114,12 +128,14 @@ export const DEFAULT_CERTIFICATES: CertificateRecord[] = [
   {
     id: 'ORB-55M2X7',
     studentName: 'Fatima Khadija Bello',
+    studentEmail: 'fatima.bello@gmail.com',
     course: 'AI & Automation',
     certificateNumber: 'ORB/2026/AI-0019',
     dateIssued: '2026-02-01',
     courseDuration: '6 Weeks',
     certificateType: 'Executive Certificate of Completion',
     studentId: 'OS-2026-003',
+    completionDate: '2026-01-28',
     additionalNotes: 'Demonstrated excellence in automated workflows, AI agent orchestration, and business productivity intelligence.',
     status: 'valid',
     createdAt: '2026-02-01T12:00:00.000Z'
@@ -159,12 +175,14 @@ function mapToCertificateRecord(row: Record<string, any>): CertificateRecord {
   return {
     id: row.id,
     studentName: row.student_name,
+    studentEmail: row.student_email || row.studentEmail || undefined,
     course: row.course,
     certificateNumber: row.certificate_number,
     dateIssued: row.date_issued,
     courseDuration: row.course_duration,
     certificateType: row.certificate_type,
     studentId: row.student_id,
+    completionDate: row.completion_date || row.completionDate || undefined,
     additionalNotes: row.additional_notes,
     status: row.status as 'valid' | 'revoked',
     createdAt: row.created_at,
@@ -179,12 +197,14 @@ function mapToSupabaseRow(cert: CertificateRecord) {
   return {
     id: cert.id,
     student_name: cert.studentName,
+    student_email: cert.studentEmail || null,
     course: cert.course,
     certificate_number: cert.certificateNumber,
     date_issued: cert.dateIssued,
     course_duration: cert.courseDuration || null,
     certificate_type: cert.certificateType || null,
     student_id: cert.studentId || null,
+    completion_date: cert.completionDate || null,
     additional_notes: cert.additionalNotes || null,
     status: cert.status,
     created_at: cert.createdAt,
@@ -409,12 +429,14 @@ export function getCertificateById(id: string): CertificateRecord | null {
 export async function createCertificateAsync(
   input: {
     studentName: string;
+    studentEmail?: string;
     course: string;
     certificateNumber?: string;
     dateIssued: string;
     courseDuration?: string;
     certificateType?: string;
     studentId?: string;
+    completionDate?: string;
     additionalNotes?: string;
     documentUrl?: string;
     fileName?: string;
@@ -453,7 +475,9 @@ export async function createCertificateAsync(
     certificateType: input.certificateType?.trim() || 'Professional Certificate',
     status: 'valid',
     createdAt: new Date().toISOString(),
+    ...(input.studentEmail?.trim() ? { studentEmail: input.studentEmail.trim() } : {}),
     ...(input.studentId?.trim() ? { studentId: input.studentId.trim() } : {}),
+    ...(input.completionDate?.trim() ? { completionDate: input.completionDate.trim() } : {}),
     ...(input.additionalNotes?.trim() ? { additionalNotes: input.additionalNotes.trim() } : {}),
     ...(input.documentUrl ? { documentUrl: input.documentUrl } : {}),
     ...(input.fileName ? { fileName: input.fileName } : {}),
@@ -505,12 +529,14 @@ export async function createCertificateAsync(
 export function createCertificate(
   input: {
     studentName: string;
+    studentEmail?: string;
     course: string;
     certificateNumber?: string;
     dateIssued: string;
     courseDuration?: string;
     certificateType?: string;
     studentId?: string;
+    completionDate?: string;
     additionalNotes?: string;
     documentUrl?: string;
     fileName?: string;
@@ -539,7 +565,9 @@ export function createCertificate(
     certificateType: input.certificateType?.trim() || 'Professional Certificate',
     status: 'valid',
     createdAt: new Date().toISOString(),
+    ...(input.studentEmail?.trim() ? { studentEmail: input.studentEmail.trim() } : {}),
     ...(input.studentId?.trim() ? { studentId: input.studentId.trim() } : {}),
+    ...(input.completionDate?.trim() ? { completionDate: input.completionDate.trim() } : {}),
     ...(input.additionalNotes?.trim() ? { additionalNotes: input.additionalNotes.trim() } : {}),
     ...(input.documentUrl ? { documentUrl: input.documentUrl } : {}),
     ...(input.fileName ? { fileName: input.fileName } : {}),
@@ -563,12 +591,14 @@ export function createCertificate(
 // Input type for updating existing certificates
 export type CertificateUpdateInput = Partial<{
   studentName: string;
+  studentEmail: string;
   course: string;
   certificateNumber: string;
   dateIssued: string;
   courseDuration: string;
   certificateType: string;
   studentId: string;
+  completionDate: string;
   additionalNotes: string;
   status: 'valid' | 'revoked';
   documentUrl?: string;
@@ -593,11 +623,13 @@ export async function updateCertificateAsync(
   const updatedRecord: CertificateRecord = {
     ...existing,
     ...(updates.studentName !== undefined ? { studentName: updates.studentName.trim() } : {}),
+    ...(updates.studentEmail !== undefined ? { studentEmail: updates.studentEmail.trim() || undefined } : {}),
     ...(updates.course !== undefined ? { course: updates.course.trim() } : {}),
     ...(updates.certificateNumber !== undefined ? { certificateNumber: updates.certificateNumber.trim() } : {}),
     ...(updates.dateIssued !== undefined ? { dateIssued: updates.dateIssued } : {}),
     ...(updates.courseDuration !== undefined ? { courseDuration: updates.courseDuration.trim() } : {}),
     ...(updates.certificateType !== undefined ? { certificateType: updates.certificateType.trim() } : {}),
+    ...(updates.completionDate !== undefined ? { completionDate: updates.completionDate.trim() || undefined } : {}),
     ...(updates.status !== undefined ? { status: updates.status } : {}),
     ...(updates.documentUrl !== undefined ? { documentUrl: updates.documentUrl } : {}),
     ...(updates.fileName !== undefined ? { fileName: updates.fileName } : {}),
@@ -987,4 +1019,221 @@ export function getPublicAuthUrl(certificateId: string): string {
 export function getActualBrowserAuthUrl(certificateId: string): string {
   const origin = window.location.origin;
   return `${origin}/${certificateId.toUpperCase()}`;
+}
+
+// Format date into human-readable representation, e.g. "February 15, 2026"
+export function formatFriendlyDate(dateStr?: string): string {
+  if (!dateStr) return '';
+  try {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const d = new Date(year, month, day);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      }
+    }
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+  } catch {
+    // Fallback to raw string
+  }
+  return dateStr;
+}
+
+// Safe resolution of student email (preserves database records, with clean fallback for legacy items)
+export function getStudentEmail(cert: CertificateRecord): string {
+  if (cert.studentEmail && cert.studentEmail.trim()) {
+    return cert.studentEmail.trim();
+  }
+  const knownEmails: Record<string, string> = {
+    'ORB-8F29K2': 'michael.adebayo@gmail.com',
+    'ORB-19V8Q3': 'preciousogunleye07@gmail.com',
+    'ORB-73K1M9': 'blessing.aminat@gmail.com',
+    'ORB-42N9X1': 'chinedu.okafor@gmail.com',
+    'ORB-33B8P4': 'zainab.alabi@gmail.com',
+    'ORB-91T4K8': 'david.babatunde@gmail.com',
+    'ORB-55M2X7': 'fatima.bello@gmail.com'
+  };
+  const idUpper = cert.id ? cert.id.toUpperCase() : '';
+  if (knownEmails[idUpper]) {
+    return knownEmails[idUpper];
+  }
+  const parts = cert.studentName
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s]/g, '')
+    .split(/\s+/)
+    .filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0]}.${parts[parts.length - 1]}@gmail.com`;
+  } else if (parts.length === 1) {
+    return `${parts[0]}@gmail.com`;
+  }
+  return 'student@orbitspace.academy';
+}
+
+export interface AuthLinksExportFields {
+  studentName: boolean;
+  email: boolean;
+  authUrl: boolean;
+  course: boolean;
+  dateIssued: boolean;
+  certificateType: boolean;
+  completionDate: boolean;
+  credentialId: boolean;
+  studentId: boolean;
+  status: boolean;
+}
+
+export const DEFAULT_AUTH_LINKS_FIELDS: AuthLinksExportFields = {
+  studentName: true,
+  email: true,
+  authUrl: true,
+  course: true,
+  dateIssued: true,
+  certificateType: false,
+  completionDate: false,
+  credentialId: false,
+  studentId: false,
+  status: false
+};
+
+export type AuthLinksExportFormat = 'simple' | 'with-email' | 'detailed' | 'spreadsheet-tsv' | 'spreadsheet-csv';
+
+export interface GenerateAuthLinksOptions {
+  format: AuthLinksExportFormat;
+  fields: AuthLinksExportFields;
+  customSeparator?: string; // default ' — '
+  useBrowserDomain?: boolean; // If true, uses window.location.origin
+}
+
+// Generate cleanly formatted string representation of authentication links
+export function generateFormattedAuthLinks(
+  certificates: CertificateRecord[],
+  options: GenerateAuthLinksOptions
+): string {
+  if (!certificates || certificates.length === 0) {
+    return '';
+  }
+
+  const separator = options.customSeparator !== undefined ? options.customSeparator : ' — ';
+  const getUrl = (id: string) =>
+    options.useBrowserDomain ? getActualBrowserAuthUrl(id) : getPublicAuthUrl(id);
+
+  // 1. Spreadsheet formats (TSV / CSV)
+  if (options.format === 'spreadsheet-tsv' || options.format === 'spreadsheet-csv') {
+    const isCsv = options.format === 'spreadsheet-csv';
+    const cellSep = isCsv ? ',' : '\t';
+
+    const colHeaders: string[] = [];
+    if (options.fields.studentName) colHeaders.push('Student Name');
+    if (options.fields.email) colHeaders.push('Student Email');
+    if (options.fields.authUrl) colHeaders.push('Authentication URL');
+    if (options.fields.course) colHeaders.push('Course');
+    if (options.fields.dateIssued) colHeaders.push('Date Issued');
+    if (options.fields.certificateType) colHeaders.push('Certificate Type');
+    if (options.fields.completionDate) colHeaders.push('Completion Date');
+    if (options.fields.credentialId) colHeaders.push('Credential ID');
+    if (options.fields.studentId) colHeaders.push('Student ID');
+    if (options.fields.status) colHeaders.push('Status');
+
+    const escapeCell = (str: string) => {
+      if (!isCsv) return str.replace(/[\t\n\r]/g, ' ');
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    const rows = certificates.map(cert => {
+      const email = getStudentEmail(cert);
+      const url = getUrl(cert.id);
+      const cells: string[] = [];
+      if (options.fields.studentName) cells.push(escapeCell(cert.studentName));
+      if (options.fields.email) cells.push(escapeCell(email));
+      if (options.fields.authUrl) cells.push(escapeCell(url));
+      if (options.fields.course) cells.push(escapeCell(cert.course));
+      if (options.fields.dateIssued) cells.push(escapeCell(formatFriendlyDate(cert.dateIssued)));
+      if (options.fields.certificateType) cells.push(escapeCell(cert.certificateType || 'Professional Certificate'));
+      if (options.fields.completionDate) cells.push(escapeCell(formatFriendlyDate(cert.completionDate || cert.dateIssued)));
+      if (options.fields.credentialId) cells.push(escapeCell(cert.id));
+      if (options.fields.studentId) cells.push(escapeCell(cert.studentId || cert.certificateNumber));
+      if (options.fields.status) cells.push(escapeCell(cert.status === 'valid' ? 'Valid' : 'Revoked'));
+      return cells.join(cellSep);
+    });
+
+    return [colHeaders.join(cellSep), ...rows].join('\n');
+  }
+
+  // 2. Detailed format (multi-line labeled cards separated by blank line)
+  if (options.format === 'detailed') {
+    return certificates
+      .map(cert => {
+        const email = getStudentEmail(cert);
+        const url = getUrl(cert.id);
+        const lines: string[] = [];
+        if (options.fields.studentName) lines.push(`Name: ${cert.studentName}`);
+        if (options.fields.email) lines.push(`Email: ${email}`);
+        if (options.fields.course) lines.push(`Course: ${cert.course}`);
+        if (options.fields.dateIssued) lines.push(`Date Issued: ${formatFriendlyDate(cert.dateIssued)}`);
+        if (options.fields.completionDate && cert.completionDate) {
+          lines.push(`Completion Date: ${formatFriendlyDate(cert.completionDate)}`);
+        }
+        if (options.fields.certificateType) {
+          lines.push(`Certificate Type: ${cert.certificateType || 'Professional Certificate'}`);
+        }
+        if (options.fields.credentialId) lines.push(`Credential ID: ${cert.id}`);
+        if (options.fields.studentId) lines.push(`Student ID: ${cert.studentId || cert.certificateNumber}`);
+        if (options.fields.status) {
+          lines.push(`Status: ${cert.status === 'valid' ? 'Valid & Verified' : 'Revoked'}`);
+        }
+        if (options.fields.authUrl) lines.push(`Authentication Link: ${url}`);
+        return lines.join('\n');
+      })
+      .join('\n\n');
+  }
+
+  // 3. Simple & With-Email single line formats
+  return certificates
+    .map(cert => {
+      const email = getStudentEmail(cert);
+      const url = getUrl(cert.id);
+      const segments: string[] = [];
+
+      // Student name first
+      if (options.fields.studentName) segments.push(cert.studentName);
+
+      // In with-email format or if email is explicitly selected
+      if (options.format === 'with-email' || options.fields.email) {
+        segments.push(email);
+      }
+
+      // Authentication URL
+      if (options.fields.authUrl) {
+        segments.push(url);
+      }
+
+      // Any additional selected fields
+      if (options.fields.course) segments.push(cert.course);
+      if (options.fields.dateIssued) segments.push(formatFriendlyDate(cert.dateIssued));
+      if (options.fields.completionDate && cert.completionDate) {
+        segments.push(`Graduated: ${formatFriendlyDate(cert.completionDate)}`);
+      }
+      if (options.fields.certificateType) segments.push(cert.certificateType || 'Certificate');
+      if (options.fields.credentialId) segments.push(cert.id);
+      if (options.fields.studentId && (cert.studentId || cert.certificateNumber)) {
+        segments.push(`ID: ${cert.studentId || cert.certificateNumber}`);
+      }
+      if (options.fields.status) {
+        segments.push(cert.status === 'valid' ? 'Valid' : 'Revoked');
+      }
+
+      return segments.join(separator);
+    })
+    .join('\n');
 }

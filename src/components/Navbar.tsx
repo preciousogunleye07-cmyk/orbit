@@ -5,8 +5,6 @@ import {
   X, 
   ArrowUpRight, 
   MapPin, 
-  Volume2, 
-  VolumeX, 
   Shield,
   Home,
   BookOpen,
@@ -20,7 +18,7 @@ import {
 import { ActiveModal } from '../types';
 import { GooeyNav, GooeyNavItem } from './GooeyNav';
 import { OrbitLogo } from './OrbitLogo';
-import { playSound, toggleSound, getSoundStatus } from '../utils/soundEffects';
+import { playSound } from '../utils/soundEffects';
 import { canAccessAdminPortal } from '../utils/adminSecurity';
 
 interface NavbarProps {
@@ -32,21 +30,14 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, setCurrentPage }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
 
   useEffect(() => {
-    setSoundEnabled(getSoundStatus());
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const handleToggleAudio = () => {
-    const newState = toggleSound();
-    setSoundEnabled(newState);
-  };
 
   const handleNavClick = (page: string) => {
     playSound('pulse');
@@ -145,19 +136,6 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
               </button>
             )}
             <button
-              onClick={handleToggleAudio}
-              className="p-2 rounded-full text-[#c4c7c8] hover:text-[#ffffff] bg-[#1f1b2e] hover:bg-[#2b253f] border border-[#332d47] transition-all min-h-[40px] min-w-[40px] flex items-center justify-center cursor-pointer active:scale-95"
-              title={soundEnabled ? 'Mute Interaction Sounds' : 'Unmute Interaction Sounds'}
-              aria-label={soundEnabled ? 'Mute Sounds' : 'Unmute Sounds'}
-              id="btn-toggle-sound"
-            >
-              {soundEnabled ? (
-                <Volume2 className="w-4 h-4 text-[#c084fc]" />
-              ) : (
-                <VolumeX className="w-4 h-4 text-[#c4c7c8]" />
-              )}
-            </button>
-            <button
               onClick={() => {
                 playSound('sparkle');
                 setActiveModal({ type: 'enroll' });
@@ -172,17 +150,6 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
 
           {/* Mobile Menu Button */}
           <div className="flex items-center gap-2 md:hidden">
-            <button
-              onClick={handleToggleAudio}
-              className="p-2 rounded-xl bg-[#201f1f] border border-[#353434] text-[#c4c7c8] min-h-[42px] min-w-[42px] flex items-center justify-center"
-              aria-label={soundEnabled ? 'Mute Sounds' : 'Unmute Sounds'}
-            >
-              {soundEnabled ? (
-                <Volume2 className="w-4 h-4 text-[#c084fc]" />
-              ) : (
-                <VolumeX className="w-4 h-4 text-[#c4c7c8]" />
-              )}
-            </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2.5 rounded-xl bg-[#201f1f] border border-[#353434] text-[#ffffff] min-h-[42px] min-w-[42px] flex items-center justify-center cursor-pointer active:scale-95"

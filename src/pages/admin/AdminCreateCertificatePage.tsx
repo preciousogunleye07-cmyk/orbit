@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
   Award, 
@@ -17,7 +17,10 @@ import {
   Clock, 
   ShieldCheck, 
   Loader2,
-  FileCheck
+  FileCheck,
+  Mail,
+  FileSpreadsheet,
+  Sparkles
 } from 'lucide-react';
 import { 
   createCertificateAsync, 
@@ -25,6 +28,10 @@ import {
   getPublicAuthUrl, 
   getActualBrowserAuthUrl 
 } from '../../services/certificateService';
+import { 
+  SheetDBStudent, 
+  fetchSheetDBStudents 
+} from '../../services/sheetdbService';
 import { generateQrCodeDataUrl, downloadQrCode } from '../../utils/qrCode';
 import { playSound } from '../../utils/soundEffects';
 
@@ -32,6 +39,7 @@ interface AdminCreateCertificatePageProps {
   onCreated: (cert: CertificateRecord) => void;
   onOpenPublicPage: (id: string) => void;
   onCancel: () => void;
+  prefilledStudent?: SheetDBStudent | null;
 }
 
 const COURSE_OPTIONS = [
@@ -57,18 +65,79 @@ const CERTIFICATE_TYPES = [
 export const AdminCreateCertificatePage: React.FC<AdminCreateCertificatePageProps> = ({
   onCreated,
   onOpenPublicPage,
-  onCancel
+  onCancel,
+  prefilledStudent
 }) => {
   // Form State
   const [studentName, setStudentName] = useState('');
+  const [studentEmail, setStudentEmail] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('Full Stack Development');
   const [customCourse, setCustomCourse] = useState('');
   const [certificateNumber, setCertificateNumber] = useState('');
   const [dateIssued, setDateIssued] = useState(new Date().toISOString().split('T')[0]);
+  const [completionDate, setCompletionDate] = useState('');
   const [courseDuration, setCourseDuration] = useState('3 Months');
   const [certificateType, setCertificateType] = useState('Professional Certificate');
   const [studentId, setStudentId] = useState('');
   const [additionalNotes, setAdditionalNotes] = useState('');
+
+  // SheetDB Quick-Fill State
+  const [sheetStudents, setSheetStudents] = useState<SheetDBStudent[]>([]);
+  const [loadingSheetStudents, setLoadingSheetStudents] = useState(false);
+  const [selectedSheetStudentId, setSelectedSheetStudentId] = useState<string>('');
+
+  // Apply student data from SheetDB record
+  const applyStudentData = (s: SheetDBStudent) => {
+    if (s.fullName) setStudentName(s.fullName);
+    if (s.email) setStudentEmail(s.email);
+    if (s.studentId) setStudentId(s.studentId);
+    
+    // Auto-match or set course
+    if (s.program) {
+      const match = COURSE_OPTIONS.find(c => c.toLowerCase() === s.program.toLowerCase());
+      if (match) {
+        setSelectedCourse(match);
+        setCustomCourse('');
+      } else {
+        setSelectedCourse('Other');
+        setCustomCourse(s.program);
+      }
+    }
+
+    if (s.matricNumber) {
+      setCertificateNumber(s.matricNumber);
+    } else if (s.studentId) {
+      setCertificateNumber(`ORB/2026/${s.studentId.replace('STU-', '')}`);
+    }
+
+    const notesParts: string[] = [];
+    if (s.program) notesParts.push(`Program: ${s.program}`);
+    if (s.cohort) notesParts.push(`Cohort ${s.cohort}`);
+    if (s.trainingMode) notesParts.push(`${s.trainingMode} Training`);
+    if (s.studentStatus) notesParts.push(`Status: ${s.studentStatus}`);
+    if (notesParts.length > 0) {
+      setAdditionalNotes(`Enrolled in Orbit Space Academy (${notesParts.join(' • ')}). Successfully fulfilled graduation criteria.`);
+    }
+
+    playSound('sparkle');
+  };
+
+  // Prefill when prop is passed or on mount
+  useEffect(() => {
+    if (prefilledStudent) {
+      applyStudentData(prefilledStudent);
+      setSelectedSheetStudentId(prefilledStudent.studentId || '');
+    }
+
+    // Load available students from SheetDB in background for quick selection
+    setLoadingSheetStudents(true);
+    fetchSheetDBStudents(false)
+      .then(list => {
+        setSheetStudents(list);
+      })
+      .catch(err => console.warn('SheetDB quick-fill fetch warning:', err))
+      .finally(() => setLoadingSheetStudents(false));
+  }, [prefilledStudent]);
 
   // File Upload State
   const [uploadedFile, setUploadedFile] = useState<{
@@ -162,9 +231,11 @@ export const AdminCreateCertificatePage: React.FC<AdminCreateCertificatePageProp
 
     const result = await createCertificateAsync({
       studentName: studentName.trim(),
+      studentEmail: studentEmail.trim() || undefined,
       course: finalCourse,
       certificateNumber: certificateNumber.trim() || undefined,
       dateIssued,
+      completionDate: completionDate.trim() || undefined,
       courseDuration: courseDuration.trim() || undefined,
       certificateType: certificateType.trim() || undefined,
       studentId: studentId.trim() || undefined,
@@ -388,6 +459,66 @@ export const AdminCreateCertificatePage: React.FC<AdminCreateCertificatePageProp
       {/* Main Form */}
       <form onSubmit={handleSubmit} className="bg-[#181524] rounded-[28px] p-6 sm:p-8 border border-[#332d47] shadow-2xl space-y-8">
         
+        {/* Quick-Fill From SheetDB Student Roster */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-[#100e17] border border-purple-500/40 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-purple-950/80 border border-purple-800/60 flex items-center justify-center text-[#a855f7] shrink-0">
+                <FileSpreadsheet className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-purple-300 font-semibold block">
+                  Connected Google Sheet (SheetDB)
+                </span>
+                <span className="text-xs font-semibold text-white">
+                  Quick-Fill from Registered Students Roster
+                </span>
+              </div>
+            </div>
+
+            <span className="text-[11px] text-[#c4c7c8] font-mono">
+              {loadingSheetStudents ? 'Loading students...' : `${sheetStudents.length} student${sheetStudents.length === 1 ? '' : 's'} available`}
+            </span>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-2.5">
+            <select
+              value={selectedSheetStudentId}
+              onChange={(e) => {
+                const sId = e.target.value;
+                setSelectedSheetStudentId(sId);
+                const found = sheetStudents.find(s => s.studentId === sId);
+                if (found) {
+                  applyStudentData(found);
+                }
+              }}
+              aria-label="Select student from SheetDB to auto-populate form"
+              className="w-full bg-[#181524] border border-[#332d47] focus:border-[#a855f7] text-[#ffffff] text-xs rounded-xl px-3.5 py-2.5 outline-none transition-colors"
+            >
+              <option value="">— Select student from SheetDB to auto-populate form —</option>
+              {sheetStudents.map(student => (
+                <option key={student.studentId} value={student.studentId}>
+                  {student.fullName} ({student.studentId}{student.matricNumber ? ` • ${student.matricNumber}` : ''}) — {student.program || 'No Track'} [{student.studentStatus || 'Active'}]
+                </option>
+              ))}
+            </select>
+
+            {selectedSheetStudentId && (
+              <button
+                type="button"
+                onClick={() => {
+                  const found = sheetStudents.find(s => s.studentId === selectedSheetStudentId);
+                  if (found) applyStudentData(found);
+                }}
+                className="px-4 py-2.5 rounded-xl bg-purple-900/60 hover:bg-purple-800/80 text-white text-xs font-semibold flex items-center gap-1.5 shrink-0 cursor-pointer border border-purple-600/50"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-purple-300" />
+                <span>Re-Apply</span>
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Section 1: Student & Course Information */}
         <div className="space-y-6">
           <div className="pb-3 border-b border-[#332d47] flex items-center gap-2">
@@ -411,6 +542,22 @@ export const AdminCreateCertificatePage: React.FC<AdminCreateCertificatePageProp
                 onChange={(e) => setStudentName(e.target.value)}
                 placeholder="e.g. John Doe"
                 className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7] text-[#ffffff] text-sm rounded-xl px-4 py-3 outline-none transition-colors"
+              />
+            </div>
+
+            {/* Student Email */}
+            <div>
+              <label className="block text-xs font-medium text-[#e2e8f0] mb-2 flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5 text-purple-400" />
+                <span>Student Email</span>
+                <span className="text-[10px] text-[#c4c7c8] font-light">(For bulk link dispatch)</span>
+              </label>
+              <input
+                type="email"
+                value={studentEmail}
+                onChange={(e) => setStudentEmail(e.target.value)}
+                placeholder="e.g. john.doe@example.com"
+                className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7] text-[#ffffff] text-sm rounded-xl px-4 py-3 outline-none transition-colors font-sans"
               />
             </div>
 
@@ -467,6 +614,19 @@ export const AdminCreateCertificatePage: React.FC<AdminCreateCertificatePageProp
                 required
                 value={dateIssued}
                 onChange={(e) => setDateIssued(e.target.value)}
+                className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7] text-[#ffffff] text-sm rounded-xl px-4 py-3 outline-none transition-colors font-sans"
+              />
+            </div>
+
+            {/* Completion Date (Optional) */}
+            <div>
+              <label className="block text-xs font-medium text-[#e2e8f0] mb-2">
+                Course Completion Date <span className="text-[10px] text-[#c4c7c8] font-light">(Optional)</span>
+              </label>
+              <input
+                type="date"
+                value={completionDate}
+                onChange={(e) => setCompletionDate(e.target.value)}
                 className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7] text-[#ffffff] text-sm rounded-xl px-4 py-3 outline-none transition-colors font-sans"
               />
             </div>

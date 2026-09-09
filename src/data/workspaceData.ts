@@ -97,12 +97,12 @@ export const FAQ_DATA: FAQItem[] = [
   },
   {
     category: 'workspace',
-    question: 'Can I just walk in and pay for a Daily Workspace pass?',
-    answer: 'Yes! You can walk in anytime between 8:00 AM and 8:00 PM, pay ₦3,000 for a daily pass, and start working immediately with fast internet and reliable power.'
+    question: 'Can I just walk in for a Daily Workspace pass?',
+    answer: 'Yes! You can walk in anytime between 8:00 AM and 8:00 PM, request a daily pass at the front desk, and start working immediately with high-speed internet and reliable power.'
   },
   {
     category: 'courses',
-    question: 'Are installment payments allowed for courses?',
-    answer: 'Yes, Orbit Space supports flexible payment plans (e.g. 50% initial deposit and remaining balance split during the course duration).'
+    question: 'Are flexible enrollment plans available for courses?',
+    answer: 'Yes, Orbit Space supports flexible milestone admissions. Contact our admissions desk upon registration for details on milestone terms.'
   }
 ];

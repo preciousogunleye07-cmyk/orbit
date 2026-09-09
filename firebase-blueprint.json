@@ -15,20 +15,6 @@
         "createdAt": { "type": "string", "description": "ISO timestamp of issuance" }
       }
     },
-    "moniepoint_payments": {
-      "fields": {
-        "reference": { "type": "string", "description": "Payment reference code" },
-        "payerName": { "type": "string", "description": "Payer name" },
-        "payerEmail": { "type": "string", "description": "Payer email address" },
-        "payerPhone": { "type": "string", "description": "Payer phone number" },
-        "itemTitle": { "type": "string", "description": "Course or workspace pass title" },
-        "itemType": { "type": "string", "description": "enrollment or workspace" },
-        "amount": { "type": "number", "description": "Amount paid in NGN" },
-        "channel": { "type": "string", "description": "Payment channel" },
-        "status": { "type": "string", "description": "Payment status" },
-        "paidAt": { "type": "string", "description": "ISO timestamp of transaction" }
-      }
-    },
     "enrollments": {
       "fields": {
         "fullName": { "type": "string", "description": "Student applicant name" },
@@ -38,12 +24,31 @@
         "status": { "type": "string", "description": "pending or approved" },
         "createdAt": { "type": "string", "description": "Application timestamp" }
       }
+    },
+    "timetable": {
+      "fields": {
+        "id": { "type": "string", "description": "Unique timetable slot identifier" },
+        "day": { "type": "string", "description": "Day of the week e.g. Monday, Tuesday" },
+        "dayIndex": { "type": "number", "description": "1 to 6 representing Monday through Saturday" },
+        "time": { "type": "string", "description": "Formatted time display e.g. 12:00–2:00 PM" },
+        "startHour": { "type": "number", "description": "24hr start hour" },
+        "startMinute": { "type": "number", "description": "Start minute (0-59)" },
+        "endHour": { "type": "number", "description": "24hr end hour" },
+        "endMinute": { "type": "number", "description": "End minute (0-59)" },
+        "course": { "type": "string", "description": "Course or module title" },
+        "instructor": { "type": "string", "description": "Instructor full name or handle" },
+        "instructorTitle": { "type": "string", "description": "Instructor professional designation" },
+        "venue": { "type": "string", "description": "Lab room or studio name" },
+        "category": { "type": "string", "description": "Track category (security, development, creative, automation, engineering, data)" },
+        "badge": { "type": "string", "description": "Optional focus badge or lab tag" },
+        "updatedAt": { "type": "string", "description": "ISO timestamp of last update" }
+      }
     }
   },
   "relations": [],
   "security_rules": {
     "certificates": "Publicly readable by all users to allow instant employer credential verification; writable for administrative operations.",
-    "moniepoint_payments": "Insertable by learners during checkout; readable for verification and transaction reporting.",
-    "enrollments": "Insertable by prospective learners during registration."
+    "enrollments": "Insertable by prospective learners during registration.",
+    "timetable": "Publicly readable by all students and guests; writable and editable by administrators."
   }
 }
