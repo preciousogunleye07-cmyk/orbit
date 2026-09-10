@@ -52,6 +52,12 @@ export const PublicCertificatePage: React.FC<PublicCertificatePageProps> = ({
 
   useEffect(() => {
     let isMounted = true;
+    if (!authId || !authId.trim()) {
+      setCertificate(null);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
     fetchCertificateByIdAsync(authId).then((record) => {
@@ -418,7 +424,7 @@ export const PublicCertificatePage: React.FC<PublicCertificatePageProps> = ({
           </motion.div>
         )}
 
-        {/* 3. STATE C: INVALID / NOT FOUND */}
+        {/* 3. STATE C: INVALID / NOT FOUND / ENTER ID */}
         {!certificate && (
           <motion.div
             initial={{ opacity: 0, y: 15 }}
@@ -426,7 +432,7 @@ export const PublicCertificatePage: React.FC<PublicCertificatePageProps> = ({
             className="bg-[#181524] rounded-[28px] p-6 sm:p-10 border border-[#332d47] shadow-2xl relative overflow-hidden space-y-8 text-center"
           >
             <div className="w-16 h-16 rounded-full bg-[#1f1b2e] border border-[#332d47] text-[#a855f7] flex items-center justify-center mx-auto shadow-xl">
-              <Search className="w-8 h-8" />
+              {authId ? <Search className="w-8 h-8" /> : <ShieldCheck className="w-8 h-8" />}
             </div>
 
             <div className="space-y-2">
@@ -434,10 +440,14 @@ export const PublicCertificatePage: React.FC<PublicCertificatePageProps> = ({
                 Verification System
               </span>
               <h1 className="text-2xl sm:text-3xl font-serif text-[#ffffff] font-normal">
-                Certificate Not Found
+                {authId ? 'Certificate Not Found' : 'Verify Student Certificate'}
               </h1>
               <p className="text-xs sm:text-sm text-[#c4c7c8] font-light max-w-md mx-auto leading-relaxed">
-                We couldn't find an official certificate associated with authentication ID <span className="font-mono text-[#ffffff] font-semibold">{authId}</span>.
+                {authId ? (
+                  <>We couldn't find an official certificate associated with authentication ID <span className="font-mono text-[#ffffff] font-semibold">{authId}</span>.</>
+                ) : (
+                  <>Enter the unique Certificate ID to verify authentic graduation credentials and course completion.</>
+                )}
               </p>
             </div>
 

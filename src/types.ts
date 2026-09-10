@@ -46,4 +46,5 @@ export type ActiveModal =
   | { type: 'about' }
   | { type: 'contact' }
   | { type: 'course-detail'; course: Course }
+  | { type: 'verify-certificate' }
   | null;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActiveModal } from '../types';
-import { MapPin, MessageCircle, Instagram, Linkedin, Video, Shield } from 'lucide-react';
+import { MapPin, MessageCircle, Instagram, Linkedin, Video, Shield, ShieldCheck } from 'lucide-react';
 import { OrbitLogo } from './OrbitLogo';
 import { playSound } from '../utils/soundEffects';
 import { canAccessAdminPortal } from '../utils/adminSecurity';
@@ -127,14 +127,16 @@ export const FooterSection: React.FC<FooterSectionProps> = ({ setActiveModal, se
               </li>
               <li className="pt-2 border-t border-[#332d47]">
                 <a
-                  href="/ORB-8F29K2"
+                  href="/verify"
                   onClick={(e) => {
                     e.preventDefault();
-                    window.history.pushState({}, '', '/ORB-8F29K2');
-                    window.dispatchEvent(new Event('popstate'));
+                    playSound('pulse');
+                    setActiveModal({ type: 'verify-certificate' });
                   }}
-                  className="text-[#c084fc] hover:text-[#ffffff] transition-colors font-medium flex items-center gap-1.5"
+                  className="text-[#c084fc] hover:text-[#ffffff] transition-colors font-medium flex items-center gap-1.5 cursor-pointer"
+                  id="btn-footer-verify-cert"
                 >
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#a855f7]" />
                   <span>Verify Certificate</span>
                 </a>
               </li>
