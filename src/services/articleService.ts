@@ -12,6 +12,16 @@ export interface StudentAuthor {
   roleInProject?: string; // e.g. "Lead Developer", "Firmware Engineer", "UI/UX Researcher"
 }
 
+export type ArticleAuthorType = 'student' | 'think-academy';
+
+export interface ThinkAcademyAuthor {
+  name: string; // e.g. "Obitt"
+  role?: string; // e.g. "Founder & Research Lead, Think Academy"
+  institution?: string; // e.g. "Think Academy"
+  badge?: string; // e.g. "Founder", "Research Fellow"
+  bio?: string;
+}
+
 export interface SupervisingTutor {
   name: string;
   role: string; // e.g. "Senior Embedded Systems & Robotics Supervisor"
@@ -29,6 +39,8 @@ export interface ArticleRecord {
   readTime: string;
   status: 'published' | 'draft';
   publishedAt: string;
+  authorType?: ArticleAuthorType; // 'student' (default) or 'think-academy' (written by Obitt / Think Academy faculty)
+  thinkAcademyAuthor?: ThinkAcademyAuthor;
   deployedBy: {
     name: string;
     role: string;
@@ -78,6 +90,80 @@ export const PRESET_ARTICLE_IMAGES = [
 ];
 
 export const DEFAULT_ARTICLES: ArticleRecord[] = [
+  {
+    id: 'art-think-academy-foundations-obitt',
+    slug: 'cognitive-engineering-principles-think-academy',
+    title: 'First Principles of Cognitive Engineering: Accelerating World-Class Tech Talent in Emerging Ecosystems',
+    subtitle: 'A foundational technical monograph by Obitt on deep-work architecture, cognitive scaffolding, and building high-order engineering competence at Think Academy.',
+    category: 'Web Engineering',
+    coverImage: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80',
+    readTime: '9 min read',
+    status: 'published',
+    publishedAt: '2026-03-10',
+    authorType: 'think-academy',
+    thinkAcademyAuthor: {
+      name: 'Obitt',
+      role: 'Founder & Lead Researcher, Think Academy',
+      institution: 'Think Academy',
+      badge: 'Founder & Research Fellow'
+    },
+    deployedBy: {
+      name: 'Obitt',
+      role: 'Founder, Think Academy',
+      email: 'obitt@thinkacademy.orbitspace.academy'
+    },
+    studentAuthors: [],
+    supervisingTutor: {
+      name: 'Think Academy Academic Directorate',
+      role: 'Executive Research Fellowship',
+      email: 'directorate@thinkacademy.orbitspace.academy'
+    },
+    tags: ['ThinkAcademy', 'Obitt', 'CognitiveEngineering', 'DeepWork', 'SoftwareArchitecture', 'Pedagogy'],
+    createdAt: '2026-03-10T08:00:00.000Z',
+    updatedAt: '2026-03-10T08:00:00.000Z',
+    content: `## 1. The Think Academy Thesis
+
+At **Think Academy**, we reject the prevailing paradigm that technical mastery is a byproduct of passive memorization or tutorial regurgitation. Modern software engineering, cybersecurity, and embedded robotics require deep cognitive scaffolding—the ability to hold high-dimensional system abstractions in working memory while executing with ruthless syntactic and architectural precision.
+
+This monograph presents the foundational engineering mental models established by **Obitt** for Think Academy Fellows and Orbit Space researchers.
+
+---
+
+## 2. Inverting the Learning Vector
+
+Traditional curricula teach syntax before architecture: variables, loops, arrays, and then hope that architecture emerges organically. In practice, this creates developers who can write algorithms in isolation but panic when faced with distributed race conditions, cache invalidation bottlenecks, or adversarial telemetry payloads.
+
+At Think Academy, we invert this vector:
+* **Mental Model First**: Understand the physical constraints of memory, networking, and state transition before writing a single function.
+* **Failure-Driven Scaffolding**: Intentionally inject high-latency jitter, payload corruption, and CPU thermal bottlenecks into development sandboxes.
+* **Architectural Invariance**: Code must prove its correctness through determinism, idempotent boundaries, and explicit contract guarantees.
+
+\`\`\`typescript
+// The Think Academy Contract Invariant Pattern
+export interface SystemInvariant<TInput, TState> {
+  precondition: (input: TInput, current: TState) => boolean;
+  transition: (input: TInput, current: TState) => Promise<TState>;
+  postcondition: (next: TState, previous: TState) => boolean;
+}
+\`\`\`
+
+---
+
+## 3. Cognitive Scaffolding in Production
+
+When engineers learn under the Think Academy methodology, they internalize three non-negotiable principles:
+
+1. **Zero-Ambiguity Interfaces**: Every data boundary must be strongly typed, contract-verified, and structurally validated.
+2. **Locality of Behavior**: Systems must minimize cognitive hops across disparate files; state mutation must be traceable within immediate scope.
+3. **Resilience by Default**: Never assume the happy path. Assume network dropouts, stale caches, and degraded hardware from millisecond zero.
+
+---
+
+## 4. Think Academy Directorate Evaluation
+
+> "True engineering is not merely typing commands that work once on a local machine. It is the deliberate discipline of designing systems that survive reality, adapt to constraints, and elevate human capability."
+> — **Obitt**, Founder & Lead Researcher, Think Academy`
+  },
   {
     id: 'art-distributed-microservices-pos',
     slug: 'distributed-realtime-inventory-microservices',
@@ -374,6 +460,17 @@ export function getArticles(): ArticleRecord[] {
 
     if (stored) {
       items = JSON.parse(stored);
+      // Ensure any new system default articles (e.g. Think Academy articles by Obitt) are safely incorporated
+      let modified = false;
+      for (const def of DEFAULT_ARTICLES) {
+        if (!items.some(i => i.id === def.id) && !deletedIds.includes(def.id)) {
+          items.unshift(def); // Place at top
+          modified = true;
+        }
+      }
+      if (modified) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      }
     } else {
       items = [...DEFAULT_ARTICLES];
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
@@ -410,6 +507,8 @@ export async function syncArticlesFromFirebase(): Promise<ArticleRecord[]> {
         if (!deletedIds.includes(art.id)) {
           await setDoc(doc(db, 'articles', art.id), {
             ...art,
+            authorType: art.authorType || 'student',
+            thinkAcademyAuthor: art.thinkAcademyAuthor ? JSON.stringify(art.thinkAcademyAuthor) : '',
             studentAuthors: JSON.stringify(art.studentAuthors),
             supervisingTutor: JSON.stringify(art.supervisingTutor),
             tags: JSON.stringify(art.tags),
@@ -424,6 +523,17 @@ export async function syncArticlesFromFirebase(): Promise<ArticleRecord[]> {
     querySnapshot.forEach(docSnap => {
       const data = docSnap.data();
       if (!deletedIds.includes(docSnap.id)) {
+        let parsedThinkAuthor: ThinkAcademyAuthor | undefined = undefined;
+        if (data.thinkAcademyAuthor) {
+          try {
+            parsedThinkAuthor = typeof data.thinkAcademyAuthor === 'string' 
+              ? JSON.parse(data.thinkAcademyAuthor) 
+              : data.thinkAcademyAuthor;
+          } catch {
+            parsedThinkAuthor = undefined;
+          }
+        }
+
         firestoreArticles.push({
           id: docSnap.id,
           slug: data.slug || docSnap.id,
@@ -435,6 +545,8 @@ export async function syncArticlesFromFirebase(): Promise<ArticleRecord[]> {
           readTime: data.readTime || '5 min read',
           status: data.status || 'published',
           publishedAt: data.publishedAt || new Date().toISOString().split('T')[0],
+          authorType: (data.authorType as ArticleAuthorType) || (data.thinkAcademyAuthor ? 'think-academy' : 'student'),
+          thinkAcademyAuthor: parsedThinkAuthor,
           deployedBy: typeof data.deployedBy === 'string' ? JSON.parse(data.deployedBy) : (data.deployedBy || { name: 'Admin', role: 'Staff', email: '' }),
           studentAuthors: typeof data.studentAuthors === 'string' ? JSON.parse(data.studentAuthors) : (data.studentAuthors || []),
           supervisingTutor: typeof data.supervisingTutor === 'string' ? JSON.parse(data.supervisingTutor) : (data.supervisingTutor || { name: 'Instructor', role: 'Supervisor' }),
@@ -512,6 +624,8 @@ export async function createOrDeployArticleAsync(
       try {
         await setDoc(doc(db, 'articles', newArticle.id), {
           ...newArticle,
+          authorType: newArticle.authorType || 'student',
+          thinkAcademyAuthor: newArticle.thinkAcademyAuthor ? JSON.stringify(newArticle.thinkAcademyAuthor) : '',
           studentAuthors: JSON.stringify(newArticle.studentAuthors),
           supervisingTutor: JSON.stringify(newArticle.supervisingTutor),
           tags: JSON.stringify(newArticle.tags),
@@ -552,6 +666,8 @@ export async function updateArticleAsync(
       try {
         await updateDoc(doc(db, 'articles', id), {
           ...updatedArticle,
+          authorType: updatedArticle.authorType || 'student',
+          thinkAcademyAuthor: updatedArticle.thinkAcademyAuthor ? JSON.stringify(updatedArticle.thinkAcademyAuthor) : '',
           studentAuthors: JSON.stringify(updatedArticle.studentAuthors),
           supervisingTutor: JSON.stringify(updatedArticle.supervisingTutor),
           tags: JSON.stringify(updatedArticle.tags),
@@ -712,3 +828,101 @@ Throughout the development lifecycle, weekly architectural audits and code revie
     tags
   };
 }
+
+/**
+ * Think Academy Monograph Draft Generator
+ * Crafts an authoritative publication from Think Academy authored by Obitt or faculty fellows.
+ */
+export function generateThinkAcademyDraft(params: {
+  authorName?: string;
+  authorRole?: string;
+  topicTitle?: string;
+  topic?: string;
+  category: string;
+  keyPrinciples?: string;
+}): {
+  title: string;
+  subtitle: string;
+  content: string;
+  category: string;
+  tags: string[];
+  thinkAcademyAuthor: ThinkAcademyAuthor;
+} {
+  const authorName = params.authorName?.trim() || 'Obitt';
+  const authorRole = params.authorRole?.trim() || 'Founder & Lead Researcher, Think Academy';
+  const topic = (params.topicTitle || params.topic || 'Engineering Foundations').trim();
+  const category = params.category || 'Web Engineering';
+
+  const title = topic.includes(':') ? topic : `${topic}: Architectural Foundations & Cognitive Models`;
+  const subtitle = `A Think Academy technical monograph by ${authorName} examining high-leverage mental models, systemic rigor, and technical craftsmanship.`;
+
+  const principlesList = params.keyPrinciples
+    ? params.keyPrinciples
+        .split('\n')
+        .map(l => l.trim().startsWith('*') || l.trim().startsWith('-') ? l : `* ${l}`)
+        .join('\n')
+    : `* **First-Principles Scaffolding**: Deconstruct systems down to immutable physics, memory boundaries, and network latencies.
+* **Deterministic Contracts**: Write resilient code with explicit invariants, idempotency, and automated recovery.
+* **Cognitive Mastery**: Move beyond tutorial replication to deep structural engineering.`;
+
+  const content = `## 1. The Think Academy Thesis
+
+At **Think Academy**, we emphasize deep conceptual mastery over ephemeral syntactic trends. In the modern computational landscape, true technical competence requires understanding how state behaves across asynchronous boundaries, hardware caches, and distributed networks.
+
+This technical monograph by **${authorName}** (${authorRole}) provides a rigorous analysis of **${topic}**.
+
+---
+
+## 2. Core Engineering Principles
+
+${principlesList}
+
+\`\`\`typescript
+// The Think Academy Contract Pattern
+export interface ArchitecturalInvariant<TContext> {
+  validate: (ctx: TContext) => boolean;
+  execute: () => Promise<void>;
+  rollback: (err: Error) => Promise<void>;
+}
+\`\`\`
+
+---
+
+## 3. Practical Implementation Guidelines
+
+When implementing solutions in ${category.toLowerCase()}, maintain:
+1. **Zero Silent Failures**: Every error must either be self-healed or bubbled with precise contextual telemetry.
+2. **Predictable Memory Footprints**: Profile heap allocations and minimize unnecessary runtime garbage collection cycles.
+3. **Ergonomic Composition**: Build software where components can be reasoned about in isolation.
+
+---
+
+## 4. Think Academy Closing Perspective
+
+> "Excellence in technology is not an accident of talent; it is the compounding output of deliberate practice, cognitive rigor, and unyielding standards."
+> — **${authorName}**, Think Academy`;
+
+  const tags = [
+    'ThinkAcademy',
+    authorName.replace(/\s+/g, ''),
+    category.replace(/\s+/g, ''),
+    'SystemArchitecture',
+    'TechLeadership'
+  ];
+
+  return {
+    title,
+    subtitle,
+    content,
+    category,
+    tags,
+    thinkAcademyAuthor: {
+      name: authorName,
+      role: authorRole,
+      institution: 'Think Academy',
+      badge: 'Monograph Author',
+      bio: 'Author of foundational engineering monographs and mental models at Think Academy.'
+    }
+  };
+}
+

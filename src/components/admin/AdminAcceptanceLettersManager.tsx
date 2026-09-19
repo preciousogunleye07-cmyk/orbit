@@ -24,7 +24,6 @@ import {
   Check, 
   Copy, 
   Eye, 
-  Sparkles, 
   UserCheck, 
   Search,
   School,

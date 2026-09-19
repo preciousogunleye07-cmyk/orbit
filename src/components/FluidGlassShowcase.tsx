@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import FluidGlass from './FluidGlass';
-import { Eye, Layers, Navigation, Sparkles } from 'lucide-react';
+import { Eye, Layers, Navigation } from 'lucide-react';
 
 export const FluidGlassShowcase: React.FC = () => {
   const [mode, setMode] = useState<'lens' | 'cube' | 'bar'>('lens');
@@ -12,7 +12,7 @@ export const FluidGlassShowcase: React.FC = () => {
         <div className="p-6 sm:p-8 border-b border-[#332d47] flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <span className="text-[10px] font-mono tracking-widest text-[#a855f7] uppercase font-semibold flex items-center gap-2 mb-2">
-              <Sparkles className="w-3.5 h-3.5" />
+              <Layers className="w-3.5 h-3.5" />
               Interactive 3D Fluid Canvas
             </span>
             <h3 className="text-2xl sm:text-3xl font-serif text-[#ffffff] font-normal">

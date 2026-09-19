@@ -14,7 +14,6 @@ import {
   AlertTriangle,
   User,
   MapPin,
-  Sparkles,
   ShieldCheck
 } from 'lucide-react';
 import { TimetableSlot, DAYS_OF_WEEK } from '../../data/timetableData';

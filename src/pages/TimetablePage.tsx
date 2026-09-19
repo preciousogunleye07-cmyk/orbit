@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, ArrowRight, Download, Shield, CheckCircle2 } from 'lucide-react';
+import { Search, ArrowRight, Download, CheckCircle2 } from 'lucide-react';
 import { DAYS_OF_WEEK, TimetableSlot } from '../data/timetableData';
 import { 
   getLocalTimetableSlots, 
   subscribeTimetable, 
   syncTimetableFromFirestore 
 } from '../services/timetableService';
-import { getAdminSession, AdminUser } from '../services/certificateService';
 import { ActiveModal } from '../types';
 import { playSound } from '../utils/soundEffects';
 import { generateTimetablePdf } from '../utils/timetablePdf';
@@ -21,13 +20,9 @@ export const TimetablePage: React.FC<TimetablePageProps> = ({ setActiveModal }) 
   const [selectedDay, setSelectedDay] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isDownloadingPdf, setIsDownloadingPdf] = useState<boolean>(false);
-  const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [toastMessage, setToastMessage] = useState<string>('');
 
   useEffect(() => {
-    // Check admin session
-    setAdminUser(getAdminSession());
-
     // Subscribe to real-time timetable updates
     const unsubscribe = subscribeTimetable((latest) => {
       setSlots(latest);
@@ -101,12 +96,6 @@ export const TimetablePage: React.FC<TimetablePageProps> = ({ setActiveModal }) 
     }
   };
 
-  const navigateToAdminPortal = () => {
-    playSound('droplet');
-    window.history.pushState({}, '', '/admin');
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  };
-
   return (
     <div className="min-h-screen bg-[#100e17] text-[#e5e2e1] py-12 px-4 sm:px-6 selection:bg-[#a855f7]/30 selection:text-white relative">
       
@@ -126,37 +115,6 @@ export const TimetablePage: React.FC<TimetablePageProps> = ({ setActiveModal }) 
       </AnimatePresence>
 
       <div className="max-w-4xl mx-auto space-y-8">
-
-        {/* Informative notice when an Admin is viewing the public page */}
-        {adminUser && (
-          <div className="bg-[#1c162e] border border-[#a855f7]/40 rounded-2xl p-3.5 sm:p-4 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-purple-950 border border-purple-800 flex items-center justify-center text-[#c084fc] shrink-0">
-                <Shield className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-white">Administrator Session Active</span>
-                  <span className="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-800/60 px-1.5 py-0.2 rounded font-mono">
-                    {adminUser.role}
-                  </span>
-                </div>
-                <p className="text-[11px] text-[#94a3b8]">
-                  This public timetable is read-only. Class slots can only be modified in the Admin Portal.
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={navigateToAdminPortal}
-              className="btn-purple px-3.5 py-1.5 rounded-xl text-xs font-semibold text-white flex items-center gap-1.5 shadow-md cursor-pointer shrink-0"
-              id="btn-admin-manage-portal"
-            >
-              <span>Open Admin Dashboard</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
 
         {/* Simple Clean Header */}
         <div className="text-center space-y-3">

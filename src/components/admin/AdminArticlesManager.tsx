@@ -4,7 +4,6 @@ import {
   FileText, 
   Plus, 
   Search, 
-  Sparkles, 
   ExternalLink, 
   Trash2, 
   Edit3, 
@@ -31,6 +30,8 @@ import {
 } from 'lucide-react';
 import { 
   ArticleRecord, 
+  ArticleAuthorType,
+  ThinkAcademyAuthor,
   StudentAuthor, 
   getArticles, 
   syncArticlesFromFirebase, 
@@ -38,7 +39,8 @@ import {
   updateArticleAsync, 
   deleteArticleAsync,
   PRESET_ARTICLE_IMAGES,
-  generateTechnicalArticleDraft
+  generateTechnicalArticleDraft,
+  generateThinkAcademyDraft
 } from '../../services/articleService';
 import { getCertificates, CertificateRecord } from '../../services/certificateService';
 import { SubAdminUser } from '../../services/subAdminService';
@@ -85,6 +87,12 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
   const [formTags, setFormTags] = useState('React, Web, Capstone');
   
   // Author State
+  const [authorType, setAuthorType] = useState<ArticleAuthorType>('student');
+  const [thinkAuthorName, setThinkAuthorName] = useState('Obitt');
+  const [thinkAuthorRole, setThinkAuthorRole] = useState('Founder & Lead Researcher, Think Academy');
+  const [thinkAuthorInstitution, setThinkAuthorInstitution] = useState('Think Academy');
+  const [thinkAuthorBio, setThinkAuthorBio] = useState('Author of foundational engineering monographs and mental models at Think Academy.');
+
   const [selectedStudentCertId, setSelectedStudentCertId] = useState<string>('');
   const [studentAuthorName, setStudentAuthorName] = useState('');
   const [studentCertNumber, setStudentCertNumber] = useState('');
@@ -95,6 +103,7 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
 
   // AI Generator Form State
   const [isAiGeneratorOpen, setIsAiGeneratorOpen] = useState(false);
+  const [aiGeneratorMode, setAiGeneratorMode] = useState<'student' | 'think-academy'>('student');
   const [aiStudentCertId, setAiStudentCertId] = useState('');
   const [aiStudentName, setAiStudentName] = useState('');
   const [aiProjectTitle, setAiProjectTitle] = useState('');
@@ -103,6 +112,13 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
   const [aiTutorRole, setAiTutorRole] = useState('Principal Engineering Fellow');
   const [aiCategory, setAiCategory] = useState('Web Engineering');
   const [aiHighlights, setAiHighlights] = useState('');
+
+  // AI Think Academy Generator Fields
+  const [aiThinkAuthorName, setAiThinkAuthorName] = useState('Obitt');
+  const [aiThinkAuthorRole, setAiThinkAuthorRole] = useState('Founder & Lead Researcher, Think Academy');
+  const [aiThinkTopic, setAiThinkTopic] = useState('');
+  const [aiThinkCategory, setAiThinkCategory] = useState('Distributed Systems');
+  const [aiThinkHighlights, setAiThinkHighlights] = useState('');
 
   // Sub-Admin Obfuscated Route Gateway State
   const [subAdminSlug, setSubAdminSlug] = useState(getSubAdminRouteSlug());
@@ -214,6 +230,12 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
     setFormContent('');
     setFormTags('OrbitSpace, Tech, Innovation');
     
+    setAuthorType('student');
+    setThinkAuthorName('Obitt');
+    setThinkAuthorRole('Founder & Lead Researcher, Think Academy');
+    setThinkAuthorInstitution('Think Academy');
+    setThinkAuthorBio('Author of foundational engineering monographs and mental models at Think Academy.');
+
     setSelectedStudentCertId('');
     setStudentAuthorName('');
     setStudentCertNumber('');
@@ -238,7 +260,22 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
     setFormContent(art.content);
     setFormTags(art.tags.join(', '));
 
-    const primaryAuthor = art.studentAuthors[0];
+    const determinedType: ArticleAuthorType = art.authorType || (art.thinkAcademyAuthor ? 'think-academy' : 'student');
+    setAuthorType(determinedType);
+
+    if (art.thinkAcademyAuthor) {
+      setThinkAuthorName(art.thinkAcademyAuthor.name || 'Obitt');
+      setThinkAuthorRole(art.thinkAcademyAuthor.role || 'Founder & Lead Researcher, Think Academy');
+      setThinkAuthorInstitution(art.thinkAcademyAuthor.institution || 'Think Academy');
+      setThinkAuthorBio(art.thinkAcademyAuthor.bio || '');
+    } else {
+      setThinkAuthorName('Obitt');
+      setThinkAuthorRole('Founder & Lead Researcher, Think Academy');
+      setThinkAuthorInstitution('Think Academy');
+      setThinkAuthorBio('Author of foundational engineering monographs and mental models at Think Academy.');
+    }
+
+    const primaryAuthor = art.studentAuthors?.[0];
     if (primaryAuthor) {
       setSelectedStudentCertId(primaryAuthor.certificateId || '');
       setStudentAuthorName(primaryAuthor.name || '');
@@ -264,12 +301,49 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
   };
 
   const handleExecuteAiGenerate = () => {
+    playSound('sparkle');
+
+    if (aiGeneratorMode === 'think-academy') {
+      if (!aiThinkTopic.trim()) {
+        showToast('Please provide a research monograph topic or title.');
+        return;
+      }
+
+      const generated = generateThinkAcademyDraft({
+        authorName: aiThinkAuthorName.trim() || 'Obitt',
+        authorRole: aiThinkAuthorRole.trim() || 'Founder & Lead Researcher, Think Academy',
+        topic: aiThinkTopic.trim(),
+        category: aiThinkCategory,
+        keyPrinciples: aiThinkHighlights
+      });
+
+      setAuthorType('think-academy');
+      setThinkAuthorName(generated.thinkAcademyAuthor.name);
+      setThinkAuthorRole(generated.thinkAcademyAuthor.role);
+      setThinkAuthorInstitution(generated.thinkAcademyAuthor.institution);
+      setThinkAuthorBio(generated.thinkAcademyAuthor.bio);
+
+      setFormTitle(generated.title);
+      setFormSubtitle(generated.subtitle);
+      setFormContent(generated.content);
+      setFormCategory(generated.category);
+      setFormTags(generated.tags.join(', '));
+      setFormSlug(generated.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''));
+
+      const matchingPreset = PRESET_ARTICLE_IMAGES.find(p => p.category.toLowerCase().includes(aiThinkCategory.toLowerCase())) || PRESET_ARTICLE_IMAGES[0];
+      setFormCoverImage(matchingPreset.url);
+
+      setIsAiGeneratorOpen(false);
+      setIsEditorOpen(true);
+      showToast('Think Academy monograph drafted successfully! You can refine and deploy.');
+      return;
+    }
+
     if (!aiStudentName.trim() || !aiProjectTitle.trim()) {
       showToast('Please enter both student name and project title.');
       return;
     }
 
-    playSound('sparkle');
     const generated = generateTechnicalArticleDraft({
       studentName: aiStudentName.trim(),
       projectTitle: aiProjectTitle.trim(),
@@ -281,6 +355,7 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
       certificateId: aiStudentCertId
     });
 
+    setAuthorType('student');
     setFormTitle(generated.title);
     setFormSubtitle(generated.subtitle);
     setFormContent(generated.content);
@@ -331,7 +406,9 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
 
-    const studentAuthorsList: StudentAuthor[] = studentAuthorName.trim()
+    const isThink = authorType === 'think-academy';
+
+    const studentAuthorsList: StudentAuthor[] = (!isThink && studentAuthorName.trim())
       ? [
           {
             name: studentAuthorName.trim(),
@@ -345,34 +422,46 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
       : [];
 
     const deployedByInfo = {
-      name: currentUser?.name || 'Academic Editorial Team',
+      name: currentUser?.name || (isThink ? 'Think Academy Faculty' : 'Academic Editorial Team'),
       role: currentUser?.role || 'Sub-Administrator',
       email: currentUser?.email || 'editor@orbitspace.academy'
     };
 
     const tagsArray = formTags.split(',').map(t => t.trim()).filter(Boolean);
 
+    const articlePayload: Partial<ArticleRecord> = {
+      title: formTitle.trim(),
+      slug: cleanSlug,
+      subtitle: formSubtitle.trim(),
+      content: formContent.trim(),
+      category: formCategory,
+      coverImage: formCoverImage,
+      readTime: formReadTime,
+      status: statusToSet,
+      publishedAt: new Date().toISOString().split('T')[0],
+      authorType: authorType,
+      thinkAcademyAuthor: isThink ? {
+        name: thinkAuthorName.trim() || 'Obitt',
+        role: thinkAuthorRole.trim() || 'Founder & Lead Researcher, Think Academy',
+        institution: thinkAuthorInstitution.trim() || 'Think Academy',
+        bio: thinkAuthorBio.trim()
+      } : undefined,
+      studentAuthors: isThink ? [] : studentAuthorsList,
+      supervisingTutor: isThink ? {
+        name: 'Think Academy Editorial Board',
+        role: 'Academic Publications'
+      } : {
+        name: supervisingTutorName.trim() || 'Orbit Space Academic Mentor',
+        role: supervisingTutorRole.trim() || 'Project Supervisor'
+      },
+      tags: tagsArray,
+      deployedBy: deployedByInfo
+    };
+
     try {
       if (editingArticleId) {
         // Update
-        const res = await updateArticleAsync(editingArticleId, {
-          title: formTitle.trim(),
-          slug: cleanSlug,
-          subtitle: formSubtitle.trim(),
-          content: formContent.trim(),
-          category: formCategory,
-          coverImage: formCoverImage,
-          readTime: formReadTime,
-          status: statusToSet,
-          publishedAt: new Date().toISOString().split('T')[0],
-          studentAuthors: studentAuthorsList,
-          supervisingTutor: {
-            name: supervisingTutorName.trim() || 'Orbit Space Academic Mentor',
-            role: supervisingTutorRole.trim() || 'Project Supervisor'
-          },
-          tags: tagsArray,
-          deployedBy: deployedByInfo
-        });
+        const res = await updateArticleAsync(editingArticleId, articlePayload);
 
         if (res.success) {
           showToast(statusToSet === 'published' ? 'Article deployed live to public website!' : 'Article draft updated.');
@@ -384,24 +473,7 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
         }
       } else {
         // Create new
-        const res = await createOrDeployArticleAsync({
-          title: formTitle.trim(),
-          slug: cleanSlug,
-          subtitle: formSubtitle.trim(),
-          content: formContent.trim(),
-          category: formCategory,
-          coverImage: formCoverImage,
-          readTime: formReadTime,
-          status: statusToSet,
-          publishedAt: new Date().toISOString().split('T')[0],
-          studentAuthors: studentAuthorsList,
-          supervisingTutor: {
-            name: supervisingTutorName.trim() || 'Orbit Space Academic Mentor',
-            role: supervisingTutorRole.trim() || 'Project Supervisor'
-          },
-          tags: tagsArray,
-          deployedBy: deployedByInfo
-        });
+        const res = await createOrDeployArticleAsync(articlePayload as Omit<ArticleRecord, 'id' | 'createdAt' | 'updatedAt'>);
 
         if (res.success) {
           showToast(statusToSet === 'published' ? 'Article deployed live to public website!' : 'Article saved as draft.');
@@ -486,10 +558,6 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
               <FileText className="w-5 h-5 text-[#c084fc]" />
               Research & Articles Deployment Studio
             </h2>
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium bg-purple-950/80 text-purple-300 border border-purple-800/60 flex items-center gap-1">
-              <Sparkles className="w-2.5 h-2.5 text-[#a855f7]" />
-              {currentUser?.role || 'Sub-Admin & Super-Admin Authorized'}
-            </span>
           </div>
           <p className="text-xs text-[#c4c7c8] font-light mt-1 max-w-2xl">
             Publish student capstones, technical research papers, and SIWES case studies. Automatically binds student authors to their official credentials and capstone projects.
@@ -499,14 +567,12 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
         <div className="flex items-center gap-2.5 w-full md:w-auto flex-wrap">
           <button
             onClick={() => {
-              playSound('sparkle');
               setIsAiGeneratorOpen(true);
             }}
             className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-900/60 to-indigo-900/60 border border-purple-500/50 hover:border-purple-400 text-purple-200 hover:text-white transition-all text-xs font-semibold flex items-center gap-2 cursor-pointer shadow-lg active:scale-95"
             title="Generate structured technical article draft from student capstone"
             id="btn-ai-generate-article"
           >
-            <Sparkles className="w-3.5 h-3.5 text-purple-300 animate-pulse" />
             <span>AI Draft Generator</span>
           </button>
 
@@ -735,7 +801,25 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
 
                     {/* Author Binding Card */}
                     <div className="bg-[#100e17] rounded-xl p-3 border border-[#332d47]/80 space-y-2">
-                      {student ? (
+                      {art.authorType === 'think-academy' ? (
+                        <div className="flex items-start justify-between gap-2 text-xs">
+                          <div className="space-y-0.5">
+                            <span className="text-[9px] font-mono uppercase text-amber-400 font-semibold block">
+                              Think Academy Monograph
+                            </span>
+                            <span className="font-semibold text-white block">
+                              {art.thinkAcademyAuthor?.name || 'Obitt'}
+                            </span>
+                            <span className="text-[10px] text-amber-200/80 block">
+                              {art.thinkAcademyAuthor?.role || 'Founder & Lead Researcher, Think Academy'}
+                            </span>
+                          </div>
+
+                          <span className="px-2 py-0.5 rounded-lg bg-amber-950/70 border border-amber-800/60 text-amber-300 text-[10px] font-mono shrink-0">
+                            Obitt Editorial
+                          </span>
+                        </div>
+                      ) : student ? (
                         <div className="flex items-start justify-between gap-2 text-xs">
                           <div className="space-y-0.5">
                             <span className="text-[9px] font-mono uppercase text-[#a855f7] tracking-wider block">
@@ -768,15 +852,17 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
                         <span className="text-xs text-gray-400">Institutional Editorial Publication</span>
                       )}
 
-                      {/* Supervising Tutor */}
-                      {art.supervisingTutor?.name && (
-                        <div className="pt-2 border-t border-[#29233b] flex items-center justify-between text-[11px]">
-                          <span className="text-[#8e8a9f]">Supervisor:</span>
-                          <span className="font-medium text-[#e5e2e1] truncate max-w-[200px]">
-                            {art.supervisingTutor.name}
-                          </span>
-                        </div>
-                      )}
+                      {/* Supervising Tutor / Origin */}
+                      <div className="pt-2 border-t border-[#29233b] flex items-center justify-between text-[11px]">
+                        <span className="text-[#8e8a9f]">
+                          {art.authorType === 'think-academy' ? 'Publication Source:' : 'Supervisor:'}
+                        </span>
+                        <span className="font-medium text-[#e5e2e1] truncate max-w-[200px]">
+                          {art.authorType === 'think-academy'
+                            ? (art.thinkAcademyAuthor?.institution || 'Think Academy Research')
+                            : (art.supervisingTutor?.name || 'Orbit Space Mentor')}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1020,110 +1106,231 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
                       </div>
                     </div>
 
-                    {/* Student Author & Certificate Linker */}
-                    <div className="bg-[#120f1b] p-4 sm:p-5 rounded-2xl border border-purple-900/40 space-y-4">
-                      <div className="flex items-center justify-between pb-2 border-b border-[#29233b]">
-                        <div className="flex items-center gap-2">
-                          <Award className="w-4 h-4 text-[#c084fc]" />
-                          <span className="text-xs font-semibold text-white">
-                            Student Authors & Certification Linking
-                          </span>
-                        </div>
-                        <span className="text-[10px] text-emerald-400 font-mono bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-800/40">
-                          Automatic Credential Binding
+                    {/* Authorship Origin & Type Switcher */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-gray-200 flex items-center gap-1.5">
+                          <User className="w-3.5 h-3.5 text-[#c084fc]" />
+                          Authorship Attribution *
+                        </label>
+                        <span className="text-[10px] font-mono text-[#a855f7]">
+                          {authorType === 'think-academy' ? 'Think Academy Monograph' : 'Student Capstone Research'}
                         </span>
                       </div>
 
-                      {/* Choose from existing issued certificates */}
-                      <div className="space-y-1.5">
-                        <label className="text-[11px] font-medium text-gray-300">
-                          Link to Registered Orbit Space Certificate:
-                        </label>
-                        <select
-                          value={selectedStudentCertId}
-                          onChange={(e) => handleSelectStudentCert(e.target.value)}
-                          className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white text-xs rounded-xl px-3 py-2.5 outline-none font-mono"
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-1.5 bg-[#100e17] rounded-2xl border border-[#332d47]">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAuthorType('student');
+                            playSound('droplet');
+                          }}
+                          className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                            authorType === 'student'
+                              ? 'bg-purple-900/70 text-white border border-purple-500/60 shadow-md'
+                              : 'text-gray-400 hover:text-gray-200 hover:bg-[#181524]'
+                          }`}
                         >
-                          <option value="">-- Select student from certificate database (or enter manual details below) --</option>
-                          {certificates.map(cert => (
-                            <option key={cert.id} value={cert.id}>
-                              {cert.studentName} — {cert.course} ({cert.id})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                          <Award className="w-3.5 h-3.5 text-purple-300" />
+                          <span>Student Capstone Author</span>
+                        </button>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-mono uppercase text-gray-400">Student Author Name</label>
-                          <input
-                            type="text"
-                            value={studentAuthorName}
-                            onChange={(e) => setStudentAuthorName(e.target.value)}
-                            placeholder="e.g. Michael Adebayo"
-                            className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white text-xs rounded-xl px-3 py-2 outline-none"
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-mono uppercase text-gray-400">Certificate ID / Ref</label>
-                          <input
-                            type="text"
-                            value={selectedStudentCertId}
-                            onChange={(e) => setSelectedStudentCertId(e.target.value)}
-                            placeholder="e.g. ORB-8F29K2"
-                            className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-purple-300 font-mono text-xs rounded-xl px-3 py-2 outline-none"
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-mono uppercase text-gray-400">Course / Academic Track</label>
-                          <input
-                            type="text"
-                            value={studentCourseTrack}
-                            onChange={(e) => setStudentCourseTrack(e.target.value)}
-                            placeholder="e.g. Full-Stack Web Development"
-                            className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white text-xs rounded-xl px-3 py-2 outline-none"
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-mono uppercase text-gray-400">Capstone Project Title</label>
-                          <input
-                            type="text"
-                            value={studentProjectTitle}
-                            onChange={(e) => setStudentProjectTitle(e.target.value)}
-                            placeholder="e.g. Distributed Inventory Microservices Engine"
-                            className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white text-xs rounded-xl px-3 py-2 outline-none"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Supervising Tutor */}
-                      <div className="pt-3 border-t border-[#29233b] grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-mono uppercase text-gray-400">Supervising Tutor / Instructor</label>
-                          <input
-                            type="text"
-                            value={supervisingTutorName}
-                            onChange={(e) => setSupervisingTutorName(e.target.value)}
-                            placeholder="e.g. Engr. David Babatunde"
-                            className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white text-xs rounded-xl px-3 py-2 outline-none"
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-mono uppercase text-gray-400">Supervisor Academic Role</label>
-                          <input
-                            type="text"
-                            value={supervisingTutorRole}
-                            onChange={(e) => setSupervisingTutorRole(e.target.value)}
-                            placeholder="e.g. Principal Web Architecture Fellow"
-                            className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white text-xs rounded-xl px-3 py-2 outline-none"
-                          />
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAuthorType('think-academy');
+                            playSound('droplet');
+                          }}
+                          className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                            authorType === 'think-academy'
+                              ? 'bg-amber-950/80 text-amber-200 border border-amber-500/70 shadow-md'
+                              : 'text-gray-400 hover:text-gray-200 hover:bg-[#181524]'
+                          }`}
+                        >
+                          <span>Think Academy (Obitt)</span>
+                        </button>
                       </div>
                     </div>
+
+                    {/* THINK ACADEMY AUTHOR FORM SECTION */}
+                    {authorType === 'think-academy' ? (
+                      <div className="bg-gradient-to-br from-[#1b1528] to-[#120f1b] p-4 sm:p-5 rounded-2xl border border-amber-600/50 space-y-4 shadow-lg">
+                        <div className="flex items-center justify-between pb-3 border-b border-amber-900/30">
+                          <span className="text-xs font-semibold text-white">
+                            Think Academy Faculty & Monograph Attribution
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setThinkAuthorName('Obitt');
+                              setThinkAuthorRole('Founder & Lead Researcher, Think Academy');
+                              setThinkAuthorInstitution('Think Academy');
+                              setThinkAuthorBio('Author of foundational engineering monographs and mental models at Think Academy, focused on first-principles thinking and distributed computing.');
+                              playSound('sparkle');
+                              showToast('Reset author to Obitt (Think Academy Founder)');
+                            }}
+                            className="text-[10px] text-amber-300 hover:text-white font-mono bg-amber-950/60 hover:bg-amber-900/70 px-2.5 py-1 rounded-lg border border-amber-700/50 transition-all cursor-pointer"
+                          >
+                            Reset to Obitt
+                          </button>
+                        </div>
+
+                        <p className="text-[11px] text-amber-200/80 font-light leading-relaxed">
+                          This article is authored by Obitt / Think Academy faculty. It appears with institutional monograph styling and does not require student certification links.
+                        </p>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-mono uppercase text-amber-300">Author Name *</label>
+                            <input
+                              type="text"
+                              value={thinkAuthorName}
+                              onChange={(e) => setThinkAuthorName(e.target.value)}
+                              placeholder="e.g. Obitt"
+                              className="w-full bg-[#100e17] border border-amber-900/50 focus:border-amber-400 text-white text-xs rounded-xl px-3 py-2 outline-none"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-mono uppercase text-amber-300">Author Role / Academic Title</label>
+                            <input
+                              type="text"
+                              value={thinkAuthorRole}
+                              onChange={(e) => setThinkAuthorRole(e.target.value)}
+                              placeholder="e.g. Founder & Lead Researcher, Think Academy"
+                              className="w-full bg-[#100e17] border border-amber-900/50 focus:border-amber-400 text-white text-xs rounded-xl px-3 py-2 outline-none"
+                            />
+                          </div>
+
+                          <div className="space-y-1 sm:col-span-2">
+                            <label className="text-[10px] font-mono uppercase text-amber-300">Institution / Department</label>
+                            <input
+                              type="text"
+                              value={thinkAuthorInstitution}
+                              onChange={(e) => setThinkAuthorInstitution(e.target.value)}
+                              placeholder="e.g. Think Academy"
+                              className="w-full bg-[#100e17] border border-amber-900/50 focus:border-amber-400 text-white text-xs rounded-xl px-3 py-2 outline-none"
+                            />
+                          </div>
+
+                          <div className="space-y-1 sm:col-span-2">
+                            <label className="text-[10px] font-mono uppercase text-amber-300">Author Bio & Editorial Note</label>
+                            <textarea
+                              rows={2}
+                              value={thinkAuthorBio}
+                              onChange={(e) => setThinkAuthorBio(e.target.value)}
+                              placeholder="Brief background on the author's research or mental model..."
+                              className="w-full bg-[#100e17] border border-amber-900/50 focus:border-amber-400 text-white text-xs rounded-xl p-3 outline-none"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      /* STUDENT AUTHOR FORM SECTION */
+                      <div className="bg-[#120f1b] p-4 sm:p-5 rounded-2xl border border-purple-900/40 space-y-4">
+                        <div className="flex items-center justify-between pb-2 border-b border-[#29233b]">
+                          <div className="flex items-center gap-2">
+                            <Award className="w-4 h-4 text-[#c084fc]" />
+                            <span className="text-xs font-semibold text-white">
+                              Student Authors & Certification Linking
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-emerald-400 font-mono bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-800/40">
+                            Automatic Credential Binding
+                          </span>
+                        </div>
+
+                        {/* Choose from existing issued certificates */}
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-medium text-gray-300">
+                            Link to Registered Orbit Space Certificate:
+                          </label>
+                          <select
+                            value={selectedStudentCertId}
+                            onChange={(e) => handleSelectStudentCert(e.target.value)}
+                            className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white text-xs rounded-xl px-3 py-2.5 outline-none font-mono"
+                          >
+                            <option value="">-- Select student from certificate database (or enter manual details below) --</option>
+                            {certificates.map(cert => (
+                              <option key={cert.id} value={cert.id}>
+                                {cert.studentName} — {cert.course} ({cert.id})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-mono uppercase text-gray-400">Student Author Name</label>
+                            <input
+                              type="text"
+                              value={studentAuthorName}
+                              onChange={(e) => setStudentAuthorName(e.target.value)}
+                              placeholder="e.g. Michael Adebayo"
+                              className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white text-xs rounded-xl px-3 py-2 outline-none"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-mono uppercase text-gray-400">Certificate ID / Ref</label>
+                            <input
+                              type="text"
+                              value={selectedStudentCertId}
+                              onChange={(e) => setSelectedStudentCertId(e.target.value)}
+                              placeholder="e.g. ORB-8F29K2"
+                              className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-purple-300 font-mono text-xs rounded-xl px-3 py-2 outline-none"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-mono uppercase text-gray-400">Course / Academic Track</label>
+                            <input
+                              type="text"
+                              value={studentCourseTrack}
+                              onChange={(e) => setStudentCourseTrack(e.target.value)}
+                              placeholder="e.g. Full-Stack Web Development"
+                              className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white text-xs rounded-xl px-3 py-2 outline-none"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-mono uppercase text-gray-400">Capstone Project Title</label>
+                            <input
+                              type="text"
+                              value={studentProjectTitle}
+                              onChange={(e) => setStudentProjectTitle(e.target.value)}
+                              placeholder="e.g. Distributed Inventory Microservices Engine"
+                              className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white text-xs rounded-xl px-3 py-2 outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Supervising Tutor */}
+                        <div className="pt-3 border-t border-[#29233b] grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-mono uppercase text-gray-400">Supervising Tutor / Instructor</label>
+                            <input
+                              type="text"
+                              value={supervisingTutorName}
+                              onChange={(e) => setSupervisingTutorName(e.target.value)}
+                              placeholder="e.g. Engr. David Babatunde"
+                              className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white text-xs rounded-xl px-3 py-2 outline-none"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-mono uppercase text-gray-400">Supervisor Academic Role</label>
+                            <input
+                              type="text"
+                              value={supervisingTutorRole}
+                              onChange={(e) => setSupervisingTutorRole(e.target.value)}
+                              placeholder="e.g. Principal Web Architecture Fellow"
+                              className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white text-xs rounded-xl px-3 py-2 outline-none"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Article Content */}
                     <div className="space-y-2">
@@ -1186,25 +1393,46 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
                     )}
 
                     {/* Author credit card preview */}
-                    <div className="bg-[#181524] rounded-2xl p-4 border border-[#332d47] grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <span className="text-[10px] font-mono uppercase text-[#a855f7] block">Student Author</span>
-                        <p className="text-sm font-semibold text-white">{studentAuthorName || 'Student Name'}</p>
-                        <p className="text-xs text-[#8e8a9f]">{studentCourseTrack || 'Course Track'}</p>
-                        {selectedStudentCertId && (
-                          <div className="pt-1 flex items-center gap-1.5 text-xs text-emerald-400 font-mono">
-                            <ShieldCheck className="w-3.5 h-3.5" />
-                            <span>Verified Certificate #{selectedStudentCertId}</span>
-                          </div>
-                        )}
-                      </div>
+                    {authorType === 'think-academy' ? (
+                      <div className="bg-[#181524] rounded-2xl p-4 border border-amber-800/40 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-mono uppercase text-amber-400 font-semibold block">
+                            Think Academy Monograph Author
+                          </span>
+                          <p className="text-sm font-semibold text-white">{thinkAuthorName || 'Obitt'}</p>
+                          <p className="text-xs text-amber-200/90">{thinkAuthorRole || 'Founder & Lead Researcher'}</p>
+                          {thinkAuthorBio && (
+                            <p className="text-[11px] text-[#8e8a9f] font-light line-clamp-2 pt-1">{thinkAuthorBio}</p>
+                          )}
+                        </div>
 
-                      <div className="space-y-1">
-                        <span className="text-[10px] font-mono uppercase text-[#a855f7] block">Supervising Tutor</span>
-                        <p className="text-sm font-semibold text-white">{supervisingTutorName || 'Supervisor Name'}</p>
-                        <p className="text-xs text-[#8e8a9f]">{supervisingTutorRole || 'Faculty Designation'}</p>
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-mono uppercase text-purple-400 block">Publication Authority</span>
+                          <p className="text-sm font-semibold text-white">{thinkAuthorInstitution || 'Think Academy'}</p>
+                          <p className="text-xs text-[#8e8a9f]">Academic Monograph Series</p>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="bg-[#181524] rounded-2xl p-4 border border-[#332d47] grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-mono uppercase text-[#a855f7] block">Student Author</span>
+                          <p className="text-sm font-semibold text-white">{studentAuthorName || 'Student Name'}</p>
+                          <p className="text-xs text-[#8e8a9f]">{studentCourseTrack || 'Course Track'}</p>
+                          {selectedStudentCertId && (
+                            <div className="pt-1 flex items-center gap-1.5 text-xs text-emerald-400 font-mono">
+                              <ShieldCheck className="w-3.5 h-3.5" />
+                              <span>Verified Certificate #{selectedStudentCertId}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-mono uppercase text-[#a855f7] block">Supervising Tutor</span>
+                          <p className="text-sm font-semibold text-white">{supervisingTutorName || 'Supervisor Name'}</p>
+                          <p className="text-xs text-[#8e8a9f]">{supervisingTutorRole || 'Faculty Designation'}</p>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Body markdown preview */}
                     <div className="text-xs sm:text-sm text-[#e2e8f0] font-light leading-relaxed whitespace-pre-wrap font-sans space-y-4">
@@ -1262,15 +1490,15 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
             >
               <div className="p-5 sm:p-6 border-b border-[#332d47] bg-gradient-to-r from-purple-950/60 to-indigo-950/60 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-purple-900/80 border border-purple-600/80 flex items-center justify-center text-purple-200">
-                    <Sparkles className="w-5 h-5 text-purple-300" />
+                  <div className="w-9 h-9 rounded-xl bg-purple-900/80 border border-purple-600/80 flex items-center justify-center text-purple-200 font-mono text-sm font-bold">
+                    AI
                   </div>
                   <div>
                     <h3 className="text-base font-serif font-medium text-white">
-                      AI Capstone Article Generator
+                      AI Article Draft Generator
                     </h3>
                     <p className="text-[11px] text-purple-200">
-                      Crafts a high-impact technical paper linked to student certification and project.
+                      Crafts a high-impact technical paper or Think Academy research monograph.
                     </p>
                   </div>
                 </div>
@@ -1283,102 +1511,209 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
                 </button>
               </div>
 
-              <div className="p-5 sm:p-6 space-y-4 text-xs">
-                {/* Select from existing students */}
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-gray-200 block">
-                    Choose Certified Orbit Space Student:
-                  </label>
-                  <select
-                    value={aiStudentCertId}
-                    onChange={(e) => handleSelectAiStudentCert(e.target.value)}
-                    className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white text-xs rounded-xl px-3 py-2.5 outline-none font-mono"
+              {/* Mode Toggle */}
+              <div className="p-4 sm:p-5 pb-0">
+                <div className="grid grid-cols-2 gap-2 p-1 bg-[#100e17] rounded-xl border border-[#332d47]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAiGeneratorMode('student');
+                      playSound('droplet');
+                    }}
+                    className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      aiGeneratorMode === 'student'
+                        ? 'bg-purple-900/80 text-white border border-purple-500/60 shadow'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
                   >
-                    <option value="">-- Choose certified student to auto-fill details --</option>
-                    {certificates.map(cert => (
-                      <option key={cert.id} value={cert.id}>
-                        {cert.studentName} — {cert.course} ({cert.id})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                    <Award className="w-3.5 h-3.5 text-purple-300" />
+                    <span>Student Capstone</span>
+                  </button>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="font-semibold text-gray-300">Student Author Name *</label>
-                    <input
-                      type="text"
-                      value={aiStudentName}
-                      onChange={(e) => setAiStudentName(e.target.value)}
-                      placeholder="e.g. Michael Adebayo"
-                      className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white rounded-xl px-3 py-2 outline-none"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-semibold text-gray-300">Academic Track *</label>
-                    <input
-                      type="text"
-                      value={aiCourseTrack}
-                      onChange={(e) => setAiCourseTrack(e.target.value)}
-                      placeholder="e.g. Full-Stack Web Development"
-                      className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white rounded-xl px-3 py-2 outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-semibold text-gray-300">Capstone Project Title *</label>
-                  <input
-                    type="text"
-                    value={aiProjectTitle}
-                    onChange={(e) => setAiProjectTitle(e.target.value)}
-                    placeholder="e.g. Real-Time Microservices Inventory Sync Platform"
-                    className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white rounded-xl px-3 py-2 outline-none"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="font-semibold text-gray-300">Supervising Tutor</label>
-                    <input
-                      type="text"
-                      value={aiTutorName}
-                      onChange={(e) => setAiTutorName(e.target.value)}
-                      placeholder="e.g. Engr. David Babatunde"
-                      className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white rounded-xl px-3 py-2 outline-none"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-semibold text-gray-300">Supervisor Designation</label>
-                    <input
-                      type="text"
-                      value={aiTutorRole}
-                      onChange={(e) => setAiTutorRole(e.target.value)}
-                      placeholder="e.g. Principal Web Architecture Fellow"
-                      className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white rounded-xl px-3 py-2 outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-semibold text-gray-300">Key Technical Milestones (Optional)</label>
-                  <textarea
-                    rows={3}
-                    value={aiHighlights}
-                    onChange={(e) => setAiHighlights(e.target.value)}
-                    placeholder="e.g. Achieved 42ms checkout latency under heavy simulation. Zero lost transactions over 4-hour simulated network outage."
-                    className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white rounded-xl p-3 outline-none"
-                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAiGeneratorMode('think-academy');
+                      playSound('droplet');
+                    }}
+                    className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      aiGeneratorMode === 'think-academy'
+                        ? 'bg-amber-950/80 text-amber-200 border border-amber-600/70 shadow'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    <span>Think Academy (Obitt)</span>
+                  </button>
                 </div>
               </div>
+
+              {aiGeneratorMode === 'think-academy' ? (
+                /* THINK ACADEMY AI GENERATOR FIELDS */
+                <div className="p-5 sm:p-6 space-y-4 text-xs">
+                  <div className="bg-amber-950/40 p-3.5 rounded-xl border border-amber-700/40 text-amber-200/90 text-xs">
+                    Generate an in-depth technical monograph authored by Obitt for Think Academy, focusing on mental models, distributed architecture, and first principles.
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="font-semibold text-gray-300">Author Name *</label>
+                      <input
+                        type="text"
+                        value={aiThinkAuthorName}
+                        onChange={(e) => setAiThinkAuthorName(e.target.value)}
+                        placeholder="e.g. Obitt"
+                        className="w-full bg-[#100e17] border border-[#332d47] focus:border-amber-400 text-white rounded-xl px-3 py-2 outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-semibold text-gray-300">Author Designation</label>
+                      <input
+                        type="text"
+                        value={aiThinkAuthorRole}
+                        onChange={(e) => setAiThinkAuthorRole(e.target.value)}
+                        placeholder="e.g. Founder & Lead Researcher, Think Academy"
+                        className="w-full bg-[#100e17] border border-[#332d47] focus:border-amber-400 text-white rounded-xl px-3 py-2 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-semibold text-gray-300">Monograph Research Topic / Concept *</label>
+                    <input
+                      type="text"
+                      value={aiThinkTopic}
+                      onChange={(e) => setAiThinkTopic(e.target.value)}
+                      placeholder="e.g. Distributed State Invariants, Reactive Event Sourcing & Architectural Simplicity"
+                      className="w-full bg-[#100e17] border border-[#332d47] focus:border-amber-400 text-white rounded-xl px-3 py-2 outline-none font-medium"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-semibold text-gray-300">Technical Domain / Category</label>
+                    <select
+                      value={aiThinkCategory}
+                      onChange={(e) => setAiThinkCategory(e.target.value)}
+                      className="w-full bg-[#100e17] border border-[#332d47] focus:border-amber-400 text-white text-xs rounded-xl px-3 py-2 outline-none"
+                    >
+                      <option value="Distributed Systems">Distributed Systems & Backend Engineering</option>
+                      <option value="Software Architecture">Software Architecture & Mental Models</option>
+                      <option value="Web Engineering">Full-Stack Web Engineering</option>
+                      <option value="Artificial Intelligence">Applied AI & Cognitive Systems</option>
+                      <option value="DevOps & Reliability">Site Reliability & Cloud Infrastructure</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-semibold text-gray-300">Key Principles & Philosophical Pillars (Optional)</label>
+                    <textarea
+                      rows={3}
+                      value={aiThinkHighlights}
+                      onChange={(e) => setAiThinkHighlights(e.target.value)}
+                      placeholder="e.g. Avoid unnecessary microservices; treat database as immutable append-only log; prioritize deterministic state transitions."
+                      className="w-full bg-[#100e17] border border-[#332d47] focus:border-amber-400 text-white rounded-xl p-3 outline-none"
+                    />
+                  </div>
+                </div>
+              ) : (
+                /* STUDENT CAPSTONE AI GENERATOR FIELDS */
+                <div className="p-5 sm:p-6 space-y-4 text-xs">
+                  {/* Select from existing students */}
+                  <div className="space-y-1.5">
+                    <label className="font-semibold text-gray-200 block">
+                      Choose Certified Orbit Space Student:
+                    </label>
+                    <select
+                      value={aiStudentCertId}
+                      onChange={(e) => handleSelectAiStudentCert(e.target.value)}
+                      className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white text-xs rounded-xl px-3 py-2.5 outline-none font-mono"
+                    >
+                      <option value="">-- Choose certified student to auto-fill details --</option>
+                      {certificates.map(cert => (
+                        <option key={cert.id} value={cert.id}>
+                          {cert.studentName} — {cert.course} ({cert.id})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="font-semibold text-gray-300">Student Author Name *</label>
+                      <input
+                        type="text"
+                        value={aiStudentName}
+                        onChange={(e) => setAiStudentName(e.target.value)}
+                        placeholder="e.g. Michael Adebayo"
+                        className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white rounded-xl px-3 py-2 outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-semibold text-gray-300">Academic Track *</label>
+                      <input
+                        type="text"
+                        value={aiCourseTrack}
+                        onChange={(e) => setAiCourseTrack(e.target.value)}
+                        placeholder="e.g. Full-Stack Web Development"
+                        className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white rounded-xl px-3 py-2 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-semibold text-gray-300">Capstone Project Title *</label>
+                    <input
+                      type="text"
+                      value={aiProjectTitle}
+                      onChange={(e) => setAiProjectTitle(e.target.value)}
+                      placeholder="e.g. Real-Time Microservices Inventory Sync Platform"
+                      className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white rounded-xl px-3 py-2 outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="font-semibold text-gray-300">Supervising Tutor</label>
+                      <input
+                        type="text"
+                        value={aiTutorName}
+                        onChange={(e) => setAiTutorName(e.target.value)}
+                        placeholder="e.g. Engr. David Babatunde"
+                        className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white rounded-xl px-3 py-2 outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-semibold text-gray-300">Supervisor Designation</label>
+                      <input
+                        type="text"
+                        value={aiTutorRole}
+                        onChange={(e) => setAiTutorRole(e.target.value)}
+                        placeholder="e.g. Principal Web Architecture Fellow"
+                        className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white rounded-xl px-3 py-2 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-semibold text-gray-300">Key Technical Milestones (Optional)</label>
+                    <textarea
+                      rows={3}
+                      value={aiHighlights}
+                      onChange={(e) => setAiHighlights(e.target.value)}
+                      placeholder="e.g. Achieved 42ms checkout latency under heavy simulation. Zero lost transactions over 4-hour simulated network outage."
+                      className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white rounded-xl p-3 outline-none"
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="p-4 sm:p-5 border-t border-[#332d47] bg-[#14121d] flex items-center justify-between">
                 <button
                   type="button"
                   onClick={() => setIsAiGeneratorOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-[#100e17] text-gray-300 text-xs font-semibold"
+                  className="px-4 py-2 rounded-xl bg-[#100e17] text-gray-300 text-xs font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1386,10 +1721,13 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
                 <button
                   type="button"
                   onClick={handleExecuteAiGenerate}
-                  className="btn-purple px-5 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-lg"
+                  className={`px-5 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-lg transition-all cursor-pointer ${
+                    aiGeneratorMode === 'think-academy'
+                      ? 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white'
+                      : 'btn-purple'
+                  }`}
                 >
-                  <Sparkles className="w-4 h-4 text-purple-200" />
-                  <span>Generate Technical Article</span>
+                  <span>{aiGeneratorMode === 'think-academy' ? 'Generate Think Academy Monograph' : 'Generate Student Article'}</span>
                 </button>
               </div>
             </motion.div>

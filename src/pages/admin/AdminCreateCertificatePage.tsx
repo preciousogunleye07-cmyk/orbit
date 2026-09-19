@@ -20,7 +20,7 @@ import {
   FileCheck,
   Mail,
   FileSpreadsheet,
-  Sparkles
+  RefreshCw
 } from 'lucide-react';
 import { 
   createCertificateAsync, 
@@ -512,7 +512,7 @@ export const AdminCreateCertificatePage: React.FC<AdminCreateCertificatePageProp
                 }}
                 className="px-4 py-2.5 rounded-xl bg-purple-900/60 hover:bg-purple-800/80 text-white text-xs font-semibold flex items-center gap-1.5 shrink-0 cursor-pointer border border-purple-600/50"
               >
-                <Sparkles className="w-3.5 h-3.5 text-purple-300" />
+                <RefreshCw className="w-3.5 h-3.5 text-purple-300" />
                 <span>Re-Apply</span>
               </button>
             )}

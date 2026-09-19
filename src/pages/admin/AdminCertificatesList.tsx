@@ -17,7 +17,6 @@ import {
   CheckSquare,
   Square,
   Layers,
-  Sparkles,
   Mail,
   Check
 } from 'lucide-react';

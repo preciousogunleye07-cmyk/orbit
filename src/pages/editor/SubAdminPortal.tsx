@@ -8,7 +8,6 @@ import {
   Shield, 
   ShieldCheck, 
   User, 
-  Sparkles, 
   ExternalLink,
   CheckCircle2,
   Clock,

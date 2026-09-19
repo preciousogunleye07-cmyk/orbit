@@ -147,10 +147,6 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
                   <h1 className="text-sm sm:text-base font-semibold text-[#ffffff] font-sans tracking-tight">
                     Orbit Space Admin Portal
                   </h1>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    System Online
-                  </span>
                 </div>
                 <p className="text-[11px] text-[#c4c7c8] font-light hidden sm:block">
                   Student credentials, live SheetDB synchronization, and timetable manager.

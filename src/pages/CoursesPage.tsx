@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { COURSES_DATA } from '../data/coursesData';
 import { ActiveModal } from '../types';
-import { Search, Sparkles, Clock, CheckCircle2, ArrowRight, ShieldAlert, BarChart3, Code2, Server, Layers, Layout, Video, Bot, Camera } from 'lucide-react';
+import { Search, Clock, CheckCircle2, ArrowRight, ShieldAlert, BarChart3, Code2, Server, Layers, Layout, Video, Bot, Camera } from 'lucide-react';
 
 interface CoursesPageProps {
   setActiveModal: (modal: ActiveModal) => void;
@@ -30,7 +30,6 @@ export const CoursesPage: React.FC<CoursesPageProps> = ({ setActiveModal }) => {
       case 'Server': return <Server className="w-5 h-5 text-[#ffffff]" />;
       case 'Layers': return <Layers className="w-5 h-5 text-[#ffffff]" />;
       case 'Layout': return <Layout className="w-5 h-5 text-[#ffffff]" />;
-      case 'Sparkles': return <Sparkles className="w-5 h-5 text-[#ffffff]" />;
       case 'Video': return <Video className="w-5 h-5 text-[#ffffff]" />;
       case 'Bot': return <Bot className="w-5 h-5 text-[#ffffff]" />;
       case 'Camera': return <Camera className="w-5 h-5 text-[#ffffff]" />;

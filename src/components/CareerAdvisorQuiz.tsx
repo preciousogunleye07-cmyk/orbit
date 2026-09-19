@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Compass, Sparkles, ArrowRight, RotateCcw } from 'lucide-react';
+import { Compass, ArrowRight, RotateCcw } from 'lucide-react';
 import { COURSES_DATA } from '../data/coursesData';
 import { Course, ActiveModal } from '../types';
 import { playSound } from '../utils/soundEffects';
@@ -176,7 +176,7 @@ export const CareerAdvisorQuiz: React.FC<CareerAdvisorQuizProps> = ({ setActiveM
                 className="text-center py-4"
               >
                 <span className="inline-flex items-center gap-1.5 px-4 py-1 rounded-full bg-[#1f1b2e] border border-[#332d47] text-[#a855f7] text-xs font-mono uppercase tracking-wider mb-4 font-semibold">
-                  <Sparkles className="w-3.5 h-3.5 text-[#a855f7]" />
+                  <Compass className="w-3.5 h-3.5 text-[#a855f7]" />
                   Recommended Match
                 </span>
                 

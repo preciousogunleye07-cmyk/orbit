@@ -8,7 +8,6 @@ import {
   User, 
   MapPin, 
   Tag, 
-  Sparkles, 
   Check, 
   AlertCircle 
 } from 'lucide-react';
@@ -439,7 +438,7 @@ export const EditTimetableSlotModal: React.FC<EditTimetableSlotModalProps> = ({
 
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-[#c4c7c8] flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-[#a855f7]" />
+                <Tag className="w-3.5 h-3.5 text-[#a855f7]" />
                 <span>Focus Badge / Topic Tag</span>
               </label>
               <input

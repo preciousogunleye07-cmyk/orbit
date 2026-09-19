@@ -57,6 +57,8 @@
         "status": { "type": "string", "description": "published or draft" },
         "publishedAt": { "type": "string", "description": "Publication date" },
         "deployedBy": { "type": "string", "description": "Name and role of publisher" },
+        "authorType": { "type": "string", "description": "student or think-academy" },
+        "thinkAcademyAuthor": { "type": "string", "description": "JSON string of Think Academy author profile (name, role, bio, institution)" },
         "studentAuthors": { "type": "string", "description": "JSON string of student author records and linked certificate IDs" },
         "supervisingTutor": { "type": "string", "description": "Supervising tutor name and designation" },
         "tags": { "type": "string", "description": "Comma-separated search tags" },

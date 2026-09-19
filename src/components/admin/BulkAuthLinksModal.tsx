@@ -11,7 +11,6 @@ import {
   FileText, 
   Link as LinkIcon, 
   Download, 
-  Sparkles, 
   Mail, 
   Calendar, 
   Award, 
@@ -354,7 +353,6 @@ export const BulkAuthLinksModal: React.FC<BulkAuthLinksModalProps> = ({
             >
               <span className="w-4 h-4 rounded-full bg-white/20 text-[10px] flex items-center justify-center font-bold">3</span>
               <span>Format & Preview</span>
-              <Sparkles className="w-3 h-3 text-purple-300" />
             </button>
           </div>
 
@@ -883,8 +881,7 @@ export const BulkAuthLinksModal: React.FC<BulkAuthLinksModalProps> = ({
           {/* Quick Preview at bottom of Tab 1 & 2 for instant feedback */}
           {activeTab !== 'preview' && (
             <div className="bg-[#120f1d] p-3.5 rounded-xl border border-[#2d2740] flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center gap-2 text-xs text-[#cbd5e1]">
-                <Sparkles className="w-4 h-4 text-purple-400 shrink-0" />
+              <div className="text-xs text-[#cbd5e1]">
                 <span>
                   Format:{' '}
                   <strong className="text-white capitalize">{format.replace('-', ' ')}</strong>

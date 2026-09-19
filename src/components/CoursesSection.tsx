@@ -11,7 +11,6 @@ import {
   Server, 
   Layers, 
   Layout, 
-  Sparkles, 
   Clock, 
   ArrowRight, 
   Search,
@@ -77,7 +76,6 @@ export const CoursesSection: React.FC<CoursesSectionProps> = ({ setActiveModal }
       case 'Server': return <Server className="w-5 h-5 text-[#a855f7]" />;
       case 'Layers': return <Layers className="w-5 h-5 text-[#a855f7]" />;
       case 'Layout': return <Layout className="w-5 h-5 text-[#a855f7]" />;
-      case 'Sparkles': return <Sparkles className="w-5 h-5 text-[#a855f7]" />;
       case 'Video': return <Video className="w-5 h-5 text-[#a855f7]" />;
       case 'Bot': return <Bot className="w-5 h-5 text-[#a855f7]" />;
       case 'Camera': return <Camera className="w-5 h-5 text-[#a855f7]" />;
@@ -86,7 +84,7 @@ export const CoursesSection: React.FC<CoursesSectionProps> = ({ setActiveModal }
   };
 
   const CATEGORIES: { id: string; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-    { id: 'all', label: 'All Tracks', icon: Sparkles },
+    { id: 'all', label: 'All Tracks', icon: Layers },
     { id: 'development', label: 'Development', icon: Code2 },
     { id: 'security', label: 'Cybersecurity', icon: ShieldAlert },
     { id: 'data', label: 'Data Analysis', icon: BarChart3 },

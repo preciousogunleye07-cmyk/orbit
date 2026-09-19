@@ -190,15 +190,26 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
         {/* Article Meta Header */}
         <header className="space-y-4">
           <div className="flex items-center gap-2.5 flex-wrap">
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#221c35] text-[#c084fc] border border-purple-800/50">
-              {article.category}
-            </span>
+            {article.authorType === 'think-academy' ? (
+              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-950/80 text-amber-300 border border-amber-600/50 shadow-sm">
+                Think Academy Monograph
+              </span>
+            ) : (
+              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#221c35] text-[#c084fc] border border-purple-800/50">
+                {article.category}
+              </span>
+            )}
             <span className="text-xs text-[#8e8a9f] font-mono flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5 text-[#a855f7]" /> {article.publishedAt}
             </span>
             <span className="text-xs text-[#8e8a9f] font-mono flex items-center gap-1">
               <Clock className="w-3.5 h-3.5 text-[#a855f7]" /> {article.readTime}
             </span>
+            {article.authorType === 'think-academy' && (
+              <span className="text-xs font-mono text-amber-300/90 flex items-center gap-1">
+                <User className="w-3.5 h-3.5 text-amber-400" /> Authored by {article.thinkAcademyAuthor?.name || 'Obitt'}
+              </span>
+            )}
           </div>
 
           <h1 className="text-2xl sm:text-4xl lg:text-5xl font-serif text-white font-normal leading-tight tracking-tight">
@@ -219,92 +230,157 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
           />
         </div>
 
-        {/* CRITICAL FEATURE: BI-DIRECTIONAL STUDENT AUTHOR & TUTOR LINKING BOX */}
-        <div className="bg-[#181524] rounded-[28px] p-5 sm:p-7 border border-purple-800/40 shadow-xl space-y-5">
-          <div className="flex items-center justify-between pb-3 border-b border-[#2e2645]">
-            <div className="flex items-center gap-2">
-              <Award className="w-4 h-4 text-[#c084fc]" />
+        {/* AUTHORSHIP PRESENTATION */}
+        {article.authorType === 'think-academy' ? (
+          <div className="bg-gradient-to-br from-[#1b1528] to-[#120f1c] rounded-[28px] p-5 sm:p-7 border border-amber-600/40 shadow-xl space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-amber-900/30">
               <span className="text-xs sm:text-sm font-semibold text-white">
-                Academic Capstone Research Authorship
+                Think Academy Monograph & Faculty Publication
+              </span>
+              <span className="text-[10px] font-mono text-amber-300 bg-amber-950/70 px-2.5 py-0.5 rounded-full border border-amber-700/50 flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-amber-400" />
+                Verified Think Academy Editorial
               </span>
             </div>
-            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-800/40 flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3" />
-              Verified Orbit Space Research
-            </span>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Student Author Card */}
-            {primaryStudent ? (
-              <div className="bg-[#100e17] rounded-2xl p-4 border border-[#332d47] space-y-3 flex flex-col justify-between">
-                <div className="space-y-1">
-                  <span className="text-[10px] font-mono uppercase text-[#a855f7] tracking-wider block">
-                    Student Author & Alum
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Think Academy Author Card */}
+              <div className="bg-[#100e17] rounded-2xl p-5 border border-amber-900/30 space-y-3 flex flex-col justify-between">
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-mono uppercase text-amber-400 tracking-wider font-semibold block">
+                    Author & Think Academy Lead
                   </span>
-                  <h4 className="text-base font-semibold text-white">
-                    {primaryStudent.name}
+                  <h4 className="text-lg font-serif font-semibold text-white">
+                    {article.thinkAcademyAuthor?.name || 'Obitt'}
                   </h4>
-                  {primaryStudent.courseTrack && (
-                    <p className="text-xs text-[#c4c7c8]">
-                      Track: {primaryStudent.courseTrack}
-                    </p>
-                  )}
-                  {primaryStudent.projectTitle && (
-                    <p className="text-xs text-[#8e8a9f] italic">
-                      Project: "{primaryStudent.projectTitle}"
-                    </p>
-                  )}
+                  <p className="text-xs text-amber-200/90 font-medium">
+                    {article.thinkAcademyAuthor?.role || 'Founder & Lead Researcher, Think Academy'}
+                  </p>
+                  <p className="text-xs text-[#a39ebb] font-light leading-relaxed pt-1">
+                    {article.thinkAcademyAuthor?.bio || 'Author of foundational engineering monographs and mental models at Think Academy, focused on first-principles thinking and distributed computing.'}
+                  </p>
                 </div>
 
-                {primaryStudent.certificateId ? (
-                  <button
-                    onClick={() => {
-                      playSound('sparkle');
-                      onNavigateToCertificate(primaryStudent.certificateId!);
-                    }}
-                    className="w-full mt-2 py-2.5 px-3 rounded-xl bg-purple-950/70 hover:bg-purple-900 border border-purple-700/60 hover:border-purple-400 text-[#c084fc] hover:text-white text-xs font-mono font-medium flex items-center justify-center gap-2 transition-all cursor-pointer"
-                  >
-                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                    <span>Verify Official Certificate #{primaryStudent.certificateId}</span>
-                    <ExternalLink className="w-3.5 h-3.5 ml-1" />
-                  </button>
-                ) : (
-                  <div className="text-[11px] text-[#8e8a9f] font-mono pt-1">
-                    Orbit Space Certified Program Alum
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="bg-[#100e17] rounded-2xl p-4 border border-[#332d47] space-y-2">
-                <span className="text-[10px] font-mono uppercase text-[#a855f7] block">Authorship</span>
-                <h4 className="text-sm font-semibold text-white">Orbit Space Editorial Team</h4>
-              </div>
-            )}
-
-            {/* Supervising Tutor Card */}
-            <div className="bg-[#100e17] rounded-2xl p-4 border border-[#332d47] space-y-2 flex flex-col justify-between">
-              <div className="space-y-1">
-                <span className="text-[10px] font-mono uppercase text-[#a855f7] tracking-wider block">
-                  Supervising Faculty / Tutor
-                </span>
-                <h4 className="text-base font-semibold text-white">
-                  {article.supervisingTutor?.name || 'Orbit Space Academic Mentor'}
-                </h4>
-                <p className="text-xs text-[#c4c7c8]">
-                  {article.supervisingTutor?.role || 'Senior Academic & Research Supervisor'}
-                </p>
+                <div className="pt-3 border-t border-[#252033] flex items-center justify-between text-[11px] text-[#8e8a9f]">
+                  <span className="flex items-center gap-1.5 font-mono text-gray-300">
+                    <Building className="w-3.5 h-3.5 text-amber-400" />
+                    {article.thinkAcademyAuthor?.institution || 'Think Academy'}
+                  </span>
+                  <span className="text-amber-400 font-mono text-[10px]">Author: Obitt</span>
+                </div>
               </div>
 
-              <div className="pt-2 border-t border-[#29233b] flex items-center justify-between text-[11px] text-[#8e8a9f]">
-                <span className="flex items-center gap-1 font-mono">
-                  <Building className="w-3 h-3 text-[#a855f7]" /> Orbit Space Academia
-                </span>
-                <span className="text-[#a855f7] font-medium">Faculty Review Board</span>
+              {/* Think Academy Editorial Standards Card */}
+              <div className="bg-[#100e17] rounded-2xl p-5 border border-amber-900/30 space-y-3 flex flex-col justify-between">
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-mono uppercase text-[#c084fc] tracking-wider font-semibold block">
+                    Editorial Standards & Academic Rigor
+                  </span>
+                  <h4 className="text-base font-semibold text-white">
+                    Think Academy Monograph Series
+                  </h4>
+                  <p className="text-xs text-[#c4c7c8] font-light leading-relaxed">
+                    Think Academy monographs provide deep-dive technical explorations written directly by Obitt and senior faculty fellows. These publications establish engineering standards and mental models for students and developers.
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-[#252033] flex items-center justify-between text-[11px] text-[#8e8a9f]">
+                  <span className="flex items-center gap-1 font-mono">
+                    <Building className="w-3.5 h-3.5 text-[#a855f7]" /> Think Academy Publications
+                  </span>
+                  <span className="text-purple-400 font-medium font-mono text-[10px]">Open Access</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        ) : (
+          /* STUDENT AUTHOR & TUTOR LINKING BOX */
+          <div className="bg-[#181524] rounded-[28px] p-5 sm:p-7 border border-purple-800/40 shadow-xl space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-[#2e2645]">
+              <div className="flex items-center gap-2">
+                <Award className="w-4 h-4 text-[#c084fc]" />
+                <span className="text-xs sm:text-sm font-semibold text-white">
+                  Academic Capstone Research Authorship
+                </span>
+              </div>
+              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-800/40 flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3" />
+                Verified Orbit Space Research
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Student Author Card */}
+              {primaryStudent ? (
+                <div className="bg-[#100e17] rounded-2xl p-4 border border-[#332d47] space-y-3 flex flex-col justify-between">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-mono uppercase text-[#a855f7] tracking-wider block">
+                      Student Author & Alum
+                    </span>
+                    <h4 className="text-base font-semibold text-white">
+                      {primaryStudent.name}
+                    </h4>
+                    {primaryStudent.courseTrack && (
+                      <p className="text-xs text-[#c4c7c8]">
+                        Track: {primaryStudent.courseTrack}
+                      </p>
+                    )}
+                    {primaryStudent.projectTitle && (
+                      <p className="text-xs text-[#8e8a9f] italic">
+                        Project: "{primaryStudent.projectTitle}"
+                      </p>
+                    )}
+                  </div>
+
+                  {primaryStudent.certificateId ? (
+                    <button
+                      onClick={() => {
+                        playSound('sparkle');
+                        onNavigateToCertificate(primaryStudent.certificateId!);
+                      }}
+                      className="w-full mt-2 py-2.5 px-3 rounded-xl bg-purple-950/70 hover:bg-purple-900 border border-purple-700/60 hover:border-purple-400 text-[#c084fc] hover:text-white text-xs font-mono font-medium flex items-center justify-center gap-2 transition-all cursor-pointer"
+                    >
+                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                      <span>Verify Official Certificate #{primaryStudent.certificateId}</span>
+                      <ExternalLink className="w-3.5 h-3.5 ml-1" />
+                    </button>
+                  ) : (
+                    <div className="text-[11px] text-[#8e8a9f] font-mono pt-1">
+                      Orbit Space Certified Program Alum
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-[#100e17] rounded-2xl p-4 border border-[#332d47] space-y-2">
+                  <span className="text-[10px] font-mono uppercase text-[#a855f7] block">Authorship</span>
+                  <h4 className="text-sm font-semibold text-white">Orbit Space Editorial Team</h4>
+                </div>
+              )}
+
+              {/* Supervising Tutor Card */}
+              <div className="bg-[#100e17] rounded-2xl p-4 border border-[#332d47] space-y-2 flex flex-col justify-between">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-mono uppercase text-[#a855f7] tracking-wider block">
+                    Supervising Faculty / Tutor
+                  </span>
+                  <h4 className="text-base font-semibold text-white">
+                    {article.supervisingTutor?.name || 'Orbit Space Academic Mentor'}
+                  </h4>
+                  <p className="text-xs text-[#c4c7c8]">
+                    {article.supervisingTutor?.role || 'Senior Academic & Research Supervisor'}
+                  </p>
+                </div>
+
+                <div className="pt-2 border-t border-[#29233b] flex items-center justify-between text-[11px] text-[#8e8a9f]">
+                  <span className="flex items-center gap-1 font-mono">
+                    <Building className="w-3 h-3 text-[#a855f7]" /> Orbit Space Academia
+                  </span>
+                  <span className="text-[#a855f7] font-medium">Faculty Review Board</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Main Article Body Text */}
         <section className="bg-[#181524] rounded-[28px] p-6 sm:p-10 border border-[#332d47] shadow-xl text-white">
