@@ -16,6 +16,9 @@ import { TimetablePage } from './pages/TimetablePage';
 import { AdminLoginPage } from './pages/admin/AdminLoginPage';
 import { AdminDashboardLayout } from './pages/admin/AdminDashboardLayout';
 import { PublicCertificatePage } from './pages/PublicCertificatePage';
+import { ArticlesPage } from './pages/ArticlesPage';
+import { ArticleDetailPage } from './pages/ArticleDetailPage';
+import { SubAdminPortal } from './pages/editor/SubAdminPortal';
 
 import { EnrollModal } from './components/modals/EnrollModal';
 import { SIWESModal } from './components/modals/SIWESModal';
@@ -37,13 +40,17 @@ import {
 } from './services/certificateService';
 import { canAccessAdminPortal } from './utils/adminSecurity';
 import { LocalAdminSecurityGate } from './components/admin/LocalAdminSecurityGate';
+import { isSubAdminPath, isObviousPredictablePath } from './utils/subAdminRoute';
 
 const MAIN_PAGES = ['home', 'courses', 'timetable', 'siwes', 'workspace', 'quiz', 'about', 'contact'];
 
 type RouteState = 
   | { mode: 'main'; page: string }
+  | { mode: 'articles' }
+  | { mode: 'article-detail'; slug: string }
+  | { mode: 'sub-admin' }
   | { mode: 'admin-login' }
-  | { mode: 'admin-dashboard'; subTab?: 'overview' | 'directory' | 'create' }
+  | { mode: 'admin-dashboard'; subTab?: 'overview' | 'directory' | 'create' | 'articles' }
   | { mode: 'admin-blocked' }
   | { mode: 'public-certificate'; authId: string };
 
@@ -130,6 +137,27 @@ function parsePathToRoute(path: string): RouteState {
     return { mode: 'admin-login' };
   }
 
+  // Sub-admin editorial portal (Protected by unguessable custom gateway slug)
+  if (isSubAdminPath(cleanPath)) {
+    return { mode: 'sub-admin' };
+  }
+
+  // Conceal and block predictable routes (/editor, /sub-admin, etc.) from casual discovery
+  if (isObviousPredictablePath(cleanPath)) {
+    return { mode: 'main', page: 'home' };
+  }
+
+  // Articles & Technical Research Papers
+  if (lowerPath === 'articles' || lowerPath === 'research' || lowerPath === 'papers') {
+    return { mode: 'articles' };
+  }
+
+  if (lowerPath.startsWith('articles/') || lowerPath.startsWith('research/')) {
+    const slashIdx = cleanPath.indexOf('/');
+    const slug = cleanPath.substring(slashIdx + 1).trim();
+    return { mode: 'article-detail', slug };
+  }
+
   // Main site pages
   if (MAIN_PAGES.includes(lowerPath)) {
     return { mode: 'main', page: lowerPath };
@@ -162,7 +190,9 @@ const PAGE_TITLES: Record<string, string> = {
   workspace: 'Coworking Space & Passes | Orbit Space Academia',
   quiz: 'Tech Career Advisor Quiz | Orbit Space Academia',
   about: 'About Orbit Space | Tech Hub in Ilorin',
-  contact: 'Contact Us & Location | Orbit Space Academia'
+  contact: 'Contact Us & Location | Orbit Space Academia',
+  articles: 'Technical Research & Capstone Articles | Orbit Space Academia',
+  'sub-admin': 'Editorial & Sub-Admin Studio | Orbit Space'
 };
 
 export default function App() {
@@ -199,6 +229,12 @@ export default function App() {
 
     if (newRoute.mode === 'main' && PAGE_TITLES[newRoute.page]) {
       document.title = PAGE_TITLES[newRoute.page];
+    } else if (newRoute.mode === 'articles') {
+      document.title = PAGE_TITLES['articles'];
+    } else if (newRoute.mode === 'article-detail') {
+      document.title = `Research Article | Orbit Space Academia`;
+    } else if (newRoute.mode === 'sub-admin') {
+      document.title = PAGE_TITLES['sub-admin'];
     } else if (newRoute.mode === 'admin-login' || newRoute.mode === 'admin-dashboard') {
       document.title = 'Certificate Authentication Admin | Orbit Space';
     } else if (newRoute.mode === 'public-certificate') {
@@ -216,12 +252,18 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#141313] text-[#e5e2e1] font-sans selection:bg-[#353434] selection:text-white flex flex-col justify-between overflow-x-hidden">
       
-      {/* Show Main Navbar only when on Main site pages */}
-      {route.mode === 'main' && (
+      {/* Show Main Navbar on Main site pages, Articles directory, and Article detail pages */}
+      {(route.mode === 'main' || route.mode === 'articles' || route.mode === 'article-detail') && (
         <Navbar
           setActiveModal={setActiveModal}
-          currentPage={route.page}
-          setCurrentPage={(p) => navigateTo(p === 'home' ? '/' : `/${p}`)}
+          currentPage={route.mode === 'articles' || route.mode === 'article-detail' ? 'articles' : route.page}
+          setCurrentPage={(p) => {
+            if (p === 'articles') {
+              navigateTo('/articles');
+            } else {
+              navigateTo(p === 'home' ? '/' : `/${p}`);
+            }
+          }}
         />
       )}
 
@@ -266,7 +308,61 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* 2. Admin Blocked Route (When accessed non-locally) */}
+          {/* 2. Public Articles Directory */}
+          {route.mode === 'articles' && (
+            <motion.div
+              key="articles-directory"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="w-full pt-20"
+            >
+              <ArticlesPage
+                onSelectArticle={(slug) => navigateTo(`/articles/${slug}`)}
+                onNavigateToCertificate={(certId) => navigateTo(`/${certId}`)}
+              />
+            </motion.div>
+          )}
+
+          {/* 3. Public Article Detail Page */}
+          {route.mode === 'article-detail' && (
+            <motion.div
+              key={`article-${route.slug}`}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="w-full pt-20"
+            >
+              <ArticleDetailPage
+                slug={route.slug}
+                onBack={() => navigateTo('/articles')}
+                onNavigateToCertificate={(certId) => navigateTo(`/${certId}`)}
+                onSelectArticle={(slug) => navigateTo(`/articles/${slug}`)}
+              />
+            </motion.div>
+          )}
+
+          {/* 4. Sub-Admin Editorial Portal (Accessible from anywhere without localhost block) */}
+          {route.mode === 'sub-admin' && (
+            <motion.div
+              key="sub-admin-portal"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="w-full"
+            >
+              <SubAdminPortal
+                onNavigateHome={() => navigateTo('/')}
+                onOpenArticle={(slug) => navigateTo(`/articles/${slug}`)}
+                onOpenCertificate={(certId) => navigateTo(`/${certId}`)}
+              />
+            </motion.div>
+          )}
+
+          {/* 5. Admin Blocked Route (When accessed non-locally) */}
           {route.mode === 'admin-blocked' && (
             <motion.div
               key="admin-blocked"
@@ -283,7 +379,7 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* 3. Admin Login Page (Localhost Only) */}
+          {/* 6. Admin Login Page (Localhost Only) */}
           {route.mode === 'admin-login' && (
             <motion.div
               key="admin-login"
@@ -307,7 +403,7 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* 4. Admin Dashboard (Protected Route - Localhost Only) */}
+          {/* 7. Admin Dashboard (Protected Route - Localhost Only) */}
           {route.mode === 'admin-dashboard' && (
             <motion.div
               key="admin-dashboard"
@@ -338,7 +434,7 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* 4. Public Certificate Authentication Page */}
+          {/* 8. Public Certificate Authentication Page */}
           {route.mode === 'public-certificate' && (
             <motion.div
               key={`public-cert-${route.authId}`}
@@ -352,6 +448,7 @@ export default function App() {
                 authId={route.authId}
                 onNavigateHome={() => navigateTo('/')}
                 onSearchNewId={(newId) => navigateTo(`/${newId}`)}
+                onNavigateToArticle={(slug) => navigateTo(`/articles/${slug}`)}
               />
             </motion.div>
           )}
@@ -359,11 +456,17 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      {/* Show Main Footer only on Main site pages */}
-      {route.mode === 'main' && (
+      {/* Show Main Footer on Main site pages, Articles directory, and Article details */}
+      {(route.mode === 'main' || route.mode === 'articles' || route.mode === 'article-detail') && (
         <FooterSection
           setActiveModal={setActiveModal}
-          setCurrentPage={(p) => navigateTo(`/${p}`)}
+          setCurrentPage={(p) => {
+            if (p === 'articles') {
+              navigateTo('/articles');
+            } else {
+              navigateTo(`/${p}`);
+            }
+          }}
         />
       )}
 

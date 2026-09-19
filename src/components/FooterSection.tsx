@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActiveModal } from '../types';
-import { MapPin, MessageCircle, Instagram, Linkedin, Video, Shield, ShieldCheck } from 'lucide-react';
+import { MapPin, MessageCircle, Instagram, Linkedin, Video, Shield, ShieldCheck, FileText, PenTool } from 'lucide-react';
 import { OrbitLogo } from './OrbitLogo';
 import { playSound } from '../utils/soundEffects';
 import { canAccessAdminPortal } from '../utils/adminSecurity';
@@ -123,6 +123,15 @@ export const FooterSection: React.FC<FooterSectionProps> = ({ setActiveModal, se
                   className="hover:text-[#a855f7] transition-colors"
                 >
                   Contact Us
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => navigateToPage('articles')}
+                  className="text-purple-300 hover:text-white transition-colors flex items-center gap-1.5"
+                >
+                  <FileText className="w-3.5 h-3.5 text-[#a855f7]" />
+                  <span>Articles & Research</span>
                 </button>
               </li>
               <li className="pt-2 border-t border-[#332d47]">

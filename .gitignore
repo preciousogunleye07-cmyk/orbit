@@ -1,4 +1,4 @@
-# Environment files & secrets
+# Environment variables & secrets
 .env
 .env.*
 .env.local
@@ -29,8 +29,20 @@ node_modules/
 dist/
 dist-ssr/
 build/
+out/
 coverage/
 .nyc_output/
+
+# Cache & temporary files
+.cache/
+.vite/
+*.tsbuildinfo
+.eslintcache
+.turbo/
+*.tmp
+*.bak
+*.swp
+*.swo
 
 # Logs
 logs/
@@ -49,7 +61,6 @@ lerna-debug.log*
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
 
 # OS generated files
 .DS_Store
@@ -59,5 +70,6 @@ lerna-debug.log*
 .Trashes
 ehthumbs.db
 Thumbs.db
+
 
 

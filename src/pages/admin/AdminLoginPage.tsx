@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { ShieldCheck, Eye, EyeOff, Lock, Mail, ArrowRight, Loader2, AlertCircle, AlertTriangle, ShieldAlert, Timer } from 'lucide-react';
-import { loginAdmin, getLoginRateLimitInfo, LoginRateLimitInfo, MAX_LOGIN_ATTEMPTS } from '../../services/certificateService';
+import { ShieldCheck, Eye, EyeOff, Lock, Mail, ArrowRight, Loader2, AlertCircle, AlertTriangle, ShieldAlert, Timer, RotateCcw } from 'lucide-react';
+import { loginAdmin, getLoginRateLimitInfo, resetLoginRateLimit, LoginRateLimitInfo, MAX_LOGIN_ATTEMPTS } from '../../services/certificateService';
 import { OrbitLogo } from '../../components/OrbitLogo';
 import { playSound } from '../../utils/soundEffects';
 
@@ -135,6 +135,20 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onNav
                 <span className="px-2.5 py-1 rounded-md bg-black/40 font-bold text-rose-300 tracking-wider">
                   {formatLockoutTime(rateLimit.remainingLockoutSeconds)}
                 </span>
+              </div>
+              <div className="pt-1 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetLoginRateLimit();
+                    setRateLimit(getLoginRateLimitInfo());
+                    setError(null);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-900/60 hover:bg-rose-800 text-rose-200 text-[11px] font-mono transition-colors cursor-pointer border border-rose-700/50"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Reset Lockout</span>
+                </button>
               </div>
             </motion.div>
           ) : error ? (

@@ -13,7 +13,9 @@ import {
   Building2,
   Sparkles,
   Info,
-  ChevronRight
+  ChevronRight,
+  FileText,
+  PenTool
 } from 'lucide-react';
 import { ActiveModal } from '../types';
 import { GooeyNav, GooeyNavItem } from './GooeyNav';
@@ -63,6 +65,7 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
   const mobileNavItems = [
     { id: 'home', label: 'Home', subtitle: 'Overview & Highlights', icon: Home },
     { id: 'courses', label: 'Courses Catalog', subtitle: 'Practical Tech Tracks', icon: BookOpen },
+    { id: 'articles', label: 'Research & Articles', subtitle: 'Student Engineering Papers & Capstones', icon: FileText },
     { id: 'timetable', label: 'Class Timetable', subtitle: 'Weekly Schedules & Batches', icon: Calendar },
     { id: 'siwes', label: 'SIWES Placement', subtitle: 'Internships & Logbook Supervision', icon: Briefcase },
     { id: 'workspace', label: 'Workspace Passes', subtitle: 'Power, High-Speed Wi-Fi & Desks', icon: Building2 },
@@ -124,6 +127,20 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
 
           {/* Action CTAs */}
           <div className="hidden lg:flex items-center gap-2.5">
+            <button
+              onClick={() => handleNavClick('articles')}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all flex items-center gap-1.5 cursor-pointer ${
+                currentPage === 'articles'
+                  ? 'bg-[#2b253f] border-purple-500/70 text-white shadow-sm'
+                  : 'bg-[#1f1b2e] hover:bg-[#2b253f] border-[#332d47] text-[#c4c7c8] hover:text-white'
+              }`}
+              title="Student Research & Capstone Articles"
+              id="nav-articles-btn"
+            >
+              <FileText className="w-3.5 h-3.5 text-[#c084fc]" />
+              <span>Articles</span>
+            </button>
+
             {canAccessAdminPortal() && (
               <button
                 onClick={() => handleNavClick('admin')}

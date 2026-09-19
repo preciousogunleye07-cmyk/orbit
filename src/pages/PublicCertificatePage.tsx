@@ -29,19 +29,23 @@ import {
 import { generateQrCodeDataUrl, downloadQrCode } from '../utils/qrCode';
 import { OrbitLogo } from '../components/OrbitLogo';
 import { playSound } from '../utils/soundEffects';
+import { getArticlesByStudentCertificateId, ArticleRecord } from '../services/articleService';
 
 interface PublicCertificatePageProps {
   authId: string;
   onNavigateHome: () => void;
   onSearchNewId: (newId: string) => void;
+  onNavigateToArticle?: (slug: string) => void;
 }
 
 export const PublicCertificatePage: React.FC<PublicCertificatePageProps> = ({
   authId,
   onNavigateHome,
-  onSearchNewId
+  onSearchNewId,
+  onNavigateToArticle
 }) => {
   const [certificate, setCertificate] = useState<CertificateRecord | null>(null);
+  const [linkedArticles, setLinkedArticles] = useState<ArticleRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
@@ -54,6 +58,7 @@ export const PublicCertificatePage: React.FC<PublicCertificatePageProps> = ({
     let isMounted = true;
     if (!authId || !authId.trim()) {
       setCertificate(null);
+      setLinkedArticles([]);
       setLoading(false);
       return;
     }
@@ -67,6 +72,9 @@ export const PublicCertificatePage: React.FC<PublicCertificatePageProps> = ({
 
       if (record) {
         playSound('arrival');
+        const studentArts = getArticlesByStudentCertificateId(record.id);
+        setLinkedArticles(studentArts);
+
         generateQrCodeDataUrl(browserUrl, 500)
           .then(url => {
             if (isMounted) setQrDataUrl(url);
@@ -74,6 +82,7 @@ export const PublicCertificatePage: React.FC<PublicCertificatePageProps> = ({
           .catch(console.error);
       } else {
         playSound('error');
+        setLinkedArticles([]);
       }
     });
 
@@ -319,6 +328,62 @@ export const PublicCertificatePage: React.FC<PublicCertificatePageProps> = ({
                 )}
               </div>
             </div>
+
+            {/* CRITICAL FEATURE: BI-DIRECTIONALLY LINKED STUDENT ARTICLES */}
+            {linkedArticles.length > 0 && (
+              <div className="bg-[#100e17] rounded-2xl p-5 border border-purple-800/40 space-y-4 print:hidden">
+                <div className="flex items-center justify-between pb-2 border-b border-[#2d273f]">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-[#c084fc]" />
+                    <span className="text-xs font-semibold text-white">
+                      Published Research & Capstone Articles
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-800/40">
+                    {linkedArticles.length} Published Paper{linkedArticles.length > 1 ? 's' : ''}
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  {linkedArticles.map((art) => (
+                    <div
+                      key={art.id}
+                      className="bg-[#181524] rounded-xl p-4 border border-[#332d47] hover:border-purple-500/50 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 group"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-[10px] font-mono text-[#8e8a9f]">
+                          <span className="text-[#a855f7] font-semibold">{art.category}</span>
+                          <span>•</span>
+                          <span>{art.readTime}</span>
+                        </div>
+                        <h4 className="text-xs sm:text-sm font-semibold text-white group-hover:text-purple-300 transition-colors">
+                          {art.title}
+                        </h4>
+                        {art.supervisingTutor?.name && (
+                          <p className="text-[11px] text-[#c4c7c8] font-light">
+                            Supervised by {art.supervisingTutor.name} ({art.supervisingTutor.role})
+                          </p>
+                        )}
+                      </div>
+
+                      {onNavigateToArticle && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            playSound('chime');
+                            onNavigateToArticle(art.slug);
+                          }}
+                          className="px-3.5 py-2 rounded-xl bg-[#221c35] hover:bg-purple-900/60 border border-purple-800/50 text-[#c084fc] hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-all shrink-0 cursor-pointer"
+                        >
+                          <span>Read Article</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Action Buttons */}
             <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-[#332d47] print:hidden">

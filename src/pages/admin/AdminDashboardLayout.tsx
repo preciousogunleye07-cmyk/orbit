@@ -29,6 +29,7 @@ import { AdminCreateCertificatePage } from './AdminCreateCertificatePage';
 import { AdminTimetableManager } from '../../components/admin/AdminTimetableManager';
 import { AdminSheetDBManager } from '../../components/admin/AdminSheetDBManager';
 import { AdminAcceptanceLettersManager } from '../../components/admin/AdminAcceptanceLettersManager';
+import { AdminArticlesManager } from '../../components/admin/AdminArticlesManager';
 import { CertificateDetailsModal } from '../../components/admin/CertificateDetailsModal';
 import { EditCertificateModal } from '../../components/admin/EditCertificateModal';
 import { RevokeConfirmationModal } from '../../components/admin/RevokeConfirmationModal';
@@ -41,7 +42,7 @@ interface AdminDashboardLayoutProps {
   onLogout: () => void;
   onNavigateHome: () => void;
   onOpenPublicPage: (id: string) => void;
-  initialTab?: 'overview' | 'directory' | 'students' | 'letters' | 'create' | 'timetable';
+  initialTab?: 'overview' | 'directory' | 'students' | 'articles' | 'letters' | 'create' | 'timetable';
 }
 
 export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
@@ -50,7 +51,7 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
   onOpenPublicPage,
   initialTab = 'overview'
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'directory' | 'students' | 'letters' | 'create' | 'timetable'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'overview' | 'directory' | 'students' | 'articles' | 'letters' | 'create' | 'timetable'>(initialTab);
   const [certificates, setCertificates] = useState<CertificateRecord[]>([]);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [prefilledStudentForCreate, setPrefilledStudentForCreate] = useState<SheetDBStudent | null>(null);
@@ -75,7 +76,7 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
     setAdminUser(getAdminSession());
   }, []);
 
-  const handleTabChange = (tab: 'overview' | 'directory' | 'students' | 'letters' | 'create' | 'timetable') => {
+  const handleTabChange = (tab: 'overview' | 'directory' | 'students' | 'articles' | 'letters' | 'create' | 'timetable') => {
     playSound('droplet');
     setActiveTab(tab);
   };
@@ -244,6 +245,18 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
             </button>
 
             <button
+              onClick={() => handleTabChange('articles')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 min-h-[40px] ${
+                activeTab === 'articles'
+                  ? 'btn-purple text-white shadow-md'
+                  : 'text-[#c4c7c8] hover:text-[#ffffff] hover:bg-[#1f1b2e]'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5 text-[#c084fc]" />
+              <span>Articles & Capstones</span>
+            </button>
+
+            <button
               onClick={() => handleTabChange('timetable')}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 min-h-[40px] ${
                 activeTab === 'timetable'
@@ -322,6 +335,30 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
                 setActiveTab('create');
               }}
               onOpenPublicCertificate={onOpenPublicPage}
+            />
+          )}
+
+          {activeTab === 'articles' && (
+            <AdminArticlesManager
+              currentUser={{
+                email: adminUser?.email || 'orbitspace.ilorin@gmail.com',
+                name: adminUser?.name || 'Super Administrator',
+                role: 'Super Administrator',
+                permissions: {
+                  canManageArticles: true,
+                  canDeployArticles: true,
+                  canViewCertificates: true,
+                  canCreateCertificates: true,
+                  canDeleteCertificates: true,
+                  canRevokeCertificates: true,
+                  canManageTimetable: true
+                }
+              }}
+              onViewPublicArticle={(slug) => {
+                window.history.pushState({}, '', `/articles/${slug}`);
+                window.dispatchEvent(new PopStateEvent('popstate'));
+              }}
+              onNavigateToCertificate={onOpenPublicPage}
             />
           )}
 

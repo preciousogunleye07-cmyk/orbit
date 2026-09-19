@@ -43,12 +43,33 @@
         "badge": { "type": "string", "description": "Optional focus badge or lab tag" },
         "updatedAt": { "type": "string", "description": "ISO timestamp of last update" }
       }
+    },
+    "articles": {
+      "fields": {
+        "id": { "type": "string", "description": "Unique article ID e.g. art-101" },
+        "slug": { "type": "string", "description": "URL slug for article" },
+        "title": { "type": "string", "description": "Article headline title" },
+        "subtitle": { "type": "string", "description": "Brief summary or excerpt" },
+        "content": { "type": "string", "description": "Full formatted markdown or HTML content" },
+        "category": { "type": "string", "description": "Topic category e.g. Web Development, AI, Robotics" },
+        "coverImage": { "type": "string", "description": "Hero banner image URL" },
+        "readTime": { "type": "string", "description": "Estimated reading time e.g. 5 min read" },
+        "status": { "type": "string", "description": "published or draft" },
+        "publishedAt": { "type": "string", "description": "Publication date" },
+        "deployedBy": { "type": "string", "description": "Name and role of publisher" },
+        "studentAuthors": { "type": "string", "description": "JSON string of student author records and linked certificate IDs" },
+        "supervisingTutor": { "type": "string", "description": "Supervising tutor name and designation" },
+        "tags": { "type": "string", "description": "Comma-separated search tags" },
+        "createdAt": { "type": "string", "description": "Creation timestamp" },
+        "updatedAt": { "type": "string", "description": "Last update timestamp" }
+      }
     }
   },
   "relations": [],
   "security_rules": {
     "certificates": "Publicly readable by all users to allow instant employer credential verification; writable for administrative operations.",
     "enrollments": "Insertable by prospective learners during registration.",
-    "timetable": "Publicly readable by all students and guests; writable and editable by administrators."
+    "timetable": "Publicly readable by all students and guests; writable and editable by administrators.",
+    "articles": "Publicly readable for published articles; writable by authorized administrators and sub-administrators."
   }
 }

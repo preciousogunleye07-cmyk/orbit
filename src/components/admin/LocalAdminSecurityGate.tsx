@@ -52,10 +52,10 @@ export const LocalAdminSecurityGate: React.FC<LocalAdminSecurityGateProps> = ({
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-normal text-white font-serif tracking-tight mb-2">
-            Localhost-Only Admin Console
+            Super-Admin AI Studio Native Gate
           </h1>
           <p className="text-sm text-zinc-400 max-w-md mx-auto leading-relaxed">
-            The Orbit Space Administrative Console and certificate issuance tools are strictly restricted to local execution on the authorized administrator laptop.
+            The Super-Administrator console and master certificate issuance tools can only be controlled natively from inside Google AI Studio (or on local development machine). Public and external domains are strictly blocked.
           </p>
         </div>
 

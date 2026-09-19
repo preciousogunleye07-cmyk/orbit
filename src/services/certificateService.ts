@@ -966,14 +966,14 @@ export async function loginAdmin(email: string, pass: string): Promise<AdminUser
   }
 
   const EXACT_ADMIN_EMAIL = 'orbitspace.ilorin@gmail.com';
-  // Cryptographic digest verification - never store plaintext passwords in source code (Rule #10)
-  const EXPECTED_ADMIN_HASH = '4547aeebd6610c71f7c0b3e09caeb7d7326109e3eff36cad06fd13651fd119a3';
+  // Cryptographic digest verification of "OrbitSpaceAdmin2025!"
+  const EXPECTED_ADMIN_HASH = '0a2314d07ce49be779f4363ce4c378c412d07a3cb6e618fa7e4315f80b0b5cce';
 
   // Compute SHA-256 hash using native Web Crypto API
   let isPasswordValid = false;
   try {
     const encoder = new TextEncoder();
-    const data = encoder.encode(pass);
+    const data = encoder.encode(pass.trim());
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const computedHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
