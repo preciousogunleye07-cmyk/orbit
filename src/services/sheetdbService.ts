@@ -270,6 +270,24 @@ export async function fetchSheetDBStudents(includeEmptySlots: boolean = false): 
 }
 
 /**
+ * Returns cached SheetDB students synchronously from localStorage
+ */
+export function getCachedStudents(): SheetDBStudent[] {
+  try {
+    const cached = localStorage.getItem(SHEETDB_CACHE_KEY);
+    if (cached) {
+      const parsed: SheetDBStudent[] = JSON.parse(cached);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(s => s.fullName && s.fullName.trim().length > 0);
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return [];
+}
+
+/**
  * Fetch lookup programs and settings from the "Settings" sheet
  */
 export async function fetchSheetDBSettings(): Promise<string[]> {

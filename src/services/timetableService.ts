@@ -1,6 +1,7 @@
 import { collection, doc, getDocs, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './firebase';
 import { TIMETABLE_DATA, TimetableSlot, DAYS_OF_WEEK } from '../data/timetableData';
+import { isAdminAuthenticated } from './certificateService';
 
 const TIMETABLE_STORAGE_KEY = 'orbit_space_timetable_v1';
 
@@ -218,9 +219,14 @@ export function subscribeTimetable(callback: (slots: TimetableSlot[]) => void): 
 }
 
 /**
- * Save or Edit a Timetable Slot
+ * Save or Edit a Timetable Slot (Restricted to Administrators)
  */
 export async function saveTimetableSlot(slot: TimetableSlot): Promise<{ success: boolean; slot: TimetableSlot }> {
+  // Security Enforcement: Only authenticated administrators can modify the timetable
+  if (!isAdminAuthenticated()) {
+    throw new Error('Access Denied: Only authenticated administrators are authorized to modify the timetable.');
+  }
+
   const normalizedSlot: TimetableSlot = {
     ...slot,
     dayIndex: calculateDayIndex(slot.day),
@@ -260,9 +266,14 @@ export async function saveTimetableSlot(slot: TimetableSlot): Promise<{ success:
 }
 
 /**
- * Delete a timetable slot
+ * Delete a timetable slot (Restricted to Administrators)
  */
 export async function deleteTimetableSlot(slotId: string): Promise<{ success: boolean }> {
+  // Security Enforcement: Only authenticated administrators can delete timetable slots
+  if (!isAdminAuthenticated()) {
+    throw new Error('Access Denied: Only authenticated administrators are authorized to delete timetable slots.');
+  }
+
   const current = getLocalTimetableSlots();
   const filtered = current.filter(s => s.id !== slotId);
   updateLocalCache(filtered);
@@ -280,9 +291,14 @@ export async function deleteTimetableSlot(slotId: string): Promise<{ success: bo
 }
 
 /**
- * Reset Timetable back to default template
+ * Reset Timetable back to default template (Restricted to Administrators)
  */
 export async function resetTimetableToDefault(): Promise<{ success: boolean; slots: TimetableSlot[] }> {
+  // Security Enforcement: Only authenticated administrators can reset timetable slots
+  if (!isAdminAuthenticated()) {
+    throw new Error('Access Denied: Only authenticated administrators are authorized to reset the timetable.');
+  }
+
   updateLocalCache(TIMETABLE_DATA);
 
   if (isFirebaseConfigured() && db) {

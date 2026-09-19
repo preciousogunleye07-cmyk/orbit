@@ -10,7 +10,8 @@ import {
   ExternalLink,
   ArrowLeft,
   Clock,
-  FileSpreadsheet
+  FileSpreadsheet,
+  FileText
 } from 'lucide-react';
 import { 
   CertificateRecord, 
@@ -27,6 +28,7 @@ import { AdminCertificatesList } from './AdminCertificatesList';
 import { AdminCreateCertificatePage } from './AdminCreateCertificatePage';
 import { AdminTimetableManager } from '../../components/admin/AdminTimetableManager';
 import { AdminSheetDBManager } from '../../components/admin/AdminSheetDBManager';
+import { AdminAcceptanceLettersManager } from '../../components/admin/AdminAcceptanceLettersManager';
 import { CertificateDetailsModal } from '../../components/admin/CertificateDetailsModal';
 import { EditCertificateModal } from '../../components/admin/EditCertificateModal';
 import { RevokeConfirmationModal } from '../../components/admin/RevokeConfirmationModal';
@@ -39,7 +41,7 @@ interface AdminDashboardLayoutProps {
   onLogout: () => void;
   onNavigateHome: () => void;
   onOpenPublicPage: (id: string) => void;
-  initialTab?: 'overview' | 'directory' | 'students' | 'create' | 'timetable';
+  initialTab?: 'overview' | 'directory' | 'students' | 'letters' | 'create' | 'timetable';
 }
 
 export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
@@ -48,7 +50,7 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
   onOpenPublicPage,
   initialTab = 'overview'
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'directory' | 'students' | 'create' | 'timetable'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'overview' | 'directory' | 'students' | 'letters' | 'create' | 'timetable'>(initialTab);
   const [certificates, setCertificates] = useState<CertificateRecord[]>([]);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [prefilledStudentForCreate, setPrefilledStudentForCreate] = useState<SheetDBStudent | null>(null);
@@ -73,7 +75,7 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
     setAdminUser(getAdminSession());
   }, []);
 
-  const handleTabChange = (tab: 'overview' | 'directory' | 'students' | 'create' | 'timetable') => {
+  const handleTabChange = (tab: 'overview' | 'directory' | 'students' | 'letters' | 'create' | 'timetable') => {
     playSound('droplet');
     setActiveTab(tab);
   };
@@ -254,6 +256,23 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
             </button>
 
             <button
+              onClick={() => handleTabChange('letters')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 min-h-[40px] ${
+                activeTab === 'letters'
+                  ? 'btn-purple text-white shadow-md'
+                  : 'text-[#c4c7c8] hover:text-[#ffffff] hover:bg-[#1f1b2e]'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Acceptance Letters</span>
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                activeTab === 'letters' ? 'bg-purple-900/80 text-white' : 'bg-[#181524] text-purple-300 border border-[#332d47]'
+              }`}>
+                SIWES
+              </span>
+            </button>
+
+            <button
               onClick={() => handleTabChange('create')}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 ml-auto min-h-[40px] ${
                 activeTab === 'create'
@@ -313,6 +332,10 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
                 window.dispatchEvent(new PopStateEvent('popstate'));
               }}
             />
+          )}
+
+          {activeTab === 'letters' && (
+            <AdminAcceptanceLettersManager />
           )}
 
           {activeTab === 'create' && (

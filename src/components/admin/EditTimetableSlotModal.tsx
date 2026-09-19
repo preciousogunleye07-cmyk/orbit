@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { TimetableSlot, DAYS_OF_WEEK, INSTRUCTORS } from '../../data/timetableData';
 import { saveTimetableSlot, generateSlotId } from '../../services/timetableService';
+import { isAdminAuthenticated } from '../../services/certificateService';
 import { playSound } from '../../utils/soundEffects';
 
 interface EditTimetableSlotModalProps {
@@ -131,6 +132,12 @@ export const EditTimetableSlotModal: React.FC<EditTimetableSlotModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!isAdminAuthenticated()) {
+      setError('Access Denied: Only authenticated administrators can modify timetable slots.');
+      playSound('error');
+      return;
+    }
 
     if (!course.trim()) {
       setError('Please provide a course title.');

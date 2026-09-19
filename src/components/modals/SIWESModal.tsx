@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { X, CheckCircle2, GraduationCap, ArrowRight, Loader2 } from 'lucide-react';
+import { X, CheckCircle2, GraduationCap, ArrowRight, Loader2, Download, FileText } from 'lucide-react';
 import { useForm, ValidationError } from '@formspree/react';
 import { playSound } from '../../utils/soundEffects';
+import { generateAcceptanceLetterPdf } from '../../utils/acceptanceLetterPdf';
+import { generateLetterRefNumber, generateVerificationCode } from '../../services/acceptanceLetterService';
 
 interface SIWESModalProps {
   onClose: () => void;
@@ -10,6 +12,7 @@ interface SIWESModalProps {
 
 export const SIWESModal: React.FC<SIWESModalProps> = ({ onClose }) => {
   const [state, handleSubmit] = useForm('xzepdwwp');
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -26,6 +29,45 @@ export const SIWESModal: React.FC<SIWESModalProps> = ({ onClose }) => {
       playSound('success');
     }
   }, [state.succeeded]);
+
+  const handleDownloadProvisionalLetter = async () => {
+    try {
+      setIsGeneratingPdf(true);
+      playSound('pulse');
+      const today = new Date().toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+
+      await generateAcceptanceLetterPdf({
+        id: `applicant-${Date.now()}`,
+        refNumber: generateLetterRefNumber(),
+        issueDate: today,
+        recipientTitle: 'The SIWES Coordinator / Head of Department',
+        institution: formData.institution || 'University of Ilorin (UNILORIN)',
+        department: formData.department || 'Department of Computer Science',
+        institutionAddress: 'Industrial Training Coordinating Centre',
+        studentName: formData.fullName || 'Student Applicant',
+        matricNumber: 'Pending Verification',
+        academicLevel: 'Undergraduate',
+        programTrack: formData.techTrack || 'Frontend Development',
+        duration: formData.siwesDuration || '6 Months',
+        startDate: 'Next Available Cohort Intake',
+        endDate: '6 Months Subsequent',
+        schedule: 'Monday – Friday | 9:00 AM – 4:00 PM',
+        signatoryName: 'Engr. Precious Ogunleye',
+        signatoryTitle: 'Academy Director & Technical Supervisor',
+        verificationCode: generateVerificationCode()
+      });
+
+      playSound('success');
+    } catch (err) {
+      console.error('Failed to generate letter:', err);
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
 
   const handleClose = () => {
     playSound('release');
@@ -229,14 +271,30 @@ export const SIWESModal: React.FC<SIWESModalProps> = ({ onClose }) => {
               SIWES Application Received!
             </h3>
             <p className="text-xs text-[#c4c7c8] font-light mb-6 max-w-md mx-auto leading-relaxed">
-              We have received your SIWES application for <strong className="text-[#ffffff]">{formData.techTrack}</strong> ({formData.siwesDuration}). Our SIWES coordinator will issue your acceptance letter after quick verification on WhatsApp.
+              We have received your SIWES application for <strong className="text-[#ffffff]">{formData.techTrack}</strong> ({formData.siwesDuration}). You can download a provisional acceptance letter on the official Orbit Space letterhead below while our coordinator contacts you for onboarding.
             </p>
-            <button
-              onClick={handleClose}
-              className="px-8 py-3 rounded-full bg-[#ffffff] hover:bg-[#e2e2e2] text-[#141313] font-semibold text-xs"
-            >
-              Done
-            </button>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-2">
+              <button
+                onClick={handleDownloadProvisionalLetter}
+                disabled={isGeneratingPdf}
+                className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#8c35d4] hover:bg-[#7b2cbe] text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer disabled:opacity-50"
+              >
+                {isGeneratingPdf ? (
+                  <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Download className="w-3.5 h-3.5" />
+                )}
+                <span>Download Provisional Letter (PDF)</span>
+              </button>
+
+              <button
+                onClick={handleClose}
+                className="w-full sm:w-auto px-8 py-3 rounded-full bg-[#ffffff] hover:bg-[#e2e2e2] text-[#141313] font-semibold text-xs transition-all cursor-pointer"
+              >
+                Done
+              </button>
+            </div>
           </div>
         )}
 

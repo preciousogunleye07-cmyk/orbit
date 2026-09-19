@@ -966,10 +966,24 @@ export async function loginAdmin(email: string, pass: string): Promise<AdminUser
   }
 
   const EXACT_ADMIN_EMAIL = 'orbitspace.ilorin@gmail.com';
-  const EXACT_ADMIN_PASSWORD = 'Amazing@3';
+  // Cryptographic digest verification - never store plaintext passwords in source code (Rule #10)
+  const EXPECTED_ADMIN_HASH = '4547aeebd6610c71f7c0b3e09caeb7d7326109e3eff36cad06fd13651fd119a3';
 
-  // Strict check: only orbitspace.ilorin@gmail.com and Amazing@3 are authorized
-  if (cleanEmail === EXACT_ADMIN_EMAIL && pass === EXACT_ADMIN_PASSWORD) {
+  // Compute SHA-256 hash using native Web Crypto API
+  let isPasswordValid = false;
+  try {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(pass);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const computedHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    isPasswordValid = computedHash === EXPECTED_ADMIN_HASH;
+  } catch {
+    isPasswordValid = false;
+  }
+
+  // Strict check: verify email and cryptographic password hash
+  if (cleanEmail === EXACT_ADMIN_EMAIL && isPasswordValid) {
     // Reset rate limit on successful authentication
     resetLoginRateLimit();
 

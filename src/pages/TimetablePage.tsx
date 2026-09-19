@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, ArrowRight, Download, Plus, Edit3, Shield, CheckCircle2 } from 'lucide-react';
+import { Search, ArrowRight, Download, Shield, CheckCircle2 } from 'lucide-react';
 import { DAYS_OF_WEEK, TimetableSlot } from '../data/timetableData';
 import { 
   getLocalTimetableSlots, 
@@ -7,7 +7,6 @@ import {
   syncTimetableFromFirestore 
 } from '../services/timetableService';
 import { getAdminSession, AdminUser } from '../services/certificateService';
-import { EditTimetableSlotModal } from '../components/admin/EditTimetableSlotModal';
 import { ActiveModal } from '../types';
 import { playSound } from '../utils/soundEffects';
 import { generateTimetablePdf } from '../utils/timetablePdf';
@@ -23,10 +22,6 @@ export const TimetablePage: React.FC<TimetablePageProps> = ({ setActiveModal }) 
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isDownloadingPdf, setIsDownloadingPdf] = useState<boolean>(false);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
-
-  // Modal states for admin editing
-  const [slotToEdit, setSlotToEdit] = useState<TimetableSlot | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string>('');
 
   useEffect(() => {
@@ -106,18 +101,6 @@ export const TimetablePage: React.FC<TimetablePageProps> = ({ setActiveModal }) 
     }
   };
 
-  const handleOpenEdit = (slot: TimetableSlot) => {
-    playSound('droplet');
-    setSlotToEdit(slot);
-    setIsEditModalOpen(true);
-  };
-
-  const handleAddNewSlot = () => {
-    playSound('pulse');
-    setSlotToEdit(null);
-    setIsEditModalOpen(true);
-  };
-
   const navigateToAdminPortal = () => {
     playSound('droplet');
     window.history.pushState({}, '', '/admin');
@@ -144,7 +127,7 @@ export const TimetablePage: React.FC<TimetablePageProps> = ({ setActiveModal }) 
 
       <div className="max-w-4xl mx-auto space-y-8">
 
-        {/* Admin Quick Bar when Admin Session is active */}
+        {/* Informative notice when an Admin is viewing the public page */}
         {adminUser && (
           <div className="bg-[#1c162e] border border-[#a855f7]/40 rounded-2xl p-3.5 sm:p-4 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
@@ -153,34 +136,25 @@ export const TimetablePage: React.FC<TimetablePageProps> = ({ setActiveModal }) 
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-white">Admin Edit Mode Active</span>
+                  <span className="text-xs font-semibold text-white">Administrator Session Active</span>
                   <span className="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-800/60 px-1.5 py-0.2 rounded font-mono">
                     {adminUser.role}
                   </span>
                 </div>
                 <p className="text-[11px] text-[#94a3b8]">
-                  Click the edit pencil on any lecture row, or add new class slots.
+                  This public timetable is read-only. Class slots can only be modified in the Admin Portal.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-              <button
-                onClick={handleAddNewSlot}
-                className="btn-purple px-3 py-1.5 rounded-xl text-xs font-semibold text-white flex items-center gap-1.5 shadow-md cursor-pointer"
-                id="btn-admin-add-slot-public"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>+ Add Slot</span>
-              </button>
-
-              <button
-                onClick={navigateToAdminPortal}
-                className="px-3 py-1.5 rounded-xl bg-[#140f23] hover:bg-[#251b3d] border border-[#3f325d] text-xs text-[#c084fc] hover:text-white transition-colors cursor-pointer"
-              >
-                Manage in Admin Portal
-              </button>
-            </div>
+            <button
+              onClick={navigateToAdminPortal}
+              className="btn-purple px-3.5 py-1.5 rounded-xl text-xs font-semibold text-white flex items-center gap-1.5 shadow-md cursor-pointer shrink-0"
+              id="btn-admin-manage-portal"
+            >
+              <span>Open Admin Dashboard</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         )}
 
@@ -266,7 +240,6 @@ export const TimetablePage: React.FC<TimetablePageProps> = ({ setActiveModal }) 
                   <th className="py-3.5 px-6 font-semibold w-1/4">Time</th>
                   <th className="py-3.5 px-6 font-semibold w-1/3">Course</th>
                   <th className="py-3.5 px-6 font-semibold">Instructor</th>
-                  {adminUser && <th className="py-3.5 px-4 font-semibold text-right">Edit</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#262137]">
@@ -315,20 +288,6 @@ export const TimetablePage: React.FC<TimetablePageProps> = ({ setActiveModal }) 
                             <span className="text-[11px] text-[#94a3b8] block">{slot.instructorTitle}</span>
                           )}
                         </td>
-
-                        {/* Admin Inline Edit Button */}
-                        {adminUser && (
-                          <td className="py-4 px-4 text-right align-top whitespace-nowrap">
-                            <button
-                              onClick={() => handleOpenEdit(slot)}
-                              className="p-1.5 rounded-lg bg-[#271f3a] hover:bg-[#a855f7] text-[#c084fc] hover:text-white transition-all cursor-pointer shadow-sm"
-                              title={`Edit ${slot.course} slot`}
-                              id={`btn-public-edit-${slot.id}`}
-                            >
-                              <Edit3 className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
-                        )}
                       </tr>
                     );
                   });
@@ -353,18 +312,7 @@ export const TimetablePage: React.FC<TimetablePageProps> = ({ setActiveModal }) 
                     >
                       <div className="flex items-center justify-between text-xs">
                         <span className="font-mono text-[#c084fc]">{slot.time}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[#94a3b8]">{slot.instructor}</span>
-                          {adminUser && (
-                            <button
-                              onClick={() => handleOpenEdit(slot)}
-                              className="p-1 rounded bg-[#241a37] text-[#c084fc] hover:text-white cursor-pointer"
-                              title="Edit slot"
-                            >
-                              <Edit3 className="w-3 h-3" />
-                            </button>
-                          )}
-                        </div>
+                        <span className="text-[#94a3b8]">{slot.instructor}</span>
                       </div>
                       <div className="text-sm font-semibold text-white flex items-center gap-1.5 flex-wrap">
                         <span>{slot.course}</span>
@@ -401,12 +349,7 @@ export const TimetablePage: React.FC<TimetablePageProps> = ({ setActiveModal }) 
             <span>•</span>
             <span>Venue: <strong className="text-white">Orbit Space Hub, Ilorin</strong></span>
             <span>•</span>
-            <button
-              onClick={navigateToAdminPortal}
-              className="text-[#a855f7] hover:underline cursor-pointer"
-            >
-              Admin Portal
-            </button>
+            <span className="text-[#a855f7]">Official Weekly Schedule</span>
           </div>
 
           <div className="flex items-center gap-2.5 flex-wrap justify-center sm:justify-end">
@@ -445,20 +388,6 @@ export const TimetablePage: React.FC<TimetablePageProps> = ({ setActiveModal }) 
         </div>
 
       </div>
-
-      {/* Edit or Create Slot Modal for Admin */}
-      <AnimatePresence>
-        {isEditModalOpen && (
-          <EditTimetableSlotModal
-            slot={slotToEdit}
-            isOpen={isEditModalOpen}
-            onClose={() => setIsEditModalOpen(false)}
-            onSaved={(saved) => {
-              showToast(slotToEdit ? `Updated schedule for ${saved.course}.` : `Added ${saved.course} to schedule.`);
-            }}
-          />
-        )}
-      </AnimatePresence>
 
     </div>
   );

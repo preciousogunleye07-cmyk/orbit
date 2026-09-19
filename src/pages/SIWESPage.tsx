@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ActiveModal } from '../types';
-import { GraduationCap, CheckCircle2, ArrowRight, Building2, Award, FileText, Calendar, ShieldCheck, MapPin } from 'lucide-react';
+import { GraduationCap, CheckCircle2, ArrowRight, Building2, Award, FileText, Calendar, ShieldCheck, MapPin, Eye } from 'lucide-react';
+import { AcceptanceLetterPreviewModal } from '../components/modals/AcceptanceLetterPreviewModal';
 
 interface SIWESPageProps {
   setActiveModal: (modal: ActiveModal) => void;
 }
 
 export const SIWESPage: React.FC<SIWESPageProps> = ({ setActiveModal }) => {
+  const [isPreviewLetterOpen, setIsPreviewLetterOpen] = useState(false);
+
   return (
     <div className="py-20 max-w-[1200px] mx-auto px-6 bg-[#141313] min-h-screen">
       {/* Header Banner */}
@@ -27,11 +30,20 @@ export const SIWESPage: React.FC<SIWESPageProps> = ({ setActiveModal }) => {
           <div className="flex flex-wrap items-center gap-4">
             <button
               onClick={() => setActiveModal({ type: 'siwes' })}
-              className="px-8 py-3.5 rounded-full bg-[#ffffff] hover:bg-[#e2e2e2] text-[#141313] font-semibold text-xs shadow-lg transition-all flex items-center gap-2"
+              className="px-8 py-3.5 rounded-full bg-[#ffffff] hover:bg-[#e2e2e2] text-[#141313] font-semibold text-xs shadow-lg transition-all flex items-center gap-2 cursor-pointer"
             >
               <span>Apply for SIWES Placement</span>
               <ArrowRight className="w-4 h-4" />
             </button>
+
+            <button
+              onClick={() => setIsPreviewLetterOpen(true)}
+              className="px-6 py-3.5 rounded-full bg-[#2a1d47] hover:bg-[#3d2c64] text-[#d8b4fe] border border-[#5d3b94] font-semibold text-xs shadow-lg transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <Eye className="w-4 h-4" />
+              <span>Preview Official Letterhead</span>
+            </button>
+
             <span className="text-xs text-[#c4c7c8] font-light flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               <span>Official Acceptance Letters Issued Promptly</span>
@@ -50,12 +62,23 @@ export const SIWESPage: React.FC<SIWESPageProps> = ({ setActiveModal }) => {
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="p-6 bg-[#1c1b1b] rounded-[16px] border border-[#353434]">
-              <div className="w-10 h-10 rounded-full bg-[#201f1f] border border-[#353434] flex items-center justify-center text-[#ffffff] mb-3">
-                <FileText className="w-5 h-5" />
+            <div className="p-6 bg-[#1c1b1b] rounded-[16px] border border-[#353434] flex flex-col justify-between">
+              <div>
+                <div className="w-10 h-10 rounded-full bg-[#201f1f] border border-[#353434] flex items-center justify-center text-[#ffffff] mb-3">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-serif text-[#ffffff] font-medium mb-1">Official Acceptance Letter</h3>
+                <p className="text-xs text-[#c4c7c8] font-light leading-relaxed mb-3">
+                  Prompt issuance of verification letters on official Orbit Space letterhead accepted by university SIWES units.
+                </p>
               </div>
-              <h3 className="text-base font-serif text-[#ffffff] font-medium mb-1">Official Acceptance Letter</h3>
-              <p className="text-xs text-[#c4c7c8] font-light leading-relaxed">Prompt issuance of verification letters accepted by university SIWES units.</p>
+              <button
+                onClick={() => setIsPreviewLetterOpen(true)}
+                className="text-xs text-[#d8b4fe] hover:text-white flex items-center gap-1.5 font-medium cursor-pointer"
+              >
+                <span>View Sample Letter</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             </div>
 
             <div className="p-6 bg-[#1c1b1b] rounded-[16px] border border-[#353434]">
@@ -122,13 +145,19 @@ export const SIWESPage: React.FC<SIWESPageProps> = ({ setActiveModal }) => {
 
           <button
             onClick={() => setActiveModal({ type: 'siwes' })}
-            className="w-full py-3.5 rounded-full bg-[#ffffff] hover:bg-[#e2e2e2] text-[#141313] font-semibold text-xs transition-all shadow-md"
+            className="w-full py-3.5 rounded-full bg-[#ffffff] hover:bg-[#e2e2e2] text-[#141313] font-semibold text-xs transition-all shadow-md cursor-pointer"
           >
             Submit SIWES Placement Request
           </button>
         </div>
 
       </div>
+
+      {/* Acceptance Letter Preview Modal */}
+      <AcceptanceLetterPreviewModal
+        isOpen={isPreviewLetterOpen}
+        onClose={() => setIsPreviewLetterOpen(false)}
+      />
     </div>
   );
 };
