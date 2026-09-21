@@ -30,22 +30,30 @@ import { generateQrCodeDataUrl, downloadQrCode } from '../utils/qrCode';
 import { OrbitLogo } from '../components/OrbitLogo';
 import { playSound } from '../utils/soundEffects';
 import { getArticlesByStudentCertificateId, ArticleRecord } from '../services/articleService';
+import { VerificationDataService, SupervisedProjectRecord } from '../services/verificationDataService';
+import { TutorService, TutorProfile } from '../services/tutorService';
 
 interface PublicCertificatePageProps {
   authId: string;
   onNavigateHome: () => void;
   onSearchNewId: (newId: string) => void;
   onNavigateToArticle?: (slug: string) => void;
+  onNavigateToTutor?: (tutorSlug: string) => void;
+  onNavigateToProject?: (projectSlug: string) => void;
 }
 
 export const PublicCertificatePage: React.FC<PublicCertificatePageProps> = ({
   authId,
   onNavigateHome,
   onSearchNewId,
-  onNavigateToArticle
+  onNavigateToArticle,
+  onNavigateToTutor,
+  onNavigateToProject
 }) => {
   const [certificate, setCertificate] = useState<CertificateRecord | null>(null);
   const [linkedArticles, setLinkedArticles] = useState<ArticleRecord[]>([]);
+  const [linkedProject, setLinkedProject] = useState<SupervisedProjectRecord | null>(null);
+  const [supervisingTutor, setSupervisingTutor] = useState<TutorProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
@@ -75,6 +83,25 @@ export const PublicCertificatePage: React.FC<PublicCertificatePageProps> = ({
         const studentArts = getArticlesByStudentCertificateId(record.id);
         setLinkedArticles(studentArts);
 
+        // Resolve linked project evidence
+        const proj = VerificationDataService.getProjectByCertificateId(record.id);
+        setLinkedProject(proj || null);
+
+        // Resolve supervising tutor
+        if (record.supervisingTutorSlug) {
+          const tut = TutorService.getTutorBySlug(record.supervisingTutorSlug);
+          setSupervisingTutor(tut || null);
+        } else if (record.supervisingTutorName) {
+          const tut = TutorService.getAllTutors().find(t => t.name === record.supervisingTutorName || t.shortName === record.supervisingTutorName);
+          setSupervisingTutor(tut || null);
+        } else if (proj && proj.tutorId) {
+          const tut = TutorService.getTutorById(proj.tutorId);
+          setSupervisingTutor(tut || null);
+        } else if (record.course) {
+          const assigned = TutorService.getAssignedTutorForProgram(record.course);
+          setSupervisingTutor(assigned || null);
+        }
+
         generateQrCodeDataUrl(browserUrl, 500)
           .then(url => {
             if (isMounted) setQrDataUrl(url);
@@ -83,6 +110,8 @@ export const PublicCertificatePage: React.FC<PublicCertificatePageProps> = ({
       } else {
         playSound('error');
         setLinkedArticles([]);
+        setLinkedProject(null);
+        setSupervisingTutor(null);
       }
     });
 
@@ -256,6 +285,32 @@ export const PublicCertificatePage: React.FC<PublicCertificatePageProps> = ({
                   </div>
                 </div>
 
+                {/* Supervising Tutor */}
+                {supervisingTutor && (
+                  <div className="space-y-1">
+                    <span className="text-[10px] text-[#c4c7c8] font-mono uppercase tracking-wider block flex items-center gap-1.5 print:text-gray-500">
+                      <User className="w-3.5 h-3.5 text-[#a855f7]" /> Supervising Faculty
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-medium text-white print:text-black">
+                        {supervisingTutor.name}
+                      </span>
+                      {onNavigateToTutor && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            playSound('chime');
+                            onNavigateToTutor(supervisingTutor.slug);
+                          }}
+                          className="text-[10px] font-mono text-purple-400 hover:text-purple-300 underline cursor-pointer print:hidden"
+                        >
+                          (View Faculty)
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
               </div>
 
               {/* Optional Fields */}
@@ -381,6 +436,54 @@ export const PublicCertificatePage: React.FC<PublicCertificatePageProps> = ({
                       )}
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* CRITICAL FEATURE: VERIFIED STUDENT CAPSTONE PROJECT EVIDENCE */}
+            {linkedProject && (
+              <div className="bg-[#100e17] rounded-2xl p-5 border border-purple-800/40 space-y-4 print:hidden">
+                <div className="flex items-center justify-between pb-2 border-b border-[#2d273f]">
+                  <div className="flex items-center gap-2">
+                    <Award className="w-4 h-4 text-emerald-400" />
+                    <span className="text-xs font-semibold text-white">
+                      Verified Capstone Project Evidence
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-800/40 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span>Audited Evidence</span>
+                  </span>
+                </div>
+
+                <div className="bg-[#181524] rounded-xl p-4 border border-[#332d47] hover:border-purple-500/50 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 group">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-[10px] font-mono text-[#8e8a9f]">
+                      <span className="text-[#a855f7] font-semibold">{linkedProject.program}</span>
+                      <span>•</span>
+                      <span>Supervised by {linkedProject.tutorName}</span>
+                    </div>
+                    <h4 className="text-xs sm:text-sm font-semibold text-white group-hover:text-purple-300 transition-colors">
+                      {linkedProject.title}
+                    </h4>
+                    <p className="text-[11px] text-[#c4c7c8] font-light line-clamp-2">
+                      {linkedProject.description}
+                    </p>
+                  </div>
+
+                  {onNavigateToProject && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playSound('chime');
+                        onNavigateToProject(linkedProject.verificationSlug);
+                      }}
+                      className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shrink-0 cursor-pointer shadow-lg shadow-purple-950/40"
+                    >
+                      <span>Inspect Project Evidence</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
             )}

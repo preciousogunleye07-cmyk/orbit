@@ -16,9 +16,12 @@ import { TimetablePage } from './pages/TimetablePage';
 import { AdminLoginPage } from './pages/admin/AdminLoginPage';
 import { AdminDashboardLayout } from './pages/admin/AdminDashboardLayout';
 import { PublicCertificatePage } from './pages/PublicCertificatePage';
+import { PublicTutorProfilePage } from './pages/PublicTutorProfilePage';
+import { PublicProjectEvidencePage } from './pages/PublicProjectEvidencePage';
 import { ArticlesPage } from './pages/ArticlesPage';
 import { ArticleDetailPage } from './pages/ArticleDetailPage';
 import { SubAdminPortal } from './pages/editor/SubAdminPortal';
+import { AttendancePage } from './pages/AttendancePage';
 
 import { EnrollModal } from './components/modals/EnrollModal';
 import { SIWESModal } from './components/modals/SIWESModal';
@@ -42,7 +45,7 @@ import { canAccessAdminPortal } from './utils/adminSecurity';
 import { LocalAdminSecurityGate } from './components/admin/LocalAdminSecurityGate';
 import { isSubAdminPath, isObviousPredictablePath } from './utils/subAdminRoute';
 
-const MAIN_PAGES = ['home', 'courses', 'timetable', 'siwes', 'workspace', 'quiz', 'about', 'contact'];
+const MAIN_PAGES = ['home', 'courses', 'timetable', 'attendance', 'siwes', 'workspace', 'quiz', 'about', 'contact'];
 
 type RouteState = 
   | { mode: 'main'; page: string }
@@ -50,9 +53,11 @@ type RouteState =
   | { mode: 'article-detail'; slug: string }
   | { mode: 'sub-admin' }
   | { mode: 'admin-login' }
-  | { mode: 'admin-dashboard'; subTab?: 'overview' | 'directory' | 'create' | 'articles' }
+  | { mode: 'admin-dashboard'; subTab?: 'overview' | 'directory' | 'create' | 'articles' | 'verification' | 'programs' | 'tutors' }
   | { mode: 'admin-blocked' }
-  | { mode: 'public-certificate'; authId: string };
+  | { mode: 'public-certificate'; authId: string }
+  | { mode: 'public-tutor'; tutorSlug: string }
+  | { mode: 'public-project'; projectSlug: string };
 
 function getCurrentLocationPath(): string {
   if (typeof window === 'undefined') return '/';
@@ -163,6 +168,19 @@ function parsePathToRoute(path: string): RouteState {
     return { mode: 'main', page: lowerPath };
   }
 
+  // Tutor Public Authentication / Verification Link: /tutor/[unique-tutor-slug]
+  if (lowerPath.startsWith('tutor/')) {
+    const tutorSlug = cleanPath.substring(6).trim();
+    return { mode: 'public-tutor', tutorSlug };
+  }
+
+  // Student Project / Capstone Evidence Link: /project/[project-slug]
+  if (lowerPath.startsWith('project/') || lowerPath.startsWith('capstone/')) {
+    const slashIdx = cleanPath.indexOf('/');
+    const projectSlug = cleanPath.substring(slashIdx + 1).trim();
+    return { mode: 'public-project', projectSlug };
+  }
+
   // Handle /verify/ORB-8F29K2 or /ORB-8F29K2
   if (lowerPath.startsWith('verify/')) {
     const certId = cleanPath.substring(7).trim();
@@ -186,6 +204,7 @@ const PAGE_TITLES: Record<string, string> = {
   home: 'Orbit Space | Practical Tech Academy & Workspace in Ilorin',
   courses: 'Courses & Programs | Orbit Space Academia',
   timetable: 'Weekly Class Timetable | Orbit Space Academia Ilorin',
+  attendance: 'Class Attendance Registry | Orbit Space Academia Ilorin',
   siwes: 'SIWES Placement & Industrial Training | Orbit Space Academia',
   workspace: 'Coworking Space & Passes | Orbit Space Academia',
   quiz: 'Tech Career Advisor Quiz | Orbit Space Academia',
@@ -289,6 +308,9 @@ export default function App() {
               )}
               {route.page === 'timetable' && (
                 <TimetablePage setActiveModal={setActiveModal} />
+              )}
+              {route.page === 'attendance' && (
+                <AttendancePage setActiveModal={setActiveModal} />
               )}
               {route.page === 'siwes' && (
                 <SIWESPage setActiveModal={setActiveModal} />
@@ -424,6 +446,8 @@ export default function App() {
                   onLogout={() => navigateTo(LOCAL_ADMIN_LOGIN_PATH)}
                   onNavigateHome={() => navigateTo('/')}
                   onOpenPublicPage={(id) => navigateTo(`/${id}`)}
+                  onOpenPublicTutor={(slug) => navigateTo(`/tutor/${slug}`)}
+                  onOpenPublicProject={(slug) => navigateTo(`/project/${slug}`)}
                 />
               ) : (
                 <AdminLoginPage
@@ -449,6 +473,47 @@ export default function App() {
                 onNavigateHome={() => navigateTo('/')}
                 onSearchNewId={(newId) => navigateTo(`/${newId}`)}
                 onNavigateToArticle={(slug) => navigateTo(`/articles/${slug}`)}
+                onNavigateToTutor={(slug) => navigateTo(`/tutor/${slug}`)}
+                onNavigateToProject={(slug) => navigateTo(`/project/${slug}`)}
+              />
+            </motion.div>
+          )}
+
+          {/* 9. Public Tutor Verification Profile Link (/tutor/:tutorSlug) */}
+          {route.mode === 'public-tutor' && (
+            <motion.div
+              key={`public-tutor-${route.tutorSlug}`}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="w-full"
+            >
+              <PublicTutorProfilePage
+                tutorSlug={route.tutorSlug}
+                onNavigateHome={() => navigateTo('/')}
+                onNavigateToArticle={(slug) => navigateTo(`/articles/${slug}`)}
+                onNavigateToCertificate={(certId) => navigateTo(`/${certId}`)}
+                onNavigateToProject={(slug) => navigateTo(`/project/${slug}`)}
+              />
+            </motion.div>
+          )}
+
+          {/* 10. Public Student Project & Capstone Evidence Link (/project/:projectSlug) */}
+          {route.mode === 'public-project' && (
+            <motion.div
+              key={`public-project-${route.projectSlug}`}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="w-full"
+            >
+              <PublicProjectEvidencePage
+                projectSlug={route.projectSlug}
+                onNavigateHome={() => navigateTo('/')}
+                onNavigateToTutor={(slug) => navigateTo(`/tutor/${slug}`)}
+                onNavigateToCertificate={(certId) => navigateTo(`/${certId}`)}
               />
             </motion.div>
           )}

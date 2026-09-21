@@ -11,7 +11,8 @@ import {
   Check, 
   AlertCircle 
 } from 'lucide-react';
-import { TimetableSlot, DAYS_OF_WEEK, INSTRUCTORS } from '../../data/timetableData';
+import { TimetableSlot, DAYS_OF_WEEK } from '../../data/timetableData';
+import { TutorService, TutorProfile } from '../../services/tutorService';
 import { saveTimetableSlot, generateSlotId } from '../../services/timetableService';
 import { isAdminAuthenticated } from '../../services/certificateService';
 import { playSound } from '../../utils/soundEffects';
@@ -70,6 +71,14 @@ export const EditTimetableSlotModal: React.FC<EditTimetableSlotModalProps> = ({
   const [badge, setBadge] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [tutorsList, setTutorsList] = useState<TutorProfile[]>(() => TutorService.getAllTutors());
+
+  useEffect(() => {
+    const unsub = TutorService.subscribeTutors((tutors) => {
+      setTutorsList(tutors);
+    });
+    return () => unsub();
+  }, []);
 
   useEffect(() => {
     if (slot) {
@@ -113,10 +122,10 @@ export const EditTimetableSlotModal: React.FC<EditTimetableSlotModalProps> = ({
     if (!badge) setBadge(suggestion.badge);
   };
 
-  const handleSelectInstructor = (inst: typeof INSTRUCTORS[0]) => {
+  const handleSelectInstructor = (tutor: TutorProfile) => {
     playSound('droplet');
-    setInstructor(inst.name);
-    setInstructorTitle(inst.role);
+    setInstructor(tutor.shortName || tutor.name);
+    setInstructorTitle(tutor.role);
   };
 
   const handlePresetTime = (presetTime: string, sH: number, sM: number, eH: number, eM: number) => {
@@ -379,22 +388,27 @@ export const EditTimetableSlotModal: React.FC<EditTimetableSlotModalProps> = ({
                 placeholder="e.g. Olamide, Lawal, Ayo"
                 className="w-full px-3.5 py-2 rounded-xl bg-[#1d172e] border border-[#382f54] text-xs text-white focus:border-[#a855f7] focus:outline-none"
               />
-              {/* Instructor quick chips */}
+              {/* Instructor quick chips from centralized TutorService */}
               <div className="flex flex-wrap gap-1 pt-1">
-                {INSTRUCTORS.map((inst) => (
-                  <button
-                    type="button"
-                    key={inst.name}
-                    onClick={() => handleSelectInstructor(inst)}
-                    className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
-                      instructor === inst.name
-                        ? 'bg-[#a855f7]/30 border-[#a855f7] text-white'
-                        : 'bg-[#181326] border-[#31284a] text-[#a19cb5] hover:text-white'
-                    }`}
-                  >
-                    {inst.name}
-                  </button>
-                ))}
+                {tutorsList.map((t) => {
+                  const displayName = t.shortName || t.name;
+                  const isSelected = instructor === displayName || instructor === t.name;
+                  return (
+                    <button
+                      type="button"
+                      key={t.id}
+                      onClick={() => handleSelectInstructor(t)}
+                      className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
+                        isSelected
+                          ? 'bg-[#a855f7]/30 border-[#a855f7] text-white'
+                          : 'bg-[#181326] border-[#31284a] text-[#a19cb5] hover:text-white'
+                      }`}
+                      title={`${t.name} (${t.role})`}
+                    >
+                      {displayName}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

@@ -11,7 +11,11 @@ import {
   ArrowLeft,
   Clock,
   FileSpreadsheet,
-  FileText
+  FileText,
+  UserCheck,
+  BookOpen,
+  FolderGit2,
+  Users
 } from 'lucide-react';
 import { 
   CertificateRecord, 
@@ -30,6 +34,10 @@ import { AdminTimetableManager } from '../../components/admin/AdminTimetableMana
 import { AdminSheetDBManager } from '../../components/admin/AdminSheetDBManager';
 import { AdminAcceptanceLettersManager } from '../../components/admin/AdminAcceptanceLettersManager';
 import { AdminArticlesManager } from '../../components/admin/AdminArticlesManager';
+import { AdminAttendanceManager } from '../../components/admin/AdminAttendanceManager';
+import { AdminProgramManager } from '../../components/admin/AdminProgramManager';
+import { AdminTutorManager } from '../../components/admin/AdminTutorManager';
+import { AdminVerificationHub } from '../../components/admin/AdminVerificationHub';
 import { CertificateDetailsModal } from '../../components/admin/CertificateDetailsModal';
 import { EditCertificateModal } from '../../components/admin/EditCertificateModal';
 import { RevokeConfirmationModal } from '../../components/admin/RevokeConfirmationModal';
@@ -42,16 +50,20 @@ interface AdminDashboardLayoutProps {
   onLogout: () => void;
   onNavigateHome: () => void;
   onOpenPublicPage: (id: string) => void;
-  initialTab?: 'overview' | 'directory' | 'students' | 'articles' | 'letters' | 'create' | 'timetable';
+  onOpenPublicTutor?: (slug: string) => void;
+  onOpenPublicProject?: (slug: string) => void;
+  initialTab?: 'overview' | 'directory' | 'students' | 'articles' | 'letters' | 'create' | 'timetable' | 'attendance' | 'verification' | 'programs' | 'tutors';
 }
 
 export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
   onLogout,
   onNavigateHome,
   onOpenPublicPage,
+  onOpenPublicTutor,
+  onOpenPublicProject,
   initialTab = 'overview'
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'directory' | 'students' | 'articles' | 'letters' | 'create' | 'timetable'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'overview' | 'directory' | 'students' | 'articles' | 'letters' | 'create' | 'timetable' | 'attendance' | 'verification' | 'programs' | 'tutors'>(initialTab);
   const [certificates, setCertificates] = useState<CertificateRecord[]>([]);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [prefilledStudentForCreate, setPrefilledStudentForCreate] = useState<SheetDBStudent | null>(null);
@@ -76,7 +88,9 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
     setAdminUser(getAdminSession());
   }, []);
 
-  const handleTabChange = (tab: 'overview' | 'directory' | 'students' | 'articles' | 'letters' | 'create' | 'timetable') => {
+  type AdminTab = 'overview' | 'directory' | 'students' | 'articles' | 'letters' | 'create' | 'timetable' | 'attendance' | 'verification' | 'programs' | 'tutors';
+
+  const handleTabChange = (tab: AdminTab) => {
     playSound('droplet');
     setActiveTab(tab);
   };
@@ -282,6 +296,59 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
             </button>
 
             <button
+              onClick={() => handleTabChange('attendance')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 min-h-[40px] ${
+                activeTab === 'attendance'
+                  ? 'btn-purple text-white shadow-md'
+                  : 'text-[#c4c7c8] hover:text-[#ffffff] hover:bg-[#1f1b2e]'
+              }`}
+            >
+              <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Attendance</span>
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                activeTab === 'attendance' ? 'bg-emerald-900/80 text-white' : 'bg-[#181524] text-emerald-300 border border-[#332d47]'
+              }`}>
+                Classes & %
+              </span>
+            </button>
+
+            <button
+              onClick={() => handleTabChange('verification')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 min-h-[40px] ${
+                activeTab === 'verification'
+                  ? 'btn-purple text-white shadow-md'
+                  : 'text-[#c4c7c8] hover:text-[#ffffff] hover:bg-[#1f1b2e]'
+              }`}
+            >
+              <FolderGit2 className="w-3.5 h-3.5 text-purple-400" />
+              <span>Evidence Audit</span>
+            </button>
+
+            <button
+              onClick={() => handleTabChange('programs')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 min-h-[40px] ${
+                activeTab === 'programs'
+                  ? 'btn-purple text-white shadow-md'
+                  : 'text-[#c4c7c8] hover:text-[#ffffff] hover:bg-[#1f1b2e]'
+              }`}
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Programs</span>
+            </button>
+
+            <button
+              onClick={() => handleTabChange('tutors')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 min-h-[40px] ${
+                activeTab === 'tutors'
+                  ? 'btn-purple text-white shadow-md'
+                  : 'text-[#c4c7c8] hover:text-[#ffffff] hover:bg-[#1f1b2e]'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>Faculty Mentors</span>
+            </button>
+
+            <button
               onClick={() => handleTabChange('create')}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 ml-auto min-h-[40px] ${
                 activeTab === 'create'
@@ -369,6 +436,42 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
 
           {activeTab === 'letters' && (
             <AdminAcceptanceLettersManager />
+          )}
+
+          {activeTab === 'attendance' && (
+            <AdminAttendanceManager
+              currentUser={{
+                name: adminUser?.name || 'Super Administrator',
+                email: adminUser?.email || 'orbitspace.ilorin@gmail.com',
+                role: 'Super Administrator',
+              }}
+            />
+          )}
+
+          {activeTab === 'verification' && (
+            <AdminVerificationHub
+              currentAdminName={adminUser?.name || 'Super Administrator'}
+              onOpenPublicTutor={onOpenPublicTutor}
+              onOpenPublicProject={onOpenPublicProject}
+              onOpenPublicCertificate={onOpenPublicPage}
+            />
+          )}
+
+          {activeTab === 'programs' && (
+            <AdminProgramManager />
+          )}
+
+          {activeTab === 'tutors' && (
+            <AdminTutorManager
+              onOpenPublicTutor={(slug) => {
+                if (onOpenPublicTutor) {
+                  onOpenPublicTutor(slug);
+                } else {
+                  window.history.pushState({}, '', `/tutor/${slug}`);
+                  window.dispatchEvent(new PopStateEvent('popstate'));
+                }
+              }}
+            />
           )}
 
           {activeTab === 'create' && (

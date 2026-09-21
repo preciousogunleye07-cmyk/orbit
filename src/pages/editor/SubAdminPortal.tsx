@@ -13,7 +13,8 @@ import {
   Clock,
   BookOpen,
   Info,
-  Calendar
+  Calendar,
+  UserCheck
 } from 'lucide-react';
 import { 
   SubAdminUser, 
@@ -23,6 +24,7 @@ import {
 import { getCertificates, CertificateRecord, syncCertificatesFromSupabase } from '../../services/certificateService';
 import { AdminArticlesManager } from '../../components/admin/AdminArticlesManager';
 import { AdminTimetableManager } from '../../components/admin/AdminTimetableManager';
+import { AdminAttendanceManager } from '../../components/admin/AdminAttendanceManager';
 import { CertificateDetailsModal } from '../../components/admin/CertificateDetailsModal';
 import { OrbitLogo } from '../../components/OrbitLogo';
 import { playSound } from '../../utils/soundEffects';
@@ -40,7 +42,7 @@ export const SubAdminPortal: React.FC<SubAdminPortalProps> = ({
   onOpenCertificate
 }) => {
   const [currentUser, setCurrentUser] = useState<SubAdminUser | null>(null);
-  const [activeTab, setActiveTab] = useState<'articles' | 'certificates' | 'timetable'>('articles');
+  const [activeTab, setActiveTab] = useState<'articles' | 'certificates' | 'timetable' | 'attendance'>('articles');
 
   // Certificates list for reference
   const [certificates, setCertificates] = useState<CertificateRecord[]>([]);
@@ -203,6 +205,24 @@ export const SubAdminPortal: React.FC<SubAdminPortalProps> = ({
                 <Clock className="w-4 h-4" />
                 <span>Weekly Timetable</span>
               </button>
+
+              <button
+                onClick={() => {
+                  playSound('droplet');
+                  setActiveTab('attendance');
+                }}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+                  activeTab === 'attendance'
+                    ? 'btn-purple text-white shadow-md'
+                    : 'text-[#c4c7c8] hover:text-white hover:bg-[#1f1b2e]'
+                }`}
+              >
+                <UserCheck className="w-4 h-4 text-emerald-400" />
+                <span>Class Attendance & %</span>
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-emerald-950 text-emerald-300 border border-emerald-700/60">
+                  Live
+                </span>
+              </button>
             </nav>
 
             {/* Tab 1: Articles Manager */}
@@ -283,6 +303,17 @@ export const SubAdminPortal: React.FC<SubAdminPortalProps> = ({
               <AdminTimetableManager
                 onOpenPublicTimetable={() => {
                   window.open('/timetable', '_blank');
+                }}
+              />
+            )}
+
+            {/* Tab 4: Attendance System */}
+            {activeTab === 'attendance' && (
+              <AdminAttendanceManager
+                currentUser={{
+                  name: currentUser.name,
+                  email: currentUser.email,
+                  role: `Sub-Admin (${currentUser.role})`,
                 }}
               />
             )}

@@ -15,7 +15,8 @@ import {
   Info,
   ChevronRight,
   FileText,
-  PenTool
+  PenTool,
+  UserCheck
 } from 'lucide-react';
 import { ActiveModal } from '../types';
 import { GooeyNav, GooeyNavItem } from './GooeyNav';
@@ -48,7 +49,7 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const navPages = ['home', 'courses', 'timetable', 'siwes', 'workspace', 'quiz', 'about', 'contact'];
+  const navPages = ['home', 'courses', 'timetable', 'attendance', 'siwes', 'workspace', 'quiz', 'about', 'contact'];
   const activeIndex = Math.max(0, navPages.indexOf(currentPage));
 
   const gooeyNavItems: GooeyNavItem[] = [
@@ -67,6 +68,7 @@ export const Navbar: React.FC<NavbarProps> = ({ setActiveModal, currentPage, set
     { id: 'courses', label: 'Courses Catalog', subtitle: 'Practical Tech Tracks', icon: BookOpen },
     { id: 'articles', label: 'Research & Articles', subtitle: 'Student Engineering Papers & Capstones', icon: FileText },
     { id: 'timetable', label: 'Class Timetable', subtitle: 'Weekly Schedules & Batches', icon: Calendar },
+    { id: 'attendance', label: 'Attendance Registry', subtitle: 'Class Attendance Records & Percentages', icon: UserCheck },
     { id: 'siwes', label: 'SIWES Placement', subtitle: 'Internships & Logbook Supervision', icon: Briefcase },
     { id: 'workspace', label: 'Workspace Passes', subtitle: 'Power, High-Speed Wi-Fi & Desks', icon: Building2 },
     { id: 'quiz', label: 'Career Advisor', subtitle: 'Skill Recommendation Quiz', icon: Compass },

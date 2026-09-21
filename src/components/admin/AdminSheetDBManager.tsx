@@ -280,6 +280,24 @@ export const AdminSheetDBManager: React.FC<AdminSheetDBManagerProps> = ({
         matricNumber: matricToUse
       });
 
+      // Also ensure student is synced to attendance service cache & Firestore
+      try {
+        localStorage.removeItem('orbit_real_students_cache_v3');
+        const { AttendanceService } = await import('../../services/attendanceService');
+        await AttendanceService.registerStudentRecord({
+          name: newStudent.fullName.trim(),
+          email: newStudent.email.trim(),
+          phone: newStudent.phone.trim(),
+          matricNumber: matricToUse,
+          studentId: idToUse,
+          course: newStudent.program,
+          cohort: newStudent.cohort || '3',
+          gender: newStudent.gender,
+        });
+      } catch (syncErr) {
+        console.warn('Attendance sync error:', syncErr);
+      }
+
       playSound('success');
       setIsAddModalOpen(false);
       setToastMessage('Student successfully registered into Google Sheet!');
@@ -694,10 +712,11 @@ export const AdminSheetDBManager: React.FC<AdminSheetDBManagerProps> = ({
                       const existingCert = getStudentCertificate(student);
                       const isComplete = student.studentStatus.toLowerCase() === 'completed';
                       const hasContent = student.fullName.trim().length > 0;
+                      const uniqueKey = `${student.studentId || 'STU'}-${student.matricNumber || 'NOMATRIC'}-${idx}`;
 
                       return (
                         <tr 
-                          key={student.studentId || idx}
+                          key={uniqueKey}
                           className={`hover:bg-[#1f1b2e]/60 transition-colors ${
                             !hasContent ? 'opacity-50 bg-[#120f1c]/40' : ''
                           }`}
@@ -856,10 +875,11 @@ export const AdminSheetDBManager: React.FC<AdminSheetDBManagerProps> = ({
                   const existingCert = getStudentCertificate(student);
                   const isComplete = student.studentStatus.toLowerCase() === 'completed';
                   const hasContent = student.fullName.trim().length > 0;
+                  const mobileKey = `mob-${student.studentId || 'STU'}-${student.matricNumber || 'NOMATRIC'}-${idx}`;
 
                   return (
                     <div
-                      key={student.studentId || idx}
+                      key={mobileKey}
                       className="bg-[#100e17] rounded-2xl p-4 border border-[#332d47] space-y-3"
                     >
                       {/* Header: Name, Matric, Status */}

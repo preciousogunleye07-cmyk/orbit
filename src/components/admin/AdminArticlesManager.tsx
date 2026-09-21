@@ -89,9 +89,9 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
   // Author State
   const [authorType, setAuthorType] = useState<ArticleAuthorType>('student');
   const [thinkAuthorName, setThinkAuthorName] = useState('Obitt');
-  const [thinkAuthorRole, setThinkAuthorRole] = useState('Founder & Lead Researcher, Think Academy');
-  const [thinkAuthorInstitution, setThinkAuthorInstitution] = useState('Think Academy');
-  const [thinkAuthorBio, setThinkAuthorBio] = useState('Author of foundational engineering monographs and mental models at Think Academy.');
+  const [thinkAuthorRole, setThinkAuthorRole] = useState('Lead Researcher & Engineer, Orbit');
+  const [thinkAuthorInstitution, setThinkAuthorInstitution] = useState('Orbit Space');
+  const [thinkAuthorBio, setThinkAuthorBio] = useState('Author of foundational engineering monographs and mental models at Orbit Space.');
 
   const [selectedStudentCertId, setSelectedStudentCertId] = useState<string>('');
   const [studentAuthorName, setStudentAuthorName] = useState('');
@@ -113,9 +113,9 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
   const [aiCategory, setAiCategory] = useState('Web Engineering');
   const [aiHighlights, setAiHighlights] = useState('');
 
-  // AI Think Academy Generator Fields
+  // AI Orbit Official Generator Fields
   const [aiThinkAuthorName, setAiThinkAuthorName] = useState('Obitt');
-  const [aiThinkAuthorRole, setAiThinkAuthorRole] = useState('Founder & Lead Researcher, Think Academy');
+  const [aiThinkAuthorRole, setAiThinkAuthorRole] = useState('Lead Researcher & Engineer, Orbit');
   const [aiThinkTopic, setAiThinkTopic] = useState('');
   const [aiThinkCategory, setAiThinkCategory] = useState('Distributed Systems');
   const [aiThinkHighlights, setAiThinkHighlights] = useState('');
@@ -232,9 +232,9 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
     
     setAuthorType('student');
     setThinkAuthorName('Obitt');
-    setThinkAuthorRole('Founder & Lead Researcher, Think Academy');
-    setThinkAuthorInstitution('Think Academy');
-    setThinkAuthorBio('Author of foundational engineering monographs and mental models at Think Academy.');
+    setThinkAuthorRole('Lead Researcher & Engineer, Orbit');
+    setThinkAuthorInstitution('Orbit Space');
+    setThinkAuthorBio('Author of foundational engineering monographs and mental models at Orbit Space.');
 
     setSelectedStudentCertId('');
     setStudentAuthorName('');
@@ -265,14 +265,14 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
 
     if (art.thinkAcademyAuthor) {
       setThinkAuthorName(art.thinkAcademyAuthor.name || 'Obitt');
-      setThinkAuthorRole(art.thinkAcademyAuthor.role || 'Founder & Lead Researcher, Think Academy');
-      setThinkAuthorInstitution(art.thinkAcademyAuthor.institution || 'Think Academy');
+      setThinkAuthorRole(art.thinkAcademyAuthor.role || 'Lead Researcher & Engineer, Orbit');
+      setThinkAuthorInstitution(art.thinkAcademyAuthor.institution || 'Orbit Space');
       setThinkAuthorBio(art.thinkAcademyAuthor.bio || '');
     } else {
       setThinkAuthorName('Obitt');
-      setThinkAuthorRole('Founder & Lead Researcher, Think Academy');
-      setThinkAuthorInstitution('Think Academy');
-      setThinkAuthorBio('Author of foundational engineering monographs and mental models at Think Academy.');
+      setThinkAuthorRole('Lead Researcher & Engineer, Orbit');
+      setThinkAuthorInstitution('Orbit Space');
+      setThinkAuthorBio('Author of foundational engineering monographs and mental models at Orbit Space.');
     }
 
     const primaryAuthor = art.studentAuthors?.[0];
@@ -311,7 +311,7 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
 
       const generated = generateThinkAcademyDraft({
         authorName: aiThinkAuthorName.trim() || 'Obitt',
-        authorRole: aiThinkAuthorRole.trim() || 'Founder & Lead Researcher, Think Academy',
+        authorRole: aiThinkAuthorRole.trim() || 'Lead Researcher & Engineer, Orbit',
         topic: aiThinkTopic.trim(),
         category: aiThinkCategory,
         keyPrinciples: aiThinkHighlights
@@ -335,7 +335,7 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
 
       setIsAiGeneratorOpen(false);
       setIsEditorOpen(true);
-      showToast('Think Academy monograph drafted successfully! You can refine and deploy.');
+      showToast('Orbit Official Blog Post drafted successfully! You can refine and deploy.');
       return;
     }
 
@@ -422,7 +422,7 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
       : [];
 
     const deployedByInfo = {
-      name: currentUser?.name || (isThink ? 'Think Academy Faculty' : 'Academic Editorial Team'),
+      name: currentUser?.name || (isThink ? 'Orbit Official Editorial' : 'Academic Editorial Team'),
       role: currentUser?.role || 'Sub-Administrator',
       email: currentUser?.email || 'editor@orbitspace.academy'
     };
@@ -442,14 +442,14 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
       authorType: authorType,
       thinkAcademyAuthor: isThink ? {
         name: thinkAuthorName.trim() || 'Obitt',
-        role: thinkAuthorRole.trim() || 'Founder & Lead Researcher, Think Academy',
-        institution: thinkAuthorInstitution.trim() || 'Think Academy',
+        role: thinkAuthorRole.trim() || 'Lead Researcher & Engineer, Orbit',
+        institution: thinkAuthorInstitution.trim() || 'Orbit Space',
         bio: thinkAuthorBio.trim()
       } : undefined,
       studentAuthors: isThink ? [] : studentAuthorsList,
       supervisingTutor: isThink ? {
-        name: 'Think Academy Editorial Board',
-        role: 'Academic Publications'
+        name: 'Orbit Official Editorial Board',
+        role: 'Official Publications'
       } : {
         name: supervisingTutorName.trim() || 'Orbit Space Academic Mentor',
         role: supervisingTutorRole.trim() || 'Project Supervisor'
@@ -804,19 +804,19 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
                       {art.authorType === 'think-academy' ? (
                         <div className="flex items-start justify-between gap-2 text-xs">
                           <div className="space-y-0.5">
-                            <span className="text-[9px] font-mono uppercase text-amber-400 font-semibold block">
-                              Think Academy Monograph
+                            <span className="text-[9px] font-mono uppercase text-[#c084fc] font-semibold block">
+                              Orbit Official Blog Post
                             </span>
                             <span className="font-semibold text-white block">
                               {art.thinkAcademyAuthor?.name || 'Obitt'}
                             </span>
-                            <span className="text-[10px] text-amber-200/80 block">
-                              {art.thinkAcademyAuthor?.role || 'Founder & Lead Researcher, Think Academy'}
+                            <span className="text-[10px] text-[#c4c7c8] block">
+                              {art.thinkAcademyAuthor?.role || 'Lead Researcher & Engineer, Orbit'}
                             </span>
                           </div>
 
-                          <span className="px-2 py-0.5 rounded-lg bg-amber-950/70 border border-amber-800/60 text-amber-300 text-[10px] font-mono shrink-0">
-                            Obitt Editorial
+                          <span className="px-2 py-0.5 rounded-lg bg-purple-950/70 border border-purple-800/60 text-[#c084fc] text-[10px] font-mono shrink-0">
+                            Orbit Official
                           </span>
                         </div>
                       ) : student ? (
@@ -859,7 +859,7 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
                         </span>
                         <span className="font-medium text-[#e5e2e1] truncate max-w-[200px]">
                           {art.authorType === 'think-academy'
-                            ? (art.thinkAcademyAuthor?.institution || 'Think Academy Research')
+                            ? (art.thinkAcademyAuthor?.institution || 'Orbit Space')
                             : (art.supervisingTutor?.name || 'Orbit Space Mentor')}
                         </span>
                       </div>
@@ -1114,7 +1114,7 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
                           Authorship Attribution *
                         </label>
                         <span className="text-[10px] font-mono text-[#a855f7]">
-                          {authorType === 'think-academy' ? 'Think Academy Monograph' : 'Student Capstone Research'}
+                          {authorType === 'think-academy' ? 'Orbit Official Blog Post' : 'Student Capstone Research'}
                         </span>
                       </div>
 
@@ -1143,84 +1143,84 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
                           }}
                           className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                             authorType === 'think-academy'
-                              ? 'bg-amber-950/80 text-amber-200 border border-amber-500/70 shadow-md'
+                              ? 'bg-[#221c35] text-[#c084fc] border border-purple-500/70 shadow-md'
                               : 'text-gray-400 hover:text-gray-200 hover:bg-[#181524]'
                           }`}
                         >
-                          <span>Think Academy (Obitt)</span>
+                          <span>Orbit Official Blog Post</span>
                         </button>
                       </div>
                     </div>
 
-                    {/* THINK ACADEMY AUTHOR FORM SECTION */}
+                    {/* ORBIT OFFICIAL AUTHOR FORM SECTION */}
                     {authorType === 'think-academy' ? (
-                      <div className="bg-gradient-to-br from-[#1b1528] to-[#120f1b] p-4 sm:p-5 rounded-2xl border border-amber-600/50 space-y-4 shadow-lg">
-                        <div className="flex items-center justify-between pb-3 border-b border-amber-900/30">
+                      <div className="bg-[#181524] p-4 sm:p-5 rounded-2xl border border-[#332d47] space-y-4 shadow-lg">
+                        <div className="flex items-center justify-between pb-3 border-b border-[#29233b]">
                           <span className="text-xs font-semibold text-white">
-                            Think Academy Faculty & Monograph Attribution
+                            Orbit Official Blog Post & Editorial Attribution
                           </span>
                           <button
                             type="button"
                             onClick={() => {
                               setThinkAuthorName('Obitt');
-                              setThinkAuthorRole('Founder & Lead Researcher, Think Academy');
-                              setThinkAuthorInstitution('Think Academy');
-                              setThinkAuthorBio('Author of foundational engineering monographs and mental models at Think Academy, focused on first-principles thinking and distributed computing.');
+                              setThinkAuthorRole('Lead Researcher & Engineer, Orbit');
+                              setThinkAuthorInstitution('Orbit Space');
+                              setThinkAuthorBio('Author of foundational engineering monographs and mental models at Orbit Space, focused on first-principles thinking and distributed computing.');
                               playSound('sparkle');
-                              showToast('Reset author to Obitt (Think Academy Founder)');
+                              showToast('Reset author to Obitt (Orbit Lead)');
                             }}
-                            className="text-[10px] text-amber-300 hover:text-white font-mono bg-amber-950/60 hover:bg-amber-900/70 px-2.5 py-1 rounded-lg border border-amber-700/50 transition-all cursor-pointer"
+                            className="text-[10px] text-[#c084fc] hover:text-white font-mono bg-purple-950/60 hover:bg-purple-900/70 px-2.5 py-1 rounded-lg border border-purple-700/50 transition-all cursor-pointer"
                           >
                             Reset to Obitt
                           </button>
                         </div>
 
-                        <p className="text-[11px] text-amber-200/80 font-light leading-relaxed">
-                          This article is authored by Obitt / Think Academy faculty. It appears with institutional monograph styling and does not require student certification links.
+                        <p className="text-[11px] text-[#c4c7c8] font-light leading-relaxed">
+                          This article is authored by Obitt / Orbit official team. It appears with Orbit official publication styling and does not require student certification links.
                         </p>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div className="space-y-1">
-                            <label className="text-[10px] font-mono uppercase text-amber-300">Author Name *</label>
+                            <label className="text-[10px] font-mono uppercase text-[#c084fc]">Author Name *</label>
                             <input
                               type="text"
                               value={thinkAuthorName}
                               onChange={(e) => setThinkAuthorName(e.target.value)}
                               placeholder="e.g. Obitt"
-                              className="w-full bg-[#100e17] border border-amber-900/50 focus:border-amber-400 text-white text-xs rounded-xl px-3 py-2 outline-none"
+                              className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white text-xs rounded-xl px-3 py-2 outline-none"
                             />
                           </div>
 
                           <div className="space-y-1">
-                            <label className="text-[10px] font-mono uppercase text-amber-300">Author Role / Academic Title</label>
+                            <label className="text-[10px] font-mono uppercase text-[#c084fc]">Author Role / Academic Title</label>
                             <input
                               type="text"
                               value={thinkAuthorRole}
                               onChange={(e) => setThinkAuthorRole(e.target.value)}
-                              placeholder="e.g. Founder & Lead Researcher, Think Academy"
-                              className="w-full bg-[#100e17] border border-amber-900/50 focus:border-amber-400 text-white text-xs rounded-xl px-3 py-2 outline-none"
+                              placeholder="e.g. Lead Researcher & Engineer, Orbit"
+                              className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white text-xs rounded-xl px-3 py-2 outline-none"
                             />
                           </div>
 
                           <div className="space-y-1 sm:col-span-2">
-                            <label className="text-[10px] font-mono uppercase text-amber-300">Institution / Department</label>
+                            <label className="text-[10px] font-mono uppercase text-[#c084fc]">Institution / Department</label>
                             <input
                               type="text"
                               value={thinkAuthorInstitution}
                               onChange={(e) => setThinkAuthorInstitution(e.target.value)}
-                              placeholder="e.g. Think Academy"
-                              className="w-full bg-[#100e17] border border-amber-900/50 focus:border-amber-400 text-white text-xs rounded-xl px-3 py-2 outline-none"
+                              placeholder="e.g. Orbit Space"
+                              className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white text-xs rounded-xl px-3 py-2 outline-none"
                             />
                           </div>
 
                           <div className="space-y-1 sm:col-span-2">
-                            <label className="text-[10px] font-mono uppercase text-amber-300">Author Bio & Editorial Note</label>
+                            <label className="text-[10px] font-mono uppercase text-[#c084fc]">Author Bio & Editorial Note</label>
                             <textarea
                               rows={2}
                               value={thinkAuthorBio}
                               onChange={(e) => setThinkAuthorBio(e.target.value)}
                               placeholder="Brief background on the author's research or mental model..."
-                              className="w-full bg-[#100e17] border border-amber-900/50 focus:border-amber-400 text-white text-xs rounded-xl p-3 outline-none"
+                              className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white text-xs rounded-xl p-3 outline-none"
                             />
                           </div>
                         </div>
@@ -1394,13 +1394,13 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
 
                     {/* Author credit card preview */}
                     {authorType === 'think-academy' ? (
-                      <div className="bg-[#181524] rounded-2xl p-4 border border-amber-800/40 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="bg-[#181524] rounded-2xl p-4 border border-purple-800/40 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1">
-                          <span className="text-[10px] font-mono uppercase text-amber-400 font-semibold block">
-                            Think Academy Monograph Author
+                          <span className="text-[10px] font-mono uppercase text-[#c084fc] font-semibold block">
+                            Orbit Official Blog Post Author
                           </span>
                           <p className="text-sm font-semibold text-white">{thinkAuthorName || 'Obitt'}</p>
-                          <p className="text-xs text-amber-200/90">{thinkAuthorRole || 'Founder & Lead Researcher'}</p>
+                          <p className="text-xs text-[#c4c7c8]">{thinkAuthorRole || 'Lead Researcher & Engineer, Orbit'}</p>
                           {thinkAuthorBio && (
                             <p className="text-[11px] text-[#8e8a9f] font-light line-clamp-2 pt-1">{thinkAuthorBio}</p>
                           )}
@@ -1408,8 +1408,8 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
 
                         <div className="space-y-1">
                           <span className="text-[10px] font-mono uppercase text-purple-400 block">Publication Authority</span>
-                          <p className="text-sm font-semibold text-white">{thinkAuthorInstitution || 'Think Academy'}</p>
-                          <p className="text-xs text-[#8e8a9f]">Academic Monograph Series</p>
+                          <p className="text-sm font-semibold text-white">{thinkAuthorInstitution || 'Orbit Space'}</p>
+                          <p className="text-xs text-[#8e8a9f]">Orbit Official Blog Series</p>
                         </div>
                       </div>
                     ) : (
@@ -1498,7 +1498,7 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
                       AI Article Draft Generator
                     </h3>
                     <p className="text-[11px] text-purple-200">
-                      Crafts a high-impact technical paper or Think Academy research monograph.
+                      Crafts a high-impact technical paper or Orbit Official Blog Post.
                     </p>
                   </div>
                 </div>
@@ -1538,20 +1538,20 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
                     }}
                     className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
                       aiGeneratorMode === 'think-academy'
-                        ? 'bg-amber-950/80 text-amber-200 border border-amber-600/70 shadow'
+                        ? 'bg-[#221c35] text-[#c084fc] border border-purple-500/70 shadow'
                         : 'text-gray-400 hover:text-white'
                     }`}
                   >
-                    <span>Think Academy (Obitt)</span>
+                    <span>Orbit Official Blog Post</span>
                   </button>
                 </div>
               </div>
 
               {aiGeneratorMode === 'think-academy' ? (
-                /* THINK ACADEMY AI GENERATOR FIELDS */
+                /* ORBIT OFFICIAL AI GENERATOR FIELDS */
                 <div className="p-5 sm:p-6 space-y-4 text-xs">
-                  <div className="bg-amber-950/40 p-3.5 rounded-xl border border-amber-700/40 text-amber-200/90 text-xs">
-                    Generate an in-depth technical monograph authored by Obitt for Think Academy, focusing on mental models, distributed architecture, and first principles.
+                  <div className="bg-[#181524] p-3.5 rounded-xl border border-purple-800/40 text-[#c4c7c8] text-xs">
+                    Generate an in-depth technical monograph authored by Obitt for the Orbit Official Blog, focusing on mental models, distributed architecture, and first principles.
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1562,7 +1562,7 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
                         value={aiThinkAuthorName}
                         onChange={(e) => setAiThinkAuthorName(e.target.value)}
                         placeholder="e.g. Obitt"
-                        className="w-full bg-[#100e17] border border-[#332d47] focus:border-amber-400 text-white rounded-xl px-3 py-2 outline-none"
+                        className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white rounded-xl px-3 py-2 outline-none"
                       />
                     </div>
 
@@ -1572,8 +1572,8 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
                         type="text"
                         value={aiThinkAuthorRole}
                         onChange={(e) => setAiThinkAuthorRole(e.target.value)}
-                        placeholder="e.g. Founder & Lead Researcher, Think Academy"
-                        className="w-full bg-[#100e17] border border-[#332d47] focus:border-amber-400 text-white rounded-xl px-3 py-2 outline-none"
+                        placeholder="e.g. Lead Researcher & Engineer, Orbit"
+                        className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white rounded-xl px-3 py-2 outline-none"
                       />
                     </div>
                   </div>
@@ -1585,7 +1585,7 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
                       value={aiThinkTopic}
                       onChange={(e) => setAiThinkTopic(e.target.value)}
                       placeholder="e.g. Distributed State Invariants, Reactive Event Sourcing & Architectural Simplicity"
-                      className="w-full bg-[#100e17] border border-[#332d47] focus:border-amber-400 text-white rounded-xl px-3 py-2 outline-none font-medium"
+                      className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white rounded-xl px-3 py-2 outline-none font-medium"
                     />
                   </div>
 
@@ -1594,7 +1594,7 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
                     <select
                       value={aiThinkCategory}
                       onChange={(e) => setAiThinkCategory(e.target.value)}
-                      className="w-full bg-[#100e17] border border-[#332d47] focus:border-amber-400 text-white text-xs rounded-xl px-3 py-2 outline-none"
+                      className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white text-xs rounded-xl px-3 py-2 outline-none"
                     >
                       <option value="Distributed Systems">Distributed Systems & Backend Engineering</option>
                       <option value="Software Architecture">Software Architecture & Mental Models</option>
@@ -1611,7 +1611,7 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
                       value={aiThinkHighlights}
                       onChange={(e) => setAiThinkHighlights(e.target.value)}
                       placeholder="e.g. Avoid unnecessary microservices; treat database as immutable append-only log; prioritize deterministic state transitions."
-                      className="w-full bg-[#100e17] border border-[#332d47] focus:border-amber-400 text-white rounded-xl p-3 outline-none"
+                      className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white rounded-xl p-3 outline-none"
                     />
                   </div>
                 </div>
@@ -1721,13 +1721,9 @@ export const AdminArticlesManager: React.FC<AdminArticlesManagerProps> = ({
                 <button
                   type="button"
                   onClick={handleExecuteAiGenerate}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-lg transition-all cursor-pointer ${
-                    aiGeneratorMode === 'think-academy'
-                      ? 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white'
-                      : 'btn-purple'
-                  }`}
+                  className="btn-purple px-5 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-lg transition-all cursor-pointer"
                 >
-                  <span>{aiGeneratorMode === 'think-academy' ? 'Generate Think Academy Monograph' : 'Generate Student Article'}</span>
+                  <span>{aiGeneratorMode === 'think-academy' ? 'Generate Orbit Official Blog Post' : 'Generate Student Article'}</span>
                 </button>
               </div>
             </motion.div>

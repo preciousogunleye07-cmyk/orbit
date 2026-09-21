@@ -191,8 +191,9 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
         <header className="space-y-4">
           <div className="flex items-center gap-2.5 flex-wrap">
             {article.authorType === 'think-academy' ? (
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-950/80 text-amber-300 border border-amber-600/50 shadow-sm">
-                Think Academy Monograph
+              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#221c35] text-[#c084fc] border border-purple-800/50 shadow-sm flex items-center gap-1.5">
+                <BookOpen className="w-3.5 h-3.5 text-[#c084fc]" />
+                Orbit Official Blog Post
               </span>
             ) : (
               <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#221c35] text-[#c084fc] border border-purple-800/50">
@@ -206,8 +207,8 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
               <Clock className="w-3.5 h-3.5 text-[#a855f7]" /> {article.readTime}
             </span>
             {article.authorType === 'think-academy' && (
-              <span className="text-xs font-mono text-amber-300/90 flex items-center gap-1">
-                <User className="w-3.5 h-3.5 text-amber-400" /> Authored by {article.thinkAcademyAuthor?.name || 'Obitt'}
+              <span className="text-xs font-mono text-[#c4c7c8] flex items-center gap-1">
+                <User className="w-3.5 h-3.5 text-[#a855f7]" /> Authored by {article.thinkAcademyAuthor?.name || 'Obitt'}
               </span>
             )}
           </div>
@@ -232,63 +233,66 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
 
         {/* AUTHORSHIP PRESENTATION */}
         {article.authorType === 'think-academy' ? (
-          <div className="bg-gradient-to-br from-[#1b1528] to-[#120f1c] rounded-[28px] p-5 sm:p-7 border border-amber-600/40 shadow-xl space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-amber-900/30">
-              <span className="text-xs sm:text-sm font-semibold text-white">
-                Think Academy Monograph & Faculty Publication
-              </span>
-              <span className="text-[10px] font-mono text-amber-300 bg-amber-950/70 px-2.5 py-0.5 rounded-full border border-amber-700/50 flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3 text-amber-400" />
-                Verified Think Academy Editorial
+          <div className="bg-[#181524] rounded-[28px] p-5 sm:p-7 border border-purple-800/40 shadow-xl space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-[#2e2645]">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-[#c084fc]" />
+                <span className="text-xs sm:text-sm font-semibold text-white">
+                  Orbit Official Blog Post & Technical Publication
+                </span>
+              </div>
+              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-800/40 flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                Verified Orbit Official Editorial
               </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* Think Academy Author Card */}
-              <div className="bg-[#100e17] rounded-2xl p-5 border border-amber-900/30 space-y-3 flex flex-col justify-between">
+              {/* Orbit Official Author Card */}
+              <div className="bg-[#100e17] rounded-2xl p-5 border border-[#332d47] space-y-3 flex flex-col justify-between">
                 <div className="space-y-1.5">
-                  <span className="text-[10px] font-mono uppercase text-amber-400 tracking-wider font-semibold block">
-                    Author & Think Academy Lead
+                  <span className="text-[10px] font-mono uppercase text-[#a855f7] tracking-wider font-semibold block">
+                    Author & Orbit Lead
                   </span>
                   <h4 className="text-lg font-serif font-semibold text-white">
                     {article.thinkAcademyAuthor?.name || 'Obitt'}
                   </h4>
-                  <p className="text-xs text-amber-200/90 font-medium">
-                    {article.thinkAcademyAuthor?.role || 'Founder & Lead Researcher, Think Academy'}
+                  <p className="text-xs text-purple-300 font-medium">
+                    {article.thinkAcademyAuthor?.role || 'Lead Researcher & Engineer, Orbit'}
                   </p>
                   <p className="text-xs text-[#a39ebb] font-light leading-relaxed pt-1">
-                    {article.thinkAcademyAuthor?.bio || 'Author of foundational engineering monographs and mental models at Think Academy, focused on first-principles thinking and distributed computing.'}
+                    {article.thinkAcademyAuthor?.bio || 'Author of foundational engineering monographs and mental models at Orbit Space, focused on first-principles thinking and distributed computing.'}
                   </p>
                 </div>
 
                 <div className="pt-3 border-t border-[#252033] flex items-center justify-between text-[11px] text-[#8e8a9f]">
                   <span className="flex items-center gap-1.5 font-mono text-gray-300">
-                    <Building className="w-3.5 h-3.5 text-amber-400" />
-                    {article.thinkAcademyAuthor?.institution || 'Think Academy'}
+                    <Building className="w-3.5 h-3.5 text-[#a855f7]" />
+                    {article.thinkAcademyAuthor?.institution || 'Orbit Space'}
                   </span>
-                  <span className="text-amber-400 font-mono text-[10px]">Author: Obitt</span>
+                  <span className="text-[#c084fc] font-mono text-[10px]">Official Author: Obitt</span>
                 </div>
               </div>
 
-              {/* Think Academy Editorial Standards Card */}
-              <div className="bg-[#100e17] rounded-2xl p-5 border border-amber-900/30 space-y-3 flex flex-col justify-between">
+              {/* Orbit Editorial Standards Card */}
+              <div className="bg-[#100e17] rounded-2xl p-5 border border-[#332d47] space-y-3 flex flex-col justify-between">
                 <div className="space-y-1.5">
                   <span className="text-[10px] font-mono uppercase text-[#c084fc] tracking-wider font-semibold block">
                     Editorial Standards & Academic Rigor
                   </span>
                   <h4 className="text-base font-semibold text-white">
-                    Think Academy Monograph Series
+                    Orbit Official Blog Series
                   </h4>
                   <p className="text-xs text-[#c4c7c8] font-light leading-relaxed">
-                    Think Academy monographs provide deep-dive technical explorations written directly by Obitt and senior faculty fellows. These publications establish engineering standards and mental models for students and developers.
+                    Orbit official blog posts provide deep-dive technical explorations written directly by Obitt and senior faculty fellows. These publications establish engineering standards and mental models for students and developers.
                   </p>
                 </div>
 
                 <div className="pt-3 border-t border-[#252033] flex items-center justify-between text-[11px] text-[#8e8a9f]">
                   <span className="flex items-center gap-1 font-mono">
-                    <Building className="w-3.5 h-3.5 text-[#a855f7]" /> Think Academy Publications
+                    <Building className="w-3.5 h-3.5 text-[#a855f7]" /> Orbit Space Official Blog
                   </span>
-                  <span className="text-purple-400 font-medium font-mono text-[10px]">Open Access</span>
+                  <span className="text-emerald-400 font-medium font-mono text-[10px]">Official Publication</span>
                 </div>
               </div>
             </div>

@@ -96,16 +96,12 @@ export const ArticlesPage: React.FC<ArticlesPageProps> = ({
         
         {/* Header Hero */}
         <div className="text-center space-y-4 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#181524] border border-purple-800/40 text-xs font-mono text-[#c084fc]">
-            <span>Orbit Space Publications & Think Academy Research</span>
-          </div>
-
           <h1 className="text-3xl sm:text-5xl font-serif text-[#ffffff] font-normal tracking-tight leading-tight">
-            Technical Research, Think Academy Monograms & Student Capstones
+            Orbit Official Blog Posts & Student Capstones
           </h1>
 
           <p className="text-sm sm:text-base text-[#c4c7c8] font-light leading-relaxed">
-            Explore architectural monographs authored by Obitt from Think Academy alongside peer-reviewed engineering case studies engineered by certified Orbit Space students.
+            Explore architectural monographs and technical insights from Orbit alongside peer-reviewed engineering case studies engineered by certified Orbit Space students.
           </p>
         </div>
 
@@ -139,11 +135,12 @@ export const ArticlesPage: React.FC<ArticlesPageProps> = ({
                 }}
                 className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
                   authorshipFilter === 'think-academy'
-                    ? 'bg-amber-600 text-white font-semibold shadow-lg shadow-amber-900/30'
-                    : 'bg-[#100e17] text-amber-300 hover:text-white border border-amber-800/50'
+                    ? 'btn-purple text-white shadow-md'
+                    : 'bg-[#100e17] text-[#c4c7c8] hover:text-white border border-[#332d47]'
                 }`}
               >
-                <span>Think Academy (Obitt)</span>
+                <BookOpen className="w-3 h-3 text-[#c084fc]" />
+                <span>Orbit Official Blog Post</span>
               </button>
 
               <button
@@ -169,7 +166,7 @@ export const ArticlesPage: React.FC<ArticlesPageProps> = ({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search Obitt, Think Academy, student, topic..."
+                placeholder="Search Obitt, Orbit blog, student, topic..."
                 className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] text-white text-xs rounded-xl pl-9 pr-4 py-2 outline-none transition-all"
               />
             </div>
@@ -220,12 +217,13 @@ export const ArticlesPage: React.FC<ArticlesPageProps> = ({
               <div className="absolute inset-0 bg-gradient-to-t lg:bg-gradient-to-r from-transparent to-[#181524]/90" />
               
               {featuredArticle.authorType === 'think-academy' ? (
-                <span className="absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-semibold bg-amber-950/90 backdrop-blur-md text-amber-300 border border-amber-700/60 shadow-lg">
-                  Think Academy Monograph • by Obitt
+                <span className="absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-semibold bg-[#181524]/95 backdrop-blur-md text-[#c084fc] border border-purple-600/50 shadow-lg flex items-center gap-1.5">
+                  <BookOpen className="w-3.5 h-3.5 text-[#c084fc]" />
+                  Orbit Official Blog Post
                 </span>
               ) : (
                 <span className="absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-semibold bg-purple-950/85 backdrop-blur-md text-[#c084fc] border border-purple-700/60 flex items-center gap-1.5">
-                  <Award className="w-3.5 h-3.5 text-amber-300" />
+                  <Award className="w-3.5 h-3.5 text-purple-300" />
                   Featured Academic Capstone
                 </span>
               )}
@@ -235,7 +233,7 @@ export const ArticlesPage: React.FC<ArticlesPageProps> = ({
             <div className="lg:col-span-6 p-6 sm:p-8 lg:p-10 flex flex-col justify-between space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center gap-3 text-xs font-mono text-[#8e8a9f]">
-                  <span className={featuredArticle.authorType === 'think-academy' ? 'text-amber-400 font-semibold' : 'text-[#a855f7] font-semibold'}>
+                  <span className="text-[#a855f7] font-semibold">
                     {featuredArticle.category}
                   </span>
                   <span>•</span>
@@ -265,12 +263,12 @@ export const ArticlesPage: React.FC<ArticlesPageProps> = ({
                         <span className="text-sm font-semibold text-white">
                           {featuredArticle.thinkAcademyAuthor?.name || 'Obitt'}
                         </span>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-950/80 text-amber-300 border border-amber-800/60">
-                          <span>Think Academy Author</span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-950/80 text-[#c084fc] border border-purple-800/60">
+                          <span>Orbit Official Author</span>
                         </span>
                       </div>
                       <span className="text-[11px] text-[#8e8a9f] block">
-                        {featuredArticle.thinkAcademyAuthor?.role || 'Founder & Lead Researcher, Think Academy'}
+                        {featuredArticle.thinkAcademyAuthor?.role || 'Lead Researcher & Engineer, Orbit'}
                       </span>
                     </div>
                   ) : (
@@ -305,7 +303,7 @@ export const ArticlesPage: React.FC<ArticlesPageProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2 text-xs font-semibold text-[#c084fc] group-hover:translate-x-1 transition-transform">
-                  <span>{featuredArticle.authorType === 'think-academy' ? 'Read Full Monograph' : 'Read Full Case Study'}</span>
+                  <span>{featuredArticle.authorType === 'think-academy' ? 'Read Official Post' : 'Read Full Case Study'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </div>
               </div>
@@ -345,11 +343,7 @@ export const ArticlesPage: React.FC<ArticlesPageProps> = ({
                       playSound('chime');
                       onSelectArticle(art.slug);
                     }}
-                    className={`bg-[#181524] rounded-[24px] border overflow-hidden shadow-xl transition-all flex flex-col justify-between group cursor-pointer ${
-                      isThinkAcademy 
-                        ? 'border-amber-900/40 hover:border-amber-500/70 hover:shadow-amber-950/20' 
-                        : 'border-[#332d47] hover:border-purple-500/60'
-                    }`}
+                    className={`bg-[#181524] rounded-[24px] border overflow-hidden shadow-xl transition-all flex flex-col justify-between group cursor-pointer border-[#332d47] hover:border-purple-500/60 hover:shadow-purple-950/20`}
                   >
                     <div>
                       {/* Image Thumbnail */}
@@ -362,8 +356,9 @@ export const ArticlesPage: React.FC<ArticlesPageProps> = ({
                         <div className="absolute inset-0 bg-gradient-to-t from-[#181524] via-[#181524]/30 to-transparent" />
                         
                         {isThinkAcademy ? (
-                          <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-[#100e17]/95 backdrop-blur-md text-amber-300 border border-amber-600/50">
-                            Think Academy
+                          <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-[#100e17]/95 backdrop-blur-md text-[#c084fc] border border-purple-600/50 flex items-center gap-1">
+                            <BookOpen className="w-3 h-3 text-[#c084fc]" />
+                            Orbit Official Blog Post
                           </span>
                         ) : (
                           <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-[#100e17]/90 backdrop-blur-md text-[#c084fc] border border-purple-500/30">
@@ -372,7 +367,7 @@ export const ArticlesPage: React.FC<ArticlesPageProps> = ({
                         )}
 
                         <span className="absolute bottom-3 right-3 text-[10px] font-mono text-[#c4c7c8] bg-[#100e17]/80 backdrop-blur-md px-2 py-0.5 rounded-md flex items-center gap-1">
-                          <Clock className={`w-3 h-3 ${isThinkAcademy ? 'text-amber-400' : 'text-[#a855f7]'}`} /> {art.readTime}
+                          <Clock className="w-3 h-3 text-[#a855f7]" /> {art.readTime}
                         </span>
                       </div>
 
@@ -382,9 +377,7 @@ export const ArticlesPage: React.FC<ArticlesPageProps> = ({
                           {art.publishedAt}
                         </div>
 
-                        <h4 className={`text-base font-serif font-medium text-white transition-colors line-clamp-2 leading-snug ${
-                          isThinkAcademy ? 'group-hover:text-amber-300' : 'group-hover:text-purple-300'
-                        }`}>
+                        <h4 className="text-base font-serif font-medium text-white transition-colors line-clamp-2 leading-snug group-hover:text-purple-300">
                           {art.title}
                         </h4>
 
@@ -397,18 +390,18 @@ export const ArticlesPage: React.FC<ArticlesPageProps> = ({
                     {/* Author & Verification Footer */}
                     <div className="p-5 pt-0">
                       {isThinkAcademy ? (
-                        <div className="bg-[#100e17] rounded-xl p-3 border border-amber-950/70 flex items-center justify-between gap-2">
+                        <div className="bg-[#100e17] rounded-xl p-3 border border-[#2d273f] flex items-center justify-between gap-2">
                           <div className="space-y-0.5 truncate">
-                            <span className="text-[9px] font-mono uppercase text-amber-400 font-semibold block">
-                              Think Academy
+                            <span className="text-[9px] font-mono uppercase text-[#a855f7] font-semibold block">
+                              Orbit Official Blog
                             </span>
                             <span className="text-xs font-semibold text-white truncate block">
                               {art.thinkAcademyAuthor?.name || 'Obitt'}
                             </span>
                           </div>
 
-                          <span className="px-2 py-0.5 rounded-md bg-amber-950/80 border border-amber-800/60 text-amber-300 text-[10px] font-mono shrink-0">
-                            Monograph
+                          <span className="px-2 py-0.5 rounded-md bg-purple-950/80 border border-purple-800/60 text-[#c084fc] text-[10px] font-mono shrink-0">
+                            Official Post
                           </span>
                         </div>
                       ) : (
@@ -440,10 +433,8 @@ export const ArticlesPage: React.FC<ArticlesPageProps> = ({
                         </div>
                       )}
 
-                      <div className={`pt-3 flex items-center justify-between text-xs font-medium group-hover:text-white transition-colors ${
-                        isThinkAcademy ? 'text-amber-400' : 'text-[#c084fc]'
-                      }`}>
-                        <span>{isThinkAcademy ? 'Read Monograph' : 'Read Case Study'}</span>
+                      <div className="pt-3 flex items-center justify-between text-xs font-medium text-[#c084fc] group-hover:text-white transition-colors">
+                        <span>{isThinkAcademy ? 'Read Official Post' : 'Read Case Study'}</span>
                         <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                       </div>
                     </div>
@@ -452,28 +443,6 @@ export const ArticlesPage: React.FC<ArticlesPageProps> = ({
               })}
             </div>
           )}
-        </div>
-
-        {/* Academic Submissions Banner */}
-        <div className="bg-gradient-to-r from-purple-950/40 via-[#181524] to-indigo-950/40 rounded-[28px] border border-purple-900/50 p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-2 text-center md:text-left">
-            <h3 className="text-lg sm:text-xl font-serif text-white font-normal">
-              Are you an Orbit Space Student or Capstone Supervisor?
-            </h3>
-            <p className="text-xs text-[#c4c7c8] font-light max-w-xl">
-              Published articles are automatically indexed with your verifiable graduation credentials, showcasing your technical problem-solving directly to prospective employers and research institutions.
-            </p>
-          </div>
-
-          <a
-            href="https://wa.me/2348123456789?text=Hello%20Orbit%20Space%20Academic%20Desk!%20I%20would%20like%20to%20submit%20my%20capstone%20engineering%20article."
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-purple px-6 py-3 rounded-xl text-xs font-semibold flex items-center gap-2 shrink-0 shadow-lg cursor-pointer"
-          >
-            <BookOpen className="w-4 h-4" />
-            <span>Submit Capstone to Academic Desk</span>
-          </a>
         </div>
 
       </div>

@@ -65,6 +65,103 @@
         "createdAt": { "type": "string", "description": "Creation timestamp" },
         "updatedAt": { "type": "string", "description": "Last update timestamp" }
       }
+    },
+    "attendance_classes": {
+      "fields": {
+        "id": { "type": "string", "description": "Unique class cohort ID" },
+        "name": { "type": "string", "description": "Class title e.g. Full-Stack Web Development Cohort" },
+        "code": { "type": "string", "description": "Class code e.g. FSWD-2026" },
+        "category": { "type": "string", "description": "Subject track" },
+        "scheduleDays": { "type": "array", "description": "Class meeting days" },
+        "timeSlot": { "type": "string", "description": "Meeting time slot" },
+        "venue": { "type": "string", "description": "Classroom or laboratory room" },
+        "assignedTeacherIds": { "type": "array", "description": "Assigned instructors" }
+      }
+    },
+    "attendance_sessions": {
+      "fields": {
+        "id": { "type": "string", "description": "Unique session ID" },
+        "classId": { "type": "string", "description": "Referenced class ID" },
+        "date": { "type": "string", "description": "Session date YYYY-MM-DD" },
+        "sessionTopic": { "type": "string", "description": "Topic or module taught" },
+        "studentAttendance": { "type": "object", "description": "Map of studentId to present/absent/late/excused" },
+        "teacherAttendance": { "type": "object", "description": "Map of teacherId to present/absent" }
+      }
+    },
+    "class_sessions": {
+      "fields": {
+        "class_session_id": { "type": "string", "description": "Unique class session identifier e.g. cybersecurity_cohort-3_2026-09-20" },
+        "course": { "type": "string", "description": "Course title e.g. Cybersecurity" },
+        "cohort": { "type": "string", "description": "Cohort number e.g. 3" },
+        "date": { "type": "string", "description": "Session date YYYY-MM-DD" },
+        "session_topic": { "type": "string", "description": "Topic covered in class session" },
+        "student_attendance": { "type": "object", "description": "Map of student_id to attendance status" },
+        "total_students": { "type": "number", "description": "Total students enrolled in cohort" },
+        "present_count": { "type": "number", "description": "Count of present students" },
+        "absent_count": { "type": "number", "description": "Count of absent students" },
+        "late_count": { "type": "number", "description": "Count of late students" },
+        "excused_count": { "type": "number", "description": "Count of excused students" },
+        "updated_at": { "type": "string", "description": "ISO timestamp of last update" }
+      }
+    },
+    "attendance_records": {
+      "fields": {
+        "id": { "type": "string", "description": "Compound key of class_session_id and student_id" },
+        "class_session_id": { "type": "string", "description": "Referenced class session ID" },
+        "student_id": { "type": "string", "description": "Referenced student ID" },
+        "student_name": { "type": "string", "description": "Student full name" },
+        "matric_number": { "type": "string", "description": "Matriculation reference" },
+        "course": { "type": "string", "description": "Course title" },
+        "cohort": { "type": "string", "description": "Cohort reference" },
+        "date": { "type": "string", "description": "Session date" },
+        "status": { "type": "string", "description": "present, absent, late, or excused" },
+        "updated_at": { "type": "string", "description": "Timestamp of record entry" }
+      }
+    },
+    "tutors": {
+      "fields": {
+        "id": { "type": "string", "description": "Unique tutor ID" },
+        "slug": { "type": "string", "description": "Public URL slug for verification, e.g. lawal-frontend-lead" },
+        "name": { "type": "string", "description": "Display name of tutor" },
+        "role": { "type": "string", "description": "Faculty title or designation" },
+        "specialization": { "type": "string", "description": "Primary domain focus" },
+        "status": { "type": "string", "description": "active or deactivated" },
+        "verificationStatus": { "type": "string", "description": "verified or pending" },
+        "joinedDate": { "type": "string", "description": "Date joined faculty" }
+      }
+    },
+    "programs": {
+      "fields": {
+        "id": { "type": "string", "description": "Unique program slug/ID" },
+        "title": { "type": "string", "description": "Program full title" },
+        "category": { "type": "string", "description": "Program domain track" },
+        "status": { "type": "string", "description": "active, archived, or draft" },
+        "duration": { "type": "string", "description": "Length of program" }
+      }
+    },
+    "teaching_hours": {
+      "fields": {
+        "id": { "type": "string", "description": "Unique session ID" },
+        "tutorId": { "type": "string", "description": "Foreign key to tutor ID" },
+        "program": { "type": "string", "description": "Course program title" },
+        "date": { "type": "string", "description": "Session date" },
+        "durationHours": { "type": "number", "description": "Logged teaching duration in hours" },
+        "topicCovered": { "type": "string", "description": "Topic or module" },
+        "verificationStatus": { "type": "string", "description": "verified or pending" }
+      }
+    },
+    "supervised_projects": {
+      "fields": {
+        "id": { "type": "string", "description": "Unique project identifier" },
+        "verificationSlug": { "type": "string", "description": "Unique verification slug" },
+        "title": { "type": "string", "description": "Project title" },
+        "studentName": { "type": "string", "description": "Student author" },
+        "program": { "type": "string", "description": "Program" },
+        "tutorId": { "type": "string", "description": "Supervisor tutor ID" },
+        "visibility": { "type": "string", "description": "public, private, or certificate-only" },
+        "verificationStatus": { "type": "string", "description": "verified or pending" },
+        "linkedCertificateId": { "type": "string", "description": "Linked student certificate ID" }
+      }
     }
   },
   "relations": [],
@@ -72,6 +169,14 @@
     "certificates": "Publicly readable by all users to allow instant employer credential verification; writable for administrative operations.",
     "enrollments": "Insertable by prospective learners during registration.",
     "timetable": "Publicly readable by all students and guests; writable and editable by administrators.",
-    "articles": "Publicly readable for published articles; writable by authorized administrators and sub-administrators."
+    "tutors": "Publicly readable; writable by verified administrators.",
+    "programs": "Publicly readable; writable by administrators.",
+    "teaching_hours": "Publicly readable for verified totals; writable by administrators.",
+    "supervised_projects": "Publicly readable for approved public projects; writable by tutors and admins.",
+    "articles": "Publicly readable for published articles; writable by authorized administrators and sub-administrators.",
+    "attendance_classes": "Readable and writable by super admin and sub admin.",
+    "attendance_sessions": "Readable and writable by super admin and sub admin.",
+    "class_sessions": "Readable by all students and tutors; writable only by administrators.",
+    "attendance_records": "Readable by all students and tutors; writable only by administrators."
   }
 }

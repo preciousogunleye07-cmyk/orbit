@@ -91,10 +91,10 @@ export const PRESET_ARTICLE_IMAGES = [
 
 export const DEFAULT_ARTICLES: ArticleRecord[] = [
   {
-    id: 'art-think-academy-foundations-obitt',
-    slug: 'cognitive-engineering-principles-think-academy',
+    id: 'art-orbit-official-foundations-obitt',
+    slug: 'cognitive-engineering-principles-orbit-official',
     title: 'First Principles of Cognitive Engineering: Accelerating World-Class Tech Talent in Emerging Ecosystems',
-    subtitle: 'A foundational technical monograph by Obitt on deep-work architecture, cognitive scaffolding, and building high-order engineering competence at Think Academy.',
+    subtitle: 'A foundational technical blog post by Obitt on deep-work architecture, cognitive scaffolding, and building high-order engineering competence at Orbit Space.',
     category: 'Web Engineering',
     coverImage: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80',
     readTime: '9 min read',
@@ -103,29 +103,29 @@ export const DEFAULT_ARTICLES: ArticleRecord[] = [
     authorType: 'think-academy',
     thinkAcademyAuthor: {
       name: 'Obitt',
-      role: 'Founder & Lead Researcher, Think Academy',
-      institution: 'Think Academy',
-      badge: 'Founder & Research Fellow'
+      role: 'Lead Researcher & Engineer, Orbit',
+      institution: 'Orbit Space',
+      badge: 'Orbit Lead Fellow'
     },
     deployedBy: {
       name: 'Obitt',
-      role: 'Founder, Think Academy',
-      email: 'obitt@thinkacademy.orbitspace.academy'
+      role: 'Lead Researcher, Orbit Space',
+      email: 'obitt@orbitspace.academy'
     },
     studentAuthors: [],
     supervisingTutor: {
-      name: 'Think Academy Academic Directorate',
+      name: 'Orbit Engineering Directorate',
       role: 'Executive Research Fellowship',
-      email: 'directorate@thinkacademy.orbitspace.academy'
+      email: 'directorate@orbitspace.academy'
     },
-    tags: ['ThinkAcademy', 'Obitt', 'CognitiveEngineering', 'DeepWork', 'SoftwareArchitecture', 'Pedagogy'],
+    tags: ['OrbitOfficial', 'Obitt', 'CognitiveEngineering', 'DeepWork', 'SoftwareArchitecture', 'Pedagogy'],
     createdAt: '2026-03-10T08:00:00.000Z',
     updatedAt: '2026-03-10T08:00:00.000Z',
-    content: `## 1. The Think Academy Thesis
+    content: `## 1. The Orbit Engineering Thesis
 
-At **Think Academy**, we reject the prevailing paradigm that technical mastery is a byproduct of passive memorization or tutorial regurgitation. Modern software engineering, cybersecurity, and embedded robotics require deep cognitive scaffolding—the ability to hold high-dimensional system abstractions in working memory while executing with ruthless syntactic and architectural precision.
+At **Orbit Space**, we reject the prevailing paradigm that technical mastery is a byproduct of passive memorization or tutorial regurgitation. Modern software engineering, cybersecurity, and embedded robotics require deep cognitive scaffolding—the ability to hold high-dimensional system abstractions in working memory while executing with ruthless syntactic and architectural precision.
 
-This monograph presents the foundational engineering mental models established by **Obitt** for Think Academy Fellows and Orbit Space researchers.
+This official publication presents the foundational engineering mental models established by **Obitt** for Orbit Space researchers and students.
 
 ---
 
@@ -460,8 +460,13 @@ export function getArticles(): ArticleRecord[] {
 
     if (stored) {
       items = JSON.parse(stored);
-      // Ensure any new system default articles (e.g. Think Academy articles by Obitt) are safely incorporated
+      // Ensure any new system default articles (e.g. Orbit Official articles by Obitt) are safely incorporated
       let modified = false;
+      const oldIdx = items.findIndex(i => i.id === 'art-think-academy-foundations-obitt');
+      if (oldIdx !== -1) {
+        items[oldIdx] = { ...DEFAULT_ARTICLES[0] };
+        modified = true;
+      }
       for (const def of DEFAULT_ARTICLES) {
         if (!items.some(i => i.id === def.id) && !deletedIds.includes(def.id)) {
           items.unshift(def); // Place at top
@@ -597,6 +602,17 @@ export function getArticlesByStudentName(studentName: string): ArticleRecord[] {
     art.status === 'published' &&
     art.studentAuthors.some(author => author.name.trim().toLowerCase().includes(nameClean) || nameClean.includes(author.name.trim().toLowerCase()))
   );
+}
+
+export function getArticlesByTutorName(tutorName: string): ArticleRecord[] {
+  if (!tutorName) return [];
+  const articles = getArticles();
+  const nameClean = tutorName.trim().toLowerCase();
+  return articles.filter(art => {
+    if (art.status !== 'published') return false;
+    const supName = (art.supervisingTutor?.name || '').trim().toLowerCase();
+    return supName.includes(nameClean) || nameClean.includes(supName);
+  });
 }
 
 export async function createOrDeployArticleAsync(
@@ -830,8 +846,8 @@ Throughout the development lifecycle, weekly architectural audits and code revie
 }
 
 /**
- * Think Academy Monograph Draft Generator
- * Crafts an authoritative publication from Think Academy authored by Obitt or faculty fellows.
+ * Orbit Official Blog Post Draft Generator
+ * Crafts an authoritative publication from Orbit Space authored by Obitt or engineering leads.
  */
 export function generateThinkAcademyDraft(params: {
   authorName?: string;
@@ -849,12 +865,12 @@ export function generateThinkAcademyDraft(params: {
   thinkAcademyAuthor: ThinkAcademyAuthor;
 } {
   const authorName = params.authorName?.trim() || 'Obitt';
-  const authorRole = params.authorRole?.trim() || 'Founder & Lead Researcher, Think Academy';
+  const authorRole = params.authorRole?.trim() || 'Lead Researcher & Engineer, Orbit';
   const topic = (params.topicTitle || params.topic || 'Engineering Foundations').trim();
   const category = params.category || 'Web Engineering';
 
   const title = topic.includes(':') ? topic : `${topic}: Architectural Foundations & Cognitive Models`;
-  const subtitle = `A Think Academy technical monograph by ${authorName} examining high-leverage mental models, systemic rigor, and technical craftsmanship.`;
+  const subtitle = `An Orbit Official Blog Post by ${authorName} examining high-leverage mental models, systemic rigor, and technical craftsmanship.`;
 
   const principlesList = params.keyPrinciples
     ? params.keyPrinciples
@@ -865,11 +881,11 @@ export function generateThinkAcademyDraft(params: {
 * **Deterministic Contracts**: Write resilient code with explicit invariants, idempotency, and automated recovery.
 * **Cognitive Mastery**: Move beyond tutorial replication to deep structural engineering.`;
 
-  const content = `## 1. The Think Academy Thesis
+  const content = `## 1. The Orbit Engineering Thesis
 
-At **Think Academy**, we emphasize deep conceptual mastery over ephemeral syntactic trends. In the modern computational landscape, true technical competence requires understanding how state behaves across asynchronous boundaries, hardware caches, and distributed networks.
+At **Orbit Space**, we emphasize deep conceptual mastery over ephemeral syntactic trends. In the modern computational landscape, true technical competence requires understanding how state behaves across asynchronous boundaries, hardware caches, and distributed networks.
 
-This technical monograph by **${authorName}** (${authorRole}) provides a rigorous analysis of **${topic}**.
+This official publication by **${authorName}** (${authorRole}) provides a rigorous analysis of **${topic}**.
 
 ---
 
@@ -878,7 +894,7 @@ This technical monograph by **${authorName}** (${authorRole}) provides a rigorou
 ${principlesList}
 
 \`\`\`typescript
-// The Think Academy Contract Pattern
+// The Orbit Space Contract Pattern
 export interface ArchitecturalInvariant<TContext> {
   validate: (ctx: TContext) => boolean;
   execute: () => Promise<void>;
@@ -897,13 +913,13 @@ When implementing solutions in ${category.toLowerCase()}, maintain:
 
 ---
 
-## 4. Think Academy Closing Perspective
+## 4. Orbit Space Closing Perspective
 
 > "Excellence in technology is not an accident of talent; it is the compounding output of deliberate practice, cognitive rigor, and unyielding standards."
-> — **${authorName}**, Think Academy`;
+> — **${authorName}**, Orbit Space`;
 
   const tags = [
-    'ThinkAcademy',
+    'OrbitOfficial',
     authorName.replace(/\s+/g, ''),
     category.replace(/\s+/g, ''),
     'SystemArchitecture',
@@ -919,9 +935,9 @@ When implementing solutions in ${category.toLowerCase()}, maintain:
     thinkAcademyAuthor: {
       name: authorName,
       role: authorRole,
-      institution: 'Think Academy',
-      badge: 'Monograph Author',
-      bio: 'Author of foundational engineering monographs and mental models at Think Academy.'
+      institution: 'Orbit Space',
+      badge: 'Orbit Official Author',
+      bio: 'Author of foundational engineering monographs and mental models at Orbit Space.'
     }
   };
 }

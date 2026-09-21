@@ -21,6 +21,14 @@ export interface CertificateRecord {
   fileName?: string;
   fileSize?: number;
   fileType?: string;
+  // Tutor & Project Verification Linkage
+  supervisingTutorId?: string;
+  supervisingTutorName?: string;
+  supervisingTutorSlug?: string;
+  projectTitle?: string;
+  projectUrl?: string;
+  projectSlug?: string;
+  projectVerified?: boolean;
 }
 
 export interface AdminUser {
@@ -48,7 +56,12 @@ export const DEFAULT_CERTIFICATES: CertificateRecord[] = [
     completionDate: '2026-02-10',
     additionalNotes: 'Graduated with Distinction in Full-Stack Web Development. Demonstrated mastery of React, Node.js, TypeScript, and modern distributed architecture.',
     status: 'valid',
-    createdAt: '2026-02-15T10:30:00.000Z'
+    createdAt: '2026-02-15T10:30:00.000Z',
+    supervisingTutorId: 'tch-lawal-frontend',
+    supervisingTutorName: 'Lawal (Senior Frontend Lead)',
+    supervisingTutorSlug: 'lawal-frontend-lead',
+    projectTitle: 'Distributed Microservices Architecture Capstone',
+    projectVerified: true
   },
   {
     id: 'ORB-19V8Q3',
@@ -63,7 +76,12 @@ export const DEFAULT_CERTIFICATES: CertificateRecord[] = [
     completionDate: '2026-02-25',
     additionalNotes: 'Completed production-grade frontend architecture capstone utilizing modern React, Tailwind CSS, component choreography, and state synchronization.',
     status: 'valid',
-    createdAt: '2026-02-28T10:00:00.000Z'
+    createdAt: '2026-02-28T10:00:00.000Z',
+    supervisingTutorId: 'tch-lawal-frontend',
+    supervisingTutorName: 'Lawal (Senior Frontend Lead)',
+    supervisingTutorSlug: 'lawal-frontend-lead',
+    projectTitle: 'Enterprise UI Design System & Component Library',
+    projectVerified: true
   },
   {
     id: 'ORB-73K1M9',
@@ -78,7 +96,12 @@ export const DEFAULT_CERTIFICATES: CertificateRecord[] = [
     completionDate: '2026-01-18',
     additionalNotes: 'Completed practical training in Power BI dashboard design, SQL database extraction, Excel business analytics, and exploratory data analysis.',
     status: 'valid',
-    createdAt: '2026-01-20T14:15:00.000Z'
+    createdAt: '2026-01-20T14:15:00.000Z',
+    supervisingTutorId: 'tch-stat-data',
+    supervisingTutorName: 'Mr. Stat (Lead Data Science Mentor)',
+    supervisingTutorSlug: 'mr-stat-data-science',
+    projectTitle: 'Retail Intelligence & Predictive Sales Dashboard',
+    projectVerified: true
   },
   {
     id: 'ORB-42N9X1',
@@ -93,7 +116,12 @@ export const DEFAULT_CERTIFICATES: CertificateRecord[] = [
     completionDate: '2025-11-25',
     additionalNotes: 'Demonstrated competencies in ethical hacking, vulnerability scanning, SOC defensive operations, and network incident containment.',
     status: 'valid',
-    createdAt: '2025-11-28T09:00:00.000Z'
+    createdAt: '2025-11-28T09:00:00.000Z',
+    supervisingTutorId: 'tch-olamide-sec',
+    supervisingTutorName: 'Olamide (Lead Security Engineer)',
+    supervisingTutorSlug: 'olamide-security-lead',
+    projectTitle: 'Automated SOC Penetration Test & SIEM Pipeline',
+    projectVerified: true
   },
   {
     id: 'ORB-33B8P4',
@@ -108,7 +136,12 @@ export const DEFAULT_CERTIFICATES: CertificateRecord[] = [
     completionDate: '2025-10-10',
     additionalNotes: 'Prototyped responsive design systems and completed high-fidelity interaction design for enterprise mobile and web applications.',
     status: 'valid',
-    createdAt: '2025-10-14T11:45:00.000Z'
+    createdAt: '2025-10-14T11:45:00.000Z',
+    supervisingTutorId: 'tch-ayo-product',
+    supervisingTutorName: 'Ayo (Principal Product Engineer)',
+    supervisingTutorSlug: 'ayo-product-engineer',
+    projectTitle: 'Fintech Mobile Banking Experience & Design System',
+    projectVerified: true
   },
   {
     id: 'ORB-91T4K8',
@@ -123,7 +156,12 @@ export const DEFAULT_CERTIFICATES: CertificateRecord[] = [
     completionDate: '2025-12-05',
     additionalNotes: 'Specialized in relational database modeling, RESTful microservices, containerization, and API security.',
     status: 'valid',
-    createdAt: '2025-12-10T16:00:00.000Z'
+    createdAt: '2025-12-10T16:00:00.000Z',
+    supervisingTutorId: 'tch-lawal-backend',
+    supervisingTutorName: 'Lawal (Backend & Cloud Architect)',
+    supervisingTutorSlug: 'lawal-backend-architect',
+    projectTitle: 'Distributed Event-Driven Payment Processing Gateway',
+    projectVerified: true
   },
   {
     id: 'ORB-55M2X7',
@@ -138,7 +176,12 @@ export const DEFAULT_CERTIFICATES: CertificateRecord[] = [
     completionDate: '2026-01-28',
     additionalNotes: 'Demonstrated excellence in automated workflows, AI agent orchestration, and business productivity intelligence.',
     status: 'valid',
-    createdAt: '2026-02-01T12:00:00.000Z'
+    createdAt: '2026-02-01T12:00:00.000Z',
+    supervisingTutorId: 'tch-precious-video',
+    supervisingTutorName: 'Precious (Creative Media Lead)',
+    supervisingTutorSlug: 'precious-creative-director',
+    projectTitle: 'Autonomous Customer Onboarding Agent Workflow',
+    projectVerified: true
   }
 ];
 
@@ -351,6 +394,21 @@ export function getCertificates(): CertificateRecord[] {
       }
     }
 
+    // Auto-backfill supervising tutor on any cached certificates missing this linkage
+    const defMap = new Map(DEFAULT_CERTIFICATES.map(c => [c.id.toUpperCase(), c]));
+    list.forEach(cert => {
+      const matchDef = defMap.get(cert.id.toUpperCase());
+      if (matchDef && matchDef.supervisingTutorId && !cert.supervisingTutorId) {
+        cert.supervisingTutorId = matchDef.supervisingTutorId;
+        cert.supervisingTutorName = matchDef.supervisingTutorName;
+        cert.supervisingTutorSlug = matchDef.supervisingTutorSlug;
+        if (matchDef.projectTitle && !cert.projectTitle) {
+          cert.projectTitle = matchDef.projectTitle;
+          cert.projectVerified = matchDef.projectVerified;
+        }
+      }
+    });
+
     // Filter out any deleted records
     const realList = list.filter(c => !deletedSet.has(c.id.toUpperCase()));
     localStorage.setItem(STORAGE_KEY, JSON.stringify(realList));
@@ -442,6 +500,13 @@ export async function createCertificateAsync(
     fileName?: string;
     fileSize?: number;
     fileType?: string;
+    supervisingTutorId?: string;
+    supervisingTutorName?: string;
+    supervisingTutorSlug?: string;
+    projectTitle?: string;
+    projectUrl?: string;
+    projectSlug?: string;
+    projectVerified?: boolean;
   }
 ): Promise<{ success: boolean; certificate?: CertificateRecord; error?: string }> {
   // Security enforcement: Administrative writes are strictly restricted to local machine
@@ -482,7 +547,14 @@ export async function createCertificateAsync(
     ...(input.documentUrl ? { documentUrl: input.documentUrl } : {}),
     ...(input.fileName ? { fileName: input.fileName } : {}),
     ...(input.fileSize !== undefined ? { fileSize: input.fileSize } : {}),
-    ...(input.fileType ? { fileType: input.fileType } : {})
+    ...(input.fileType ? { fileType: input.fileType } : {}),
+    ...(input.supervisingTutorId?.trim() ? { supervisingTutorId: input.supervisingTutorId.trim() } : {}),
+    ...(input.supervisingTutorName?.trim() ? { supervisingTutorName: input.supervisingTutorName.trim() } : {}),
+    ...(input.supervisingTutorSlug?.trim() ? { supervisingTutorSlug: input.supervisingTutorSlug.trim() } : {}),
+    ...(input.projectTitle?.trim() ? { projectTitle: input.projectTitle.trim() } : {}),
+    ...(input.projectUrl?.trim() ? { projectUrl: input.projectUrl.trim() } : {}),
+    ...(input.projectSlug?.trim() ? { projectSlug: input.projectSlug.trim() } : {}),
+    ...(input.projectVerified !== undefined ? { projectVerified: input.projectVerified } : {})
   };
 
   // Update local cache
@@ -605,6 +677,13 @@ export type CertificateUpdateInput = Partial<{
   fileName?: string;
   fileSize?: number;
   fileType?: string;
+  supervisingTutorId?: string;
+  supervisingTutorName?: string;
+  supervisingTutorSlug?: string;
+  projectTitle?: string;
+  projectUrl?: string;
+  projectSlug?: string;
+  projectVerified?: boolean;
 }>;
 
 // Asynchronously update an existing certificate in Supabase and local cache
@@ -634,7 +713,14 @@ export async function updateCertificateAsync(
     ...(updates.documentUrl !== undefined ? { documentUrl: updates.documentUrl } : {}),
     ...(updates.fileName !== undefined ? { fileName: updates.fileName } : {}),
     ...(updates.fileSize !== undefined ? { fileSize: updates.fileSize } : {}),
-    ...(updates.fileType !== undefined ? { fileType: updates.fileType } : {})
+    ...(updates.fileType !== undefined ? { fileType: updates.fileType } : {}),
+    ...(updates.supervisingTutorId !== undefined ? { supervisingTutorId: updates.supervisingTutorId.trim() || undefined } : {}),
+    ...(updates.supervisingTutorName !== undefined ? { supervisingTutorName: updates.supervisingTutorName.trim() || undefined } : {}),
+    ...(updates.supervisingTutorSlug !== undefined ? { supervisingTutorSlug: updates.supervisingTutorSlug.trim() || undefined } : {}),
+    ...(updates.projectTitle !== undefined ? { projectTitle: updates.projectTitle.trim() || undefined } : {}),
+    ...(updates.projectUrl !== undefined ? { projectUrl: updates.projectUrl.trim() || undefined } : {}),
+    ...(updates.projectSlug !== undefined ? { projectSlug: updates.projectSlug.trim() || undefined } : {}),
+    ...(updates.projectVerified !== undefined ? { projectVerified: updates.projectVerified } : {})
   };
 
   // Explicitly handle studentId update without leaving undefined

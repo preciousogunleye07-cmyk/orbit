@@ -4,6 +4,8 @@
  * https://sheetdb.io/api/v1/jaa32wk9mncqz
  */
 
+import { OFFICIAL_ORBIT_STUDENTS, toSheetDBStudent } from '../data/officialOrbitStudents';
+
 export const DEFAULT_SHEETDB_URL = 'https://sheetdb.io/api/v1/jaa32wk9mncqz';
 const SHEETDB_CONFIG_KEY = 'orbit_space_sheetdb_endpoint_v1';
 const SHEETDB_CACHE_KEY = 'orbit_space_sheetdb_cached_students_v1';
@@ -33,6 +35,7 @@ export interface SheetDBStudent {
   courseOfStudy: string;      // "Course of Study"
   academicLevel: string;      // "Academic Level"
   program: string;            // "Program"
+  programs?: string[];        // Multiple programs if enrolled in more than one track
   studentType: string;        // "Student Type"
   cohort: string;             // "Cohort"
   registrationDate: string;   // "Registration Date"
@@ -188,8 +191,15 @@ export async function checkSheetDBHealth(): Promise<SheetDBHealth> {
  * Maps raw SheetDB row to clean SheetDBStudent object
  */
 function mapRawRowToStudent(row: Record<string, any>, index: number): SheetDBStudent {
+  const prog1 = (row['Program 1'] || row['Program'] || row['program'] || row['Course'] || '').toString().trim();
+  const prog2 = (row['Program 2'] || '').toString().trim();
+  const programs = [prog1, prog2].filter(Boolean);
+
+  const rawId = (row['Student ID'] || row['student_id'] || row['ID'] || row[' '] || '').toString().trim();
+  const studentId = rawId || `STU-${String(index + 1).padStart(5, '0')}`;
+
   return {
-    studentId: (row['Student ID'] || row['student_id'] || row['ID'] || `STU-${String(index + 1).padStart(5, '0')}`).toString().trim(),
+    studentId,
     matricNumber: (row['Matric Number'] || row['matric_number'] || row['Matric'] || '').toString().trim(),
     fullName: (row['Full Name'] || row['full_name'] || row['Name'] || row['Student Name'] || '').toString().trim(),
     email: (row['Email Address'] || row['email'] || row['Email'] || '').toString().trim(),
@@ -198,9 +208,10 @@ function mapRawRowToStudent(row: Record<string, any>, index: number): SheetDBStu
     institution: (row['Institution / School'] || row['institution'] || row['School'] || '').toString().trim(),
     courseOfStudy: (row['Course of Study'] || row['course_of_study'] || '').toString().trim(),
     academicLevel: (row['Academic Level'] || row['academic_level'] || '').toString().trim(),
-    program: (row['Program'] || row['program'] || row['Course'] || '').toString().trim(),
+    program: prog1 || prog2 || '',
+    programs,
     studentType: (row['Student Type'] || row['student_type'] || 'Regular').toString().trim(),
-    cohort: (row['Cohort'] || row['cohort'] || '1').toString().trim(),
+    cohort: (row['Cohort'] || row['cohort'] || '3').toString().trim(),
     registrationDate: (row['Registration Date'] || row['registration_date'] || '').toString().trim(),
     startDate: (row['Start Date'] || row['start_date'] || '').toString().trim(),
     endDate: (row['End Date'] || row['end_date'] || '').toString().trim(),
@@ -214,6 +225,55 @@ function mapRawRowToStudent(row: Record<string, any>, index: number): SheetDBStu
     studentStatus: (row['Student Status'] || row['student_status'] || '').toString().trim(),
     rawRowIndex: index
   };
+}
+
+/**
+ * Helper to merge fetched or cached sheet students with the official registered Orbit students.
+ * Guarantees strictly unique students with no duplicate keys.
+ */
+function mergeWithOfficialStudents(sheetStudents: SheetDBStudent[]): SheetDBStudent[] {
+  const officialList = OFFICIAL_ORBIT_STUDENTS.map((st) => toSheetDBStudent(st));
+  const resultMap = new Map<string, SheetDBStudent>();
+
+  // Helper key generator (normalized ID, email, or matric)
+  const getKey = (s: SheetDBStudent): string => {
+    if (s.studentId && s.studentId.trim()) return s.studentId.trim().toUpperCase();
+    if (s.matricNumber && s.matricNumber.trim()) return s.matricNumber.trim().toUpperCase();
+    if (s.email && s.email.trim()) return s.email.trim().toLowerCase();
+    return s.fullName.trim().toLowerCase();
+  };
+
+  // Add official pre-registered students first
+  officialList.forEach((s) => {
+    const k = getKey(s);
+    if (k) resultMap.set(k, s);
+  });
+
+  // Secondary email lookup for updating official entries with sheet payment/progress data
+  const emailToKey = new Map<string, string>();
+  for (const [k, s] of resultMap.entries()) {
+    if (s.email && s.email.trim()) {
+      emailToKey.set(s.email.trim().toLowerCase(), k);
+    }
+  }
+
+  // Merge sheet students: update existing or insert new unique entries
+  sheetStudents.forEach((s) => {
+    const k = getKey(s);
+    const emailMatchKey = s.email ? emailToKey.get(s.email.trim().toLowerCase()) : undefined;
+    const targetKey = emailMatchKey || (resultMap.has(k) ? k : undefined);
+
+    if (targetKey) {
+      resultMap.set(targetKey, { ...resultMap.get(targetKey)!, ...s });
+    } else if (s.fullName && s.fullName.trim().length > 0) {
+      resultMap.set(k, s);
+      if (s.email && s.email.trim()) {
+        emailToKey.set(s.email.trim().toLowerCase(), k);
+      }
+    }
+  });
+
+  return Array.from(resultMap.values());
 }
 
 /**
@@ -234,7 +294,7 @@ export async function fetchSheetDBStudents(includeEmptySlots: boolean = false): 
 
     const data = await response.json();
     if (!Array.isArray(data)) {
-      return [];
+      return OFFICIAL_ORBIT_STUDENTS.map((st) => toSheetDBStudent(st));
     }
 
     const mapped: SheetDBStudent[] = data.map((row, idx) => mapRawRowToStudent(row, idx));
@@ -246,26 +306,29 @@ export async function fetchSheetDBStudents(includeEmptySlots: boolean = false): 
       // cache write failed
     }
 
+    const merged = mergeWithOfficialStudents(mapped);
+
     if (includeEmptySlots) {
-      return mapped;
+      return merged;
     }
 
     // Filter to rows that have at least a Name, Email, or Program filled out
-    return mapped.filter(s => s.fullName.length > 0 || s.email.length > 0 || s.program.length > 0);
+    return merged.filter(s => s.fullName.length > 0 || s.email.length > 0 || s.program.length > 0);
   } catch (err: any) {
-    console.warn('SheetDB student fetch warning, checking cache:', err?.message || err);
-    // Try returning cached copy if available
+    console.warn('SheetDB student fetch warning, checking cache and official records:', err?.message || err);
+    // Try returning cached copy if available, combined with official students
     try {
       const cached = localStorage.getItem(SHEETDB_CACHE_KEY);
       if (cached) {
         const parsed: SheetDBStudent[] = JSON.parse(cached);
-        if (includeEmptySlots) return parsed;
-        return parsed.filter(s => s.fullName.length > 0 || s.email.length > 0);
+        const merged = mergeWithOfficialStudents(parsed);
+        if (includeEmptySlots) return merged;
+        return merged.filter(s => s.fullName.length > 0 || s.email.length > 0);
       }
     } catch {
       // ignore
     }
-    return [];
+    return OFFICIAL_ORBIT_STUDENTS.map((st) => toSheetDBStudent(st));
   }
 }
 
@@ -278,13 +341,13 @@ export function getCachedStudents(): SheetDBStudent[] {
     if (cached) {
       const parsed: SheetDBStudent[] = JSON.parse(cached);
       if (Array.isArray(parsed)) {
-        return parsed.filter(s => s.fullName && s.fullName.trim().length > 0);
+        return mergeWithOfficialStudents(parsed.filter(s => s.fullName && s.fullName.trim().length > 0));
       }
     }
   } catch {
     // ignore
   }
-  return [];
+  return OFFICIAL_ORBIT_STUDENTS.map((st) => toSheetDBStudent(st));
 }
 
 /**
