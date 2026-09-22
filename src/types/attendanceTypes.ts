@@ -45,6 +45,7 @@ export interface ClassSessionRecord {
   cohort: string;
   date: string; // YYYY-MM-DD
   session_topic?: string;
+  mentorId?: string; // Canonical mentor ID
   tutor?: {
     id: string;
     name: string;

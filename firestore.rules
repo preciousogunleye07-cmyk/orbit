@@ -35,6 +35,12 @@ service cloud.firestore {
       allow write: if true;
     }
 
+    // Teaching Hours Ledger (Audit trail for historical, attendance, and manual adjustments)
+    match /teaching_hours_ledger/{ledgerId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
     // Supervised Capstone Student Projects
     match /supervised_projects/{projectId} {
       allow read: if true;

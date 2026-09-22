@@ -414,7 +414,8 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
                   canCreateCertificates: true,
                   canDeleteCertificates: true,
                   canRevokeCertificates: true,
-                  canManageTimetable: true
+                  canManageTimetable: true,
+                  canAdjustTeachingHours: true
                 }
               }}
               onViewPublicArticle={(slug) => {

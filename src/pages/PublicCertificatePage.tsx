@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { 
   ShieldCheck, 
@@ -85,7 +85,29 @@ export const PublicCertificatePage: React.FC<PublicCertificatePageProps> = ({
 
         // Resolve linked project evidence
         const proj = VerificationDataService.getProjectByCertificateId(record.id);
-        setLinkedProject(proj || null);
+        if (proj) {
+          setLinkedProject(proj);
+        } else if (record.projectTitle) {
+          setLinkedProject({
+            id: `proj-${record.id}`,
+            verificationSlug: record.projectSlug || record.projectTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+            title: record.projectTitle,
+            description: `Graduation capstone project in ${record.course} completed with distinction.`,
+            studentName: record.studentName,
+            program: record.course,
+            category: 'web',
+            projectUrl: record.projectUrl,
+            tutorId: record.supervisingTutorId || '',
+            tutorName: record.supervisingTutorName || 'Orbit Space Faculty',
+            supervisionDate: record.dateIssued,
+            visibility: 'public',
+            verificationStatus: 'verified',
+            linkedCertificateId: record.id,
+            createdAt: record.createdAt
+          });
+        } else {
+          setLinkedProject(null);
+        }
 
         // Resolve supervising tutor
         if (record.supervisingTutorSlug) {
@@ -119,6 +141,44 @@ export const PublicCertificatePage: React.FC<PublicCertificatePageProps> = ({
       isMounted = false;
     };
   }, [authId, browserUrl]);
+
+  // Keep certificateRef synced for event listeners
+  const certificateRef = useRef(certificate);
+  useEffect(() => {
+    certificateRef.current = certificate;
+  }, [certificate]);
+
+  // Real-time synchronization: when a lecturer's profile or picture updates, refresh supervising tutor immediately
+  useEffect(() => {
+    const handleTutorRefresh = () => {
+      const currentCert = certificateRef.current;
+      if (!currentCert) return;
+      const proj = VerificationDataService.getProjectByCertificateId(currentCert.id);
+      let tut: TutorProfile | null = null;
+      if (currentCert.supervisingTutorSlug) {
+        tut = TutorService.getTutorBySlug(currentCert.supervisingTutorSlug) || null;
+      } else if (currentCert.supervisingTutorName) {
+        tut = TutorService.getAllTutors().find(t => t.name === currentCert.supervisingTutorName || t.shortName === currentCert.supervisingTutorName) || null;
+      } else if (proj && proj.tutorId) {
+        tut = TutorService.getTutorById(proj.tutorId) || null;
+      } else if (currentCert.course) {
+        tut = TutorService.getAssignedTutorForProgram(currentCert.course) || null;
+      }
+      if (tut) {
+        setSupervisingTutor(tut);
+      }
+    };
+
+    window.addEventListener('storage', handleTutorRefresh);
+    window.addEventListener('orbit-tutors-updated', handleTutorRefresh);
+    const unsubscribe = TutorService.subscribeTutors(() => handleTutorRefresh());
+
+    return () => {
+      window.removeEventListener('storage', handleTutorRefresh);
+      window.removeEventListener('orbit-tutors-updated', handleTutorRefresh);
+      unsubscribe();
+    };
+  }, []);
 
   const handleCopyLink = () => {
     playSound('sparkle');
@@ -285,16 +345,41 @@ export const PublicCertificatePage: React.FC<PublicCertificatePageProps> = ({
                   </div>
                 </div>
 
-                {/* Supervising Tutor */}
+                {/* Supervising Tutor with Verified Profile Picture */}
                 {supervisingTutor && (
-                  <div className="space-y-1">
+                  <div className="space-y-1 sm:col-span-2 bg-[#120f1b] p-3 rounded-2xl border border-purple-900/30">
                     <span className="text-[10px] text-[#c4c7c8] font-mono uppercase tracking-wider block flex items-center gap-1.5 print:text-gray-500">
-                      <User className="w-3.5 h-3.5 text-[#a855f7]" /> Supervising Faculty
+                      <User className="w-3.5 h-3.5 text-[#a855f7]" /> Supervising Faculty Member
                     </span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-medium text-white print:text-black">
-                        {supervisingTutor.name}
-                      </span>
+                    <div className="flex items-center justify-between gap-3 pt-1">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-purple-900/40 border border-purple-500/40 flex items-center justify-center text-purple-200 font-bold text-sm shrink-0 overflow-hidden relative shadow-md">
+                          {supervisingTutor.photoUrl ? (
+                            <img
+                              src={supervisingTutor.photoUrl}
+                              alt={supervisingTutor.name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLElement).style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            supervisingTutor.avatar || (supervisingTutor.shortName ? supervisingTutor.shortName.charAt(0) : 'T')
+                          )}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs sm:text-sm font-bold text-white print:text-black">
+                              {supervisingTutor.name}
+                            </span>
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          </div>
+                          <p className="text-[11px] text-purple-300 font-medium">
+                            {supervisingTutor.role}
+                          </p>
+                        </div>
+                      </div>
+
                       {onNavigateToTutor && (
                         <button
                           type="button"
@@ -302,9 +387,10 @@ export const PublicCertificatePage: React.FC<PublicCertificatePageProps> = ({
                             playSound('chime');
                             onNavigateToTutor(supervisingTutor.slug);
                           }}
-                          className="text-[10px] font-mono text-purple-400 hover:text-purple-300 underline cursor-pointer print:hidden"
+                          className="px-2.5 py-1 rounded-lg bg-purple-950/60 hover:bg-purple-900/80 border border-purple-700/50 text-[11px] font-mono text-purple-300 hover:text-white transition-all cursor-pointer flex items-center gap-1 shrink-0 print:hidden"
                         >
-                          (View Faculty)
+                          <span>Faculty Profile</span>
+                          <ExternalLink className="w-3 h-3" />
                         </button>
                       )}
                     </div>

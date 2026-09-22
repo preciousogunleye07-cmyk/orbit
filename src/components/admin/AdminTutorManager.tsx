@@ -23,19 +23,30 @@ import { TutorProfile, TutorService } from '../../services/tutorService';
 import { VerificationDataService } from '../../services/verificationDataService';
 import { EditTutorModal } from './EditTutorModal';
 import { AdminHistoricalBaselineModal } from './AdminHistoricalBaselineModal';
+import { AdminTeachingHoursLedgerModal } from './AdminTeachingHoursLedgerModal';
+import { CreateMentorModal } from './CreateMentorModal';
+import { AdminMentorProfileView } from './AdminMentorProfileView';
 import { playSound } from '../../utils/soundEffects';
 
 interface AdminTutorManagerProps {
   onOpenPublicTutor: (slug: string) => void;
+  allowDeletion?: boolean;
 }
 
 export const AdminTutorManager: React.FC<AdminTutorManagerProps> = ({
-  onOpenPublicTutor
+  onOpenPublicTutor,
+  allowDeletion = true
 }) => {
   const [tutors, setTutors] = useState<TutorProfile[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'deactivated'>('all');
   
+  // Dedicated mentor management view
+  const [selectedMentorForDetail, setSelectedMentorForDetail] = useState<TutorProfile | null>(null);
+
+  // Create mentor modal
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+
   // Edit tutor modal
   const [tutorToEdit, setTutorToEdit] = useState<TutorProfile | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -43,6 +54,10 @@ export const AdminTutorManager: React.FC<AdminTutorManagerProps> = ({
   // Historical Baseline modal
   const [tutorForBaseline, setTutorForBaseline] = useState<TutorProfile | null>(null);
   const [isBaselineOpen, setIsBaselineOpen] = useState(false);
+
+  // Teaching Hours Ledger modal
+  const [tutorForLedger, setTutorForLedger] = useState<TutorProfile | null>(null);
+  const [isLedgerOpen, setIsLedgerOpen] = useState(false);
 
   // Deletion / Deactivation modal
   const [tutorToDelete, setTutorToDelete] = useState<TutorProfile | null>(null);
@@ -130,6 +145,24 @@ export const AdminTutorManager: React.FC<AdminTutorManagerProps> = ({
     }
   };
 
+  // Dedicated mentor management view
+  if (selectedMentorForDetail) {
+    return (
+      <AdminMentorProfileView
+        tutor={selectedMentorForDetail}
+        onBack={() => {
+          setSelectedMentorForDetail(null);
+          loadTutors();
+        }}
+        onOpenPublicTutor={onOpenPublicTutor}
+        onTutorUpdated={(updated) => {
+          setSelectedMentorForDetail(updated);
+          loadTutors();
+        }}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       
@@ -151,20 +184,32 @@ export const AdminTutorManager: React.FC<AdminTutorManagerProps> = ({
             Faculty Mentors & Verification Management
           </h2>
           <p className="text-xs text-[#9d98af] max-w-xl">
-            Audit teaching staff profiles, update cross-app naming, decommission instructors safely via soft-delete, and preview unique LinkedIn/CV public verification links.
+            Manage individual mentors across all assigned courses and cohorts. Audit teaching hours, track student capstones, and manage shareable LinkedIn verification profiles.
           </p>
         </div>
 
-        <button
-          onClick={() => {
-            setTutorToEdit(tutors[0] || null);
-            setIsEditOpen(true);
-          }}
-          className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold flex items-center gap-2 shadow-lg shadow-purple-950/40 shrink-0 cursor-pointer"
-        >
-          <Edit3 className="w-4 h-4" />
-          <span>Edit Faculty Profile</span>
-        </button>
+        <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+          <button
+            onClick={() => setIsCreateOpen(true)}
+            className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold flex items-center gap-2 shadow-lg shadow-purple-950/40 cursor-pointer transition-all"
+            title="Create a new mentor profile teaching multiple courses"
+          >
+            <Plus className="w-4 h-4" />
+            <span>+ Add Mentor</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setTutorForLedger(null);
+              setIsLedgerOpen(true);
+            }}
+            className="px-4 py-2.5 rounded-xl bg-[#1f1935] hover:bg-purple-900/40 text-purple-200 border border-purple-800/50 text-xs font-semibold flex items-center gap-2 shadow-lg shadow-purple-950/30 cursor-pointer transition-all"
+            title="Manage historical teaching hours, CSV import, and manual adjustments"
+          >
+            <Clock className="w-4 h-4 text-purple-400" />
+            <span>Teaching Hours Ledger</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter bar */}
@@ -213,13 +258,27 @@ export const AdminTutorManager: React.FC<AdminTutorManagerProps> = ({
                 
                 {/* Header row with avatar & status */}
                 <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 font-bold text-base shrink-0">
-                      {tutor.avatar || (tutor.shortName ? tutor.shortName.charAt(0) : 'T')}
+                  <div 
+                    onClick={() => setSelectedMentorForDetail(tutor)}
+                    className="flex items-center gap-3 cursor-pointer group"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-500/30 group-hover:border-purple-400 flex items-center justify-center text-purple-300 font-bold text-base shrink-0 overflow-hidden relative transition-colors">
+                      {tutor.photoUrl ? (
+                        <img
+                          src={tutor.photoUrl}
+                          alt={tutor.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLElement).style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        tutor.avatar || (tutor.shortName ? tutor.shortName.charAt(0) : 'T')
+                      )}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="text-base font-bold text-white">
+                        <h3 className="text-base font-bold text-white group-hover:text-purple-300 transition-colors">
                           {tutor.name}
                         </h3>
                         <span className="text-xs font-mono text-purple-400">
@@ -252,14 +311,34 @@ export const AdminTutorManager: React.FC<AdminTutorManagerProps> = ({
                 </div>
 
                 {/* Programs Taught */}
-                <div className="space-y-1">
-                  <span className="text-[10px] font-mono uppercase text-[#8e8a9f] tracking-wider block">Tracks Taught</span>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono uppercase text-[#8e8a9f] tracking-wider block">
+                      Assigned Subjects ({tutor.programs?.length || 0})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTutorToEdit(tutor);
+                        setIsEditOpen(true);
+                      }}
+                      className="text-[11px] text-purple-400 hover:text-purple-300 transition inline-flex items-center gap-1 cursor-pointer font-medium"
+                      title="Assign or edit multiple subjects for this tutor"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>Assign Subjects</span>
+                    </button>
+                  </div>
                   <div className="flex flex-wrap gap-1">
-                    {tutor.programs.map((prog, idx) => (
-                      <span key={idx} className="px-2 py-0.5 rounded bg-purple-950/60 border border-purple-800/40 text-purple-300 text-[10px] font-mono">
-                        {prog}
-                      </span>
-                    ))}
+                    {tutor.programs && tutor.programs.length > 0 ? (
+                      tutor.programs.map((prog, idx) => (
+                        <span key={idx} className="px-2 py-0.5 rounded bg-purple-950/60 border border-purple-800/40 text-purple-300 text-[10px] font-mono">
+                          {prog}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-[10px] text-neutral-500 italic">No subjects assigned yet — click Assign Subjects</span>
+                    )}
                   </div>
                 </div>
 
@@ -299,6 +378,29 @@ export const AdminTutorManager: React.FC<AdminTutorManagerProps> = ({
               <div className="pt-3 border-t border-[#231e33] flex items-center justify-end gap-2 flex-wrap">
                 <button
                   type="button"
+                  onClick={() => setSelectedMentorForDetail(tutor)}
+                  className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-md shadow-purple-950/40"
+                  title="Open dedicated mentor profile page"
+                >
+                  <UserCheck className="w-3.5 h-3.5" />
+                  <span>Manage Profile</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTutorForLedger(tutor);
+                    setIsLedgerOpen(true);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-purple-950/40 hover:bg-purple-900/60 text-purple-300 border border-purple-800/50 text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer"
+                  title="Audited teaching hours ledger, historical baseline & manual adjustments"
+                >
+                  <Clock className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Hours Ledger</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => {
                     setTutorForBaseline(tutor);
                     setIsBaselineOpen(true);
@@ -334,13 +436,15 @@ export const AdminTutorManager: React.FC<AdminTutorManagerProps> = ({
                   <span>{isDeactivated ? 'Reactivate' : 'Deactivate'}</span>
                 </button>
 
-                <button
-                  onClick={() => handleOpenDelete(tutor)}
-                  className="p-2 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 transition-all cursor-pointer"
-                  title="Permanently Remove Tutor"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                {allowDeletion && (
+                  <button
+                    onClick={() => handleOpenDelete(tutor)}
+                    className="p-2 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 transition-all cursor-pointer"
+                    title="Permanently Remove Tutor"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
 
             </div>
@@ -357,6 +461,20 @@ export const AdminTutorManager: React.FC<AdminTutorManagerProps> = ({
           setTutorForBaseline(null);
         }}
         onSaved={loadTutors}
+      />
+
+      {/* Teaching Hours Ledger Modal */}
+      <AdminTeachingHoursLedgerModal
+        isOpen={isLedgerOpen}
+        initialLecturerId={tutorForLedger?.id}
+        onClose={() => {
+          setIsLedgerOpen(false);
+          setTutorForLedger(null);
+        }}
+        onUpdated={() => {
+          loadTutors();
+          showToast('Teaching hours ledger and tutor metrics synchronized successfully.');
+        }}
       />
 
       {/* EDIT TUTOR MODAL */}
@@ -487,6 +605,19 @@ export const AdminTutorManager: React.FC<AdminTutorManagerProps> = ({
 
           </div>
         </div>
+      )}
+
+      {/* Create Mentor Modal */}
+      {isCreateOpen && (
+        <CreateMentorModal
+          isOpen={isCreateOpen}
+          onClose={() => setIsCreateOpen(false)}
+          onCreated={(newMentor) => {
+            loadTutors();
+            setSelectedMentorForDetail(newMentor);
+            showToast(`Created mentor profile for ${newMentor.name}`);
+          }}
+        />
       )}
 
     </div>

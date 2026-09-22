@@ -32,8 +32,12 @@ import {
   SheetDBStudent, 
   fetchSheetDBStudents 
 } from '../../services/sheetdbService';
+import { TutorService, TutorProfile } from '../../services/tutorService';
+import { VerificationDataService } from '../../services/verificationDataService';
+import { getArticles, saveArticles, ArticleRecord } from '../../services/articleService';
 import { generateQrCodeDataUrl, downloadQrCode } from '../../utils/qrCode';
 import { playSound } from '../../utils/soundEffects';
+import { FolderGit2, Link2, Sparkles, UserCheck } from 'lucide-react';
 
 interface AdminCreateCertificatePageProps {
   onCreated: (cert: CertificateRecord) => void;
@@ -80,6 +84,15 @@ export const AdminCreateCertificatePage: React.FC<AdminCreateCertificatePageProp
   const [certificateType, setCertificateType] = useState('Professional Certificate');
   const [studentId, setStudentId] = useState('');
   const [additionalNotes, setAdditionalNotes] = useState('');
+
+  // Faculty Supervisor, Project, and Auto-linked Articles State
+  const [availableTutors, setAvailableTutors] = useState<TutorProfile[]>([]);
+  const [selectedTutorId, setSelectedTutorId] = useState<string>('');
+  const [projectTitle, setProjectTitle] = useState<string>('');
+  const [projectUrl, setProjectUrl] = useState<string>('');
+  const [projectDescription, setProjectDescription] = useState<string>('');
+  const [allArticles, setAllArticles] = useState<ArticleRecord[]>([]);
+  const [selectedArticleIds, setSelectedArticleIds] = useState<string[]>([]);
 
   // SheetDB Quick-Fill State
   const [sheetStudents, setSheetStudents] = useState<SheetDBStudent[]>([]);
@@ -138,6 +151,47 @@ export const AdminCreateCertificatePage: React.FC<AdminCreateCertificatePageProp
       .catch(err => console.warn('SheetDB quick-fill fetch warning:', err))
       .finally(() => setLoadingSheetStudents(false));
   }, [prefilledStudent]);
+
+  // Load available tutors and articles on mount
+  useEffect(() => {
+    const tutors = TutorService.getAllTutors().filter(t => t.status !== 'deactivated');
+    setAvailableTutors(tutors);
+    if (tutors.length > 0 && !selectedTutorId) {
+      setSelectedTutorId(tutors[0].id);
+    }
+
+    const loadedArticles = getArticles();
+    setAllArticles(loadedArticles);
+  }, []);
+
+  // When selectedCourse changes, auto-select the best matching faculty supervisor
+  useEffect(() => {
+    const finalCourse = selectedCourse === 'Other' ? customCourse : selectedCourse;
+    if (finalCourse && availableTutors.length > 0) {
+      const match = TutorService.getAssignedTutorForProgram(finalCourse);
+      if (match) {
+        setSelectedTutorId(match.id);
+      }
+    }
+  }, [selectedCourse, customCourse, availableTutors]);
+
+  // When studentName changes, auto-detect any matching articles written by this student
+  useEffect(() => {
+    if (!studentName.trim() || allArticles.length === 0) {
+      return;
+    }
+    const clean = studentName.trim().toLowerCase();
+    const matched = allArticles.filter(art => {
+      const authorMatch = art.studentAuthors?.some(a => 
+        a.name.toLowerCase().includes(clean) || clean.includes(a.name.toLowerCase())
+      );
+      const titleMatch = art.title.toLowerCase().includes(clean) || art.subtitle.toLowerCase().includes(clean);
+      return authorMatch || titleMatch;
+    });
+    if (matched.length > 0) {
+      setSelectedArticleIds(prev => Array.from(new Set([...prev, ...matched.map(m => m.id)])));
+    }
+  }, [studentName, allArticles]);
 
   // File Upload State
   const [uploadedFile, setUploadedFile] = useState<{
@@ -229,6 +283,8 @@ export const AdminCreateCertificatePage: React.FC<AdminCreateCertificatePageProp
 
     setLoading(true);
 
+    const chosenTutor = availableTutors.find(t => t.id === selectedTutorId);
+
     const result = await createCertificateAsync({
       studentName: studentName.trim(),
       studentEmail: studentEmail.trim() || undefined,
@@ -243,10 +299,75 @@ export const AdminCreateCertificatePage: React.FC<AdminCreateCertificatePageProp
       fileName: uploadedFile?.file.name,
       fileSize: uploadedFile?.file.size,
       fileType: uploadedFile?.file.type,
-      documentUrl: uploadedFile?.previewUrl
+      documentUrl: uploadedFile?.previewUrl,
+      supervisingTutorId: chosenTutor?.id,
+      supervisingTutorName: chosenTutor?.name,
+      supervisingTutorSlug: chosenTutor?.slug,
+      projectTitle: projectTitle.trim() || undefined,
+      projectUrl: projectUrl.trim() || undefined,
+      projectVerified: projectTitle.trim() ? true : undefined
     });
 
     const newRecord = result.certificate!;
+
+    // 1. If project was specified, register it in VerificationDataService
+    if (projectTitle.trim() && chosenTutor) {
+      try {
+        await VerificationDataService.uploadStudentProject({
+          title: projectTitle.trim(),
+          description: projectDescription.trim() || `${studentName.trim()}'s graduation capstone project in ${finalCourse}.`,
+          studentName: studentName.trim(),
+          studentIdOrRef: studentId.trim() || newRecord.id,
+          program: finalCourse,
+          category: 'web',
+          projectUrl: projectUrl.trim() || undefined,
+          tutorId: chosenTutor.id,
+          tutorName: chosenTutor.name,
+          tutorRole: chosenTutor.role,
+          supervisionDate: dateIssued,
+          visibility: 'public',
+          verificationStatus: 'verified',
+          linkedCertificateId: newRecord.id
+        });
+      } catch (err) {
+        console.warn('Could not register student project in verification service:', err);
+      }
+    }
+
+    // 2. Auto-link selected articles with this certificate ID
+    if (selectedArticleIds.length > 0) {
+      try {
+        const currentArts = getArticles();
+        const updatedArts = currentArts.map(art => {
+          if (selectedArticleIds.includes(art.id)) {
+            const hasAuthor = art.studentAuthors?.some(a => 
+              a.name.toLowerCase().includes(studentName.trim().toLowerCase()) || 
+              studentName.trim().toLowerCase().includes(a.name.toLowerCase())
+            );
+            const newAuthors = hasAuthor
+              ? art.studentAuthors.map(a => 
+                  (a.name.toLowerCase().includes(studentName.trim().toLowerCase()) || studentName.trim().toLowerCase().includes(a.name.toLowerCase()))
+                    ? { ...a, certificateId: newRecord.id, certificateNumber: newRecord.certificateNumber }
+                    : a
+                )
+              : [...(art.studentAuthors || []), { 
+                  name: studentName.trim(), 
+                  certificateId: newRecord.id, 
+                  certificateNumber: newRecord.certificateNumber, 
+                  courseTrack: finalCourse 
+                }];
+            return {
+              ...art,
+              studentAuthors: newAuthors
+            };
+          }
+          return art;
+        });
+        saveArticles(updatedArts);
+      } catch (artErr) {
+        console.warn('Could not auto-link articles to certificate:', artErr);
+      }
+    }
 
     // Generate QR code for success screen
     const browserUrl = getActualBrowserAuthUrl(newRecord.id);
@@ -694,13 +815,182 @@ export const AdminCreateCertificatePage: React.FC<AdminCreateCertificatePageProp
           </div>
         </div>
 
-        {/* Section 2: Certificate Document Upload */}
+        {/* Section 2: Supervising Faculty & Capstone Project (with Auto-Linked Articles) */}
+        <div className="space-y-6">
+          <div className="pb-3 border-b border-[#332d47] flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <UserCheck className="w-4 h-4 text-[#a855f7]" />
+              <h2 className="text-sm font-semibold text-[#ffffff] uppercase tracking-wider font-mono">
+                2. Supervising Faculty & Capstone Project
+              </h2>
+            </div>
+            <span className="text-[11px] text-[#c084fc] font-mono bg-purple-950/60 px-2.5 py-0.5 rounded-full border border-purple-800/40">
+              Verified Credential Linkage
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Supervising Tutor */}
+            <div className="md:col-span-2">
+              <label className="block text-xs font-medium text-[#e2e8f0] mb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <span>Supervising Faculty / Lecturer <span className="text-purple-400">*</span></span>
+                <span className="text-[11px] text-[#c4c7c8]">Lecturer photo will automatically appear on verification page</span>
+              </label>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {availableTutors.map(tutor => {
+                  const isSelected = selectedTutorId === tutor.id;
+                  return (
+                    <div
+                      key={tutor.id}
+                      onClick={() => setSelectedTutorId(tutor.id)}
+                      className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center gap-3 ${
+                        isSelected 
+                          ? 'bg-purple-950/50 border-[#a855f7] ring-1 ring-[#a855f7]' 
+                          : 'bg-[#100e17] border-[#332d47] hover:border-purple-600/50'
+                      }`}
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-purple-900/40 border border-purple-500/30 overflow-hidden shrink-0 flex items-center justify-center text-xs font-bold text-purple-200">
+                        {tutor.photoUrl ? (
+                          <img src={tutor.photoUrl} alt={tutor.name} className="w-full h-full object-cover" />
+                        ) : (
+                          tutor.avatar || tutor.shortName.charAt(0)
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1">
+                          <p className="text-xs font-semibold text-white truncate">{tutor.name}</p>
+                          {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-purple-400 shrink-0" />}
+                        </div>
+                        <p className="text-[10px] text-[#c4c7c8] truncate">{tutor.role}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Capstone Project Title */}
+            <div>
+              <label className="block text-xs font-medium text-[#e2e8f0] mb-2 flex items-center gap-1.5">
+                <FolderGit2 className="w-3.5 h-3.5 text-purple-400" />
+                <span>Capstone Project Title</span>
+                <span className="text-[10px] text-[#c4c7c8] font-light">(Optional)</span>
+              </label>
+              <input
+                type="text"
+                value={projectTitle}
+                onChange={(e) => setProjectTitle(e.target.value)}
+                placeholder="e.g. Distributed Microservices Point-of-Sale System"
+                className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7] text-[#ffffff] text-sm rounded-xl px-4 py-3 outline-none transition-colors"
+              />
+            </div>
+
+            {/* Project URL / Demo / GitHub */}
+            <div>
+              <label className="block text-xs font-medium text-[#e2e8f0] mb-2 flex items-center gap-1.5">
+                <Link2 className="w-3.5 h-3.5 text-purple-400" />
+                <span>Project Live Demo or Repo URL</span>
+                <span className="text-[10px] text-[#c4c7c8] font-light">(Optional)</span>
+              </label>
+              <input
+                type="url"
+                value={projectUrl}
+                onChange={(e) => setProjectUrl(e.target.value)}
+                placeholder="https://github.com/... or https://..."
+                className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7] text-[#ffffff] text-sm rounded-xl px-4 py-3 outline-none transition-colors font-mono text-xs"
+              />
+            </div>
+
+            {/* Project Description */}
+            <div className="md:col-span-2">
+              <label className="block text-xs font-medium text-[#e2e8f0] mb-2">
+                Project Overview / Scope Summary <span className="text-[10px] text-[#c4c7c8] font-light">(Optional)</span>
+              </label>
+              <textarea
+                rows={2}
+                value={projectDescription}
+                onChange={(e) => setProjectDescription(e.target.value)}
+                placeholder="Brief summary of the engineering problem solved and technologies employed..."
+                className="w-full bg-[#100e17] border border-[#332d47] focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7] text-[#ffffff] text-sm rounded-xl px-4 py-2.5 outline-none transition-colors resize-none"
+              />
+            </div>
+
+            {/* Auto-Linked Articles */}
+            <div className="md:col-span-2 bg-[#120f1c] p-4 rounded-xl border border-purple-900/40 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-purple-400" />
+                  <span className="text-xs font-semibold text-white">Auto-Linked Research & Blog Articles</span>
+                </div>
+                <span className="text-[10px] font-mono text-purple-300 bg-purple-950/80 px-2 py-0.5 rounded border border-purple-800/40">
+                  {selectedArticleIds.length} Article{selectedArticleIds.length !== 1 ? 's' : ''} Selected
+                </span>
+              </div>
+              <p className="text-[11px] text-[#c4c7c8]">
+                Articles authored by or featuring this student will be automatically linked to their certificate authentication page and QR code verification.
+              </p>
+
+              {allArticles.length === 0 ? (
+                <p className="text-xs text-zinc-500 italic">No published articles available in library.</p>
+              ) : (
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                  {allArticles.map(art => {
+                    const isChecked = selectedArticleIds.includes(art.id);
+                    return (
+                      <label
+                        key={art.id}
+                        className={`flex items-start gap-3 p-2.5 rounded-lg border cursor-pointer transition-all ${
+                          isChecked 
+                            ? 'bg-purple-950/40 border-purple-600/60' 
+                            : 'bg-[#181524] border-[#332d47] hover:border-zinc-700'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedArticleIds(prev => [...prev, art.id]);
+                            } else {
+                              setSelectedArticleIds(prev => prev.filter(id => id !== art.id));
+                            }
+                          }}
+                          className="mt-1 rounded text-purple-600 focus:ring-purple-500 border-zinc-700 bg-zinc-900"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-medium text-white truncate">{art.title}</p>
+                          <div className="flex items-center gap-2 text-[10px] text-zinc-400 mt-0.5">
+                            <span className="text-purple-300 font-mono">{art.category}</span>
+                            <span>•</span>
+                            <span>{art.readTime}</span>
+                            {art.studentAuthors?.length > 0 && (
+                              <>
+                                <span>•</span>
+                                <span className="text-zinc-300 truncate">
+                                  Authors: {art.studentAuthors.map(a => a.name).join(', ')}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+          </div>
+        </div>
+
+        {/* Section 3: Certificate Document Upload */}
         <div className="space-y-4">
           <div className="pb-3 border-b border-[#332d47] flex items-center justify-between">
             <div className="flex items-center gap-2">
               <UploadCloud className="w-4 h-4 text-[#a855f7]" />
               <h2 className="text-sm font-semibold text-[#ffffff] uppercase tracking-wider font-mono">
-                2. Certificate Document Upload <span className="text-[10px] text-[#c4c7c8] font-light lowercase">(Optional)</span>
+                3. Certificate Document Upload <span className="text-[10px] text-[#c4c7c8] font-light lowercase">(Optional)</span>
               </h2>
             </div>
             <span className="text-[11px] text-[#c4c7c8]">PDF, PNG, JPG (Max 10MB)</span>

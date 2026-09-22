@@ -12,6 +12,7 @@ export interface SubAdminUser {
     canDeleteCertificates: boolean;
     canRevokeCertificates: boolean;
     canManageTimetable: boolean;
+    canAdjustTeachingHours: boolean;
   };
 }
 
@@ -82,7 +83,8 @@ export function getSubAdminSession(): SubAdminUser | null {
           canCreateCertificates: true,
           canDeleteCertificates: true,
           canRevokeCertificates: true,
-          canManageTimetable: true
+          canManageTimetable: true,
+          canAdjustTeachingHours: true
         }
       };
     }
@@ -142,7 +144,8 @@ export async function loginSubAdmin(email: string, pass: string): Promise<SubAdm
         canCreateCertificates: true,
         canDeleteCertificates: true,
         canRevokeCertificates: true,
-        canManageTimetable: true
+        canManageTimetable: true,
+        canAdjustTeachingHours: true
       }
     };
     localStorage.setItem(SUBADMIN_SESSION_KEY, JSON.stringify(user));
@@ -163,7 +166,8 @@ export async function loginSubAdmin(email: string, pass: string): Promise<SubAdm
         canCreateCertificates: false, // Restricted to Native Super-Admin
         canDeleteCertificates: false, // Restricted to Native Super-Admin
         canRevokeCertificates: false, // Restricted to Native Super-Admin
-        canManageTimetable: true
+        canManageTimetable: true,
+        canAdjustTeachingHours: false // Restricted to Native Super-Admin
       }
     };
     localStorage.setItem(SUBADMIN_SESSION_KEY, JSON.stringify(user));

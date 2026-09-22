@@ -9,6 +9,7 @@ export interface TimetableSlot {
   endMinute: number; // 0
   course: string;
   instructor: string;
+  mentorId?: string; // Canonical mentor ID (e.g. 'tch-lawal', 'tch-precious')
   instructorTitle?: string;
   venue: string;
   category: 'security' | 'development' | 'creative' | 'automation' | 'engineering' | 'data';
@@ -28,6 +29,7 @@ export const TIMETABLE_DATA: TimetableSlot[] = [
     endMinute: 0,
     course: 'Cyber Security',
     instructor: 'Olamide',
+    mentorId: 'tch-olamide',
     instructorTitle: 'Lead Security Engineer & SOC Analyst',
     venue: 'Cyber Defense Lab (Lab 1)',
     category: 'security',
@@ -44,6 +46,7 @@ export const TIMETABLE_DATA: TimetableSlot[] = [
     endMinute: 0,
     course: 'Product Engineering',
     instructor: 'Ayo',
+    mentorId: 'tch-ayo',
     instructorTitle: 'Principal Product Engineer',
     venue: 'Engineering Suite (Lab 2)',
     category: 'engineering',
@@ -62,6 +65,7 @@ export const TIMETABLE_DATA: TimetableSlot[] = [
     endMinute: 0,
     course: 'Video Editing',
     instructor: 'Precious',
+    mentorId: 'tch-precious',
     instructorTitle: 'Creative Media & VFX Specialist',
     venue: 'Creative Media Studio',
     category: 'creative',
@@ -80,6 +84,7 @@ export const TIMETABLE_DATA: TimetableSlot[] = [
     endMinute: 0,
     course: 'Back End Development',
     instructor: 'Lawal',
+    mentorId: 'tch-lawal',
     instructorTitle: 'Senior Backend & Cloud Architect',
     venue: 'Code Lab Alpha (Lab 1)',
     category: 'development',
@@ -96,6 +101,7 @@ export const TIMETABLE_DATA: TimetableSlot[] = [
     endMinute: 0,
     course: 'Cyber Security',
     instructor: 'Olamide',
+    mentorId: 'tch-olamide',
     instructorTitle: 'Lead Security Engineer & SOC Analyst',
     venue: 'Cyber Defense Lab (Lab 2)',
     category: 'security',
@@ -112,6 +118,7 @@ export const TIMETABLE_DATA: TimetableSlot[] = [
     endMinute: 0,
     course: 'Product Engineering',
     instructor: 'Ayo',
+    mentorId: 'tch-ayo',
     instructorTitle: 'Principal Product Engineer',
     venue: 'Engineering Suite (Lab 1)',
     category: 'engineering',
@@ -128,6 +135,7 @@ export const TIMETABLE_DATA: TimetableSlot[] = [
     endMinute: 0,
     course: 'Video Editing',
     instructor: 'Precious',
+    mentorId: 'tch-precious',
     instructorTitle: 'Creative Media & VFX Specialist',
     venue: 'Creative Media Studio',
     category: 'creative',
@@ -146,6 +154,7 @@ export const TIMETABLE_DATA: TimetableSlot[] = [
     endMinute: 0,
     course: 'Front End Development',
     instructor: 'Lawal',
+    mentorId: 'tch-lawal',
     instructorTitle: 'Senior Frontend & UI Engineer',
     venue: 'Code Lab Alpha (Lab 1)',
     category: 'development',
@@ -162,6 +171,7 @@ export const TIMETABLE_DATA: TimetableSlot[] = [
     endMinute: 0,
     course: 'Content Creation',
     instructor: 'Rekay',
+    mentorId: 'tch-rekay',
     instructorTitle: 'Lead Content Strategist & Brand Lead',
     venue: 'Digital Broadcast Hub',
     category: 'creative',
@@ -180,6 +190,7 @@ export const TIMETABLE_DATA: TimetableSlot[] = [
     endMinute: 0,
     course: 'Front End Development',
     instructor: 'Lawal',
+    mentorId: 'tch-lawal',
     instructorTitle: 'Senior Frontend & UI Engineer',
     venue: 'Code Lab Alpha (Lab 1)',
     category: 'development',
@@ -196,6 +207,7 @@ export const TIMETABLE_DATA: TimetableSlot[] = [
     endMinute: 0,
     course: 'Automation',
     instructor: 'Precious',
+    mentorId: 'tch-precious',
     instructorTitle: 'AI & Workflow Automation Mentor',
     venue: 'Innovation Lab (Lab 2)',
     category: 'automation',
@@ -212,6 +224,7 @@ export const TIMETABLE_DATA: TimetableSlot[] = [
     endMinute: 0,
     course: 'Back End Development',
     instructor: 'Lawal',
+    mentorId: 'tch-lawal',
     instructorTitle: 'Senior Backend & Cloud Architect',
     venue: 'Code Lab Alpha (Lab 1)',
     category: 'development',
@@ -228,6 +241,7 @@ export const TIMETABLE_DATA: TimetableSlot[] = [
     endMinute: 0,
     course: 'Statistics',
     instructor: 'Mr. Stat',
+    mentorId: 'tch-stat',
     instructorTitle: 'Lead Statistics & Data Science Mentor',
     venue: 'Data Analytics Suite (Lab 2)',
     category: 'data',
@@ -244,6 +258,7 @@ export const TIMETABLE_DATA: TimetableSlot[] = [
     endMinute: 0,
     course: 'Video Editing',
     instructor: 'Precious',
+    mentorId: 'tch-precious',
     instructorTitle: 'Creative Media & VFX Specialist',
     venue: 'Creative Media Studio',
     category: 'creative',
@@ -260,6 +275,7 @@ export const TIMETABLE_DATA: TimetableSlot[] = [
     endMinute: 0,
     course: 'Product Engineering',
     instructor: 'Ayo',
+    mentorId: 'tch-ayo',
     instructorTitle: 'Principal Product Engineer',
     venue: 'Engineering Suite (Lab 2)',
     category: 'engineering',
@@ -276,6 +292,7 @@ export const TIMETABLE_DATA: TimetableSlot[] = [
     endMinute: 0,
     course: 'Cyber Security',
     instructor: 'Olamide',
+    mentorId: 'tch-olamide',
     instructorTitle: 'Lead Security Engineer & SOC Analyst',
     venue: 'Cyber Defense Lab (Lab 1)',
     category: 'security',
@@ -294,6 +311,7 @@ export const TIMETABLE_DATA: TimetableSlot[] = [
     endMinute: 0,
     course: 'Automation',
     instructor: 'Precious',
+    mentorId: 'tch-precious',
     instructorTitle: 'AI & Workflow Automation Mentor',
     venue: 'Innovation Lab (Lab 2)',
     category: 'automation',
@@ -310,6 +328,7 @@ export const TIMETABLE_DATA: TimetableSlot[] = [
     endMinute: 0,
     course: 'Front End Development',
     instructor: 'Lawal',
+    mentorId: 'tch-lawal',
     instructorTitle: 'Senior Frontend & UI Engineer',
     venue: 'Code Lab Alpha (Lab 1)',
     category: 'development',
@@ -326,6 +345,7 @@ export const TIMETABLE_DATA: TimetableSlot[] = [
     endMinute: 0,
     course: 'Statistics',
     instructor: 'Mr. Stat',
+    mentorId: 'tch-stat',
     instructorTitle: 'Lead Statistics & Data Science Mentor',
     venue: 'Data Analytics Suite (Lab 2)',
     category: 'data',
@@ -342,6 +362,7 @@ export const TIMETABLE_DATA: TimetableSlot[] = [
     endMinute: 0,
     course: 'Cyber Security',
     instructor: 'Olamide',
+    mentorId: 'tch-olamide',
     instructorTitle: 'Lead Security Engineer & SOC Analyst',
     venue: 'Cyber Defense Lab (Lab 1)',
     category: 'security',
@@ -359,12 +380,12 @@ export const DAYS_OF_WEEK = [
 ] as const;
 
 export const INSTRUCTORS = [
-  { name: 'Olamide', track: 'Cyber Security', role: 'Lead Security Engineer', avatar: 'OL', color: '#a855f7' },
-  { name: 'Lawal', track: 'Front End & Back End Development', role: 'Senior Full Stack Lead', avatar: 'LW', color: '#38bdf8' },
-  { name: 'Ayo', track: 'Product Engineering', role: 'Principal Product Engineer', avatar: 'AY', color: '#ec4899' },
-  { name: 'Precious', track: 'Video Editing & Automation', role: 'Creative Director & AI Mentor', avatar: 'PR', color: '#10b981' },
-  { name: 'Rekay', track: 'Content Creation', role: 'Lead Content Strategist', avatar: 'RK', color: '#f59e0b' },
-  { name: 'Mr. Stat', track: 'Statistics & Data Science', role: 'Statistics & Analytics Lead', avatar: 'ST', color: '#06b6d4' }
+  { name: 'Olamide', mentorId: 'tch-olamide', track: 'Cyber Security', role: 'Lead Security Engineer', avatar: 'OL', color: '#a855f7' },
+  { name: 'Lawal', mentorId: 'tch-lawal', track: 'Front End & Back End Development', role: 'Senior Full Stack Lead', avatar: 'LW', color: '#38bdf8' },
+  { name: 'Ayo', mentorId: 'tch-ayo', track: 'Product Engineering', role: 'Principal Product Engineer', avatar: 'AY', color: '#ec4899' },
+  { name: 'Precious', mentorId: 'tch-precious', track: 'Video Editing & Automation', role: 'Creative Director & AI Mentor', avatar: 'PR', color: '#10b981' },
+  { name: 'Rekay', mentorId: 'tch-rekay', track: 'Content Creation', role: 'Lead Content Strategist', avatar: 'RK', color: '#f59e0b' },
+  { name: 'Mr. Stat', mentorId: 'tch-stat', track: 'Statistics & Data Science', role: 'Statistics & Analytics Lead', avatar: 'ST', color: '#06b6d4' }
 ];
 
 export const TIMETABLE_STATS = {

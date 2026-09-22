@@ -26,7 +26,7 @@ export const DEFAULT_CLASSES: ClassGroup[] = [
     scheduleDays: ['Monday', 'Wednesday', 'Friday'],
     timeSlot: '10:00 AM - 1:00 PM',
     venue: 'Lab 01 - Cloud Architecture Studio',
-    assignedTeacherIds: ['tch-precious-ogunleye', 'tch-marcus-okafor'],
+    assignedTeacherIds: ['tch-lawal', 'tch-precious-ogunleye'],
     createdAt: '2026-01-15T08:00:00.000Z',
     updatedAt: '2026-01-15T08:00:00.000Z',
   },
@@ -39,7 +39,7 @@ export const DEFAULT_CLASSES: ClassGroup[] = [
     scheduleDays: ['Tuesday', 'Thursday', 'Saturday'],
     timeSlot: '11:00 AM - 2:00 PM',
     venue: 'Cyber Range & Security Operations Center',
-    assignedTeacherIds: ['tch-adebayo-vance'],
+    assignedTeacherIds: ['tch-olamide-sec'],
     createdAt: '2026-01-15T08:00:00.000Z',
     updatedAt: '2026-01-15T08:00:00.000Z',
   },
@@ -52,7 +52,7 @@ export const DEFAULT_CLASSES: ClassGroup[] = [
     scheduleDays: ['Monday', 'Thursday'],
     timeSlot: '2:00 PM - 5:00 PM',
     venue: 'Hardware Fabrication & Prototyping Lab',
-    assignedTeacherIds: ['tch-fatima-bello'],
+    assignedTeacherIds: ['tch-ayo-product'],
     createdAt: '2026-01-15T08:00:00.000Z',
     updatedAt: '2026-01-15T08:00:00.000Z',
   },
@@ -65,7 +65,7 @@ export const DEFAULT_CLASSES: ClassGroup[] = [
     scheduleDays: ['Wednesday', 'Friday'],
     timeSlot: '9:00 AM - 12:00 PM',
     venue: 'Creative Studio & Human Factors Lab',
-    assignedTeacherIds: ['tch-sophia-chen'],
+    assignedTeacherIds: ['tch-precious-ogunleye', 'tch-rekay-content'],
     createdAt: '2026-01-15T08:00:00.000Z',
     updatedAt: '2026-01-15T08:00:00.000Z',
   },
@@ -78,57 +78,66 @@ export const DEFAULT_CLASSES: ClassGroup[] = [
     scheduleDays: ['Tuesday', 'Friday'],
     timeSlot: '1:00 PM - 4:00 PM',
     venue: 'AI Compute & Data Analytics Wing',
-    assignedTeacherIds: ['tch-marcus-okafor'],
+    assignedTeacherIds: ['tch-stat-data'],
     createdAt: '2026-01-15T08:00:00.000Z',
     updatedAt: '2026-01-15T08:00:00.000Z',
   },
 ];
 
-// Initial pre-seeded teachers
+// Initial pre-seeded real teachers
 export const DEFAULT_TEACHERS: TeacherRecord[] = [
   {
-    id: 'tch-precious-ogunleye',
-    name: 'Engr. Precious Ogunleye',
-    email: 'precious@orbitspace.academy',
-    specialization: 'Lead Full-Stack Architect & Cloud Systems',
-    phone: '+234 810 456 7890',
+    id: 'tch-lawal',
+    name: 'Lawal',
+    email: 'lawal@orbitspace.academy',
+    specialization: 'Lead Full-Stack Web Architect & Distributed Cloud Systems',
+    phone: '+234 814 123 4567',
     assignedClassIds: ['cls-fullstack-2026'],
     status: 'active',
   },
   {
-    id: 'tch-adebayo-vance',
-    name: 'Dr. Adebayo Vance',
-    email: 'adebayo.vance@orbitspace.academy',
-    specialization: 'Principal Security Researcher & Ethical Hacker',
+    id: 'tch-precious-ogunleye',
+    name: 'Engr. Precious Ogunleye',
+    email: 'precious@orbitspace.academy',
+    specialization: 'Creative Director, AI Automation & Digital Systems Mentor',
+    phone: '+234 810 456 7890',
+    assignedClassIds: ['cls-fullstack-2026', 'cls-uiux-2026'],
+    status: 'active',
+  },
+  {
+    id: 'tch-olamide-sec',
+    name: 'Olamide Akintola',
+    email: 'olamide.sec@orbitspace.academy',
+    specialization: 'Principal Cybersecurity Engineer & Ethical Hacking Lead',
     phone: '+234 803 123 4567',
     assignedClassIds: ['cls-cybersecurity-2026'],
     status: 'active',
   },
   {
-    id: 'tch-sophia-chen',
-    name: 'Sophia Chen',
-    email: 'sophia.chen@orbitspace.academy',
-    specialization: 'Senior Design Systems Lead & UX Strategist',
-    phone: '+234 812 987 6543',
+    id: 'tch-stat-data',
+    name: 'Babatunde Adeleke (Mr. Stat)',
+    email: 'babatunde.stat@orbitspace.academy',
+    specialization: 'Head of Data Science, Statistical Modeling & AI Intelligence',
+    phone: '+234 811 234 5678',
+    assignedClassIds: ['cls-datascience-2026'],
+    status: 'active',
+  },
+  {
+    id: 'tch-rekay-content',
+    name: 'Rebekah Ayomide (Rekay)',
+    email: 'rekay.media@orbitspace.academy',
+    specialization: 'Brand Identity, Visual Storytelling & Design Systems Mentor',
+    phone: '+234 815 678 9012',
     assignedClassIds: ['cls-uiux-2026'],
     status: 'active',
   },
   {
-    id: 'tch-fatima-bello',
-    name: 'Engr. Fatima Bello',
-    email: 'fatima.bello@orbitspace.academy',
-    specialization: 'Robotics & Hardware Firmware Specialist',
-    phone: '+234 809 345 6789',
+    id: 'tch-ayo-product',
+    name: 'Ayodeji Adeleke (Ayo)',
+    email: 'ayo.product@orbitspace.academy',
+    specialization: 'Principal Product Engineer & Robotics Lead',
+    phone: '+234 802 345 6789',
     assignedClassIds: ['cls-robotics-2026'],
-    status: 'active',
-  },
-  {
-    id: 'tch-marcus-okafor',
-    name: 'Marcus Okafor',
-    email: 'marcus.okafor@orbitspace.academy',
-    specialization: 'AI Research Fellow & Distributed Systems Engineer',
-    phone: '+234 818 654 3210',
-    assignedClassIds: ['cls-fullstack-2026', 'cls-datascience-2026'],
     status: 'active',
   },
 ];
@@ -348,7 +357,7 @@ export const DEFAULT_SESSIONS: AttendanceSession[] = [
     },
     teacherAttendance: {
       'tch-precious-ogunleye': 'present',
-      'tch-marcus-okafor': 'present',
+      'tch-lawal': 'present',
     },
     notes: 'Covered Context API vs Zustand and server actions.',
     createdAt: '2026-09-07T12:00:00.000Z',
@@ -374,7 +383,7 @@ export const DEFAULT_SESSIONS: AttendanceSession[] = [
     },
     teacherAttendance: {
       'tch-precious-ogunleye': 'present',
-      'tch-marcus-okafor': 'present',
+      'tch-lawal': 'present',
     },
     notes: 'Students built their first token verification middleware.',
     createdAt: '2026-09-10T12:00:00.000Z',
@@ -386,9 +395,9 @@ export const DEFAULT_SESSIONS: AttendanceSession[] = [
     date: '2026-09-14',
     sessionTopic: 'Relational Database Schema Design & Drizzle ORM',
     recordedBy: {
-      name: 'Marcus Okafor',
+      name: 'Lawal',
       role: 'Sub-Admin / Instructor',
-      email: 'marcus.okafor@orbitspace.academy',
+      email: 'lawal@orbitspace.academy',
     },
     studentAttendance: {
       'std-fs-01': 'present',
@@ -400,7 +409,7 @@ export const DEFAULT_SESSIONS: AttendanceSession[] = [
     },
     teacherAttendance: {
       'tch-precious-ogunleye': 'present',
-      'tch-marcus-okafor': 'present',
+      'tch-lawal': 'present',
     },
     notes: 'Hands-on migration and joins practice.',
     createdAt: '2026-09-14T12:00:00.000Z',
@@ -426,7 +435,7 @@ export const DEFAULT_SESSIONS: AttendanceSession[] = [
     },
     teacherAttendance: {
       'tch-precious-ogunleye': 'present',
-      'tch-marcus-okafor': 'present',
+      'tch-lawal': 'present',
     },
     notes: 'Live Cloud Run and Vercel container deployment.',
     createdAt: '2026-09-18T12:00:00.000Z',
@@ -440,9 +449,9 @@ export const DEFAULT_SESSIONS: AttendanceSession[] = [
     date: '2026-09-08',
     sessionTopic: 'Wireshark Packet Analysis & Network Reconnaissance',
     recordedBy: {
-      name: 'Dr. Adebayo Vance',
+      name: 'Olamide Akintola',
       role: 'Sub-Admin / Instructor',
-      email: 'adebayo.vance@orbitspace.academy',
+      email: 'olamide.sec@orbitspace.academy',
     },
     studentAttendance: {
       'std-cy-01': 'present',
@@ -451,7 +460,7 @@ export const DEFAULT_SESSIONS: AttendanceSession[] = [
       'std-cy-04': 'late',
     },
     teacherAttendance: {
-      'tch-adebayo-vance': 'present',
+      'tch-olamide-sec': 'present',
     },
     notes: 'Dissecting TCP handshake anomalies and syn flood defense.',
     createdAt: '2026-09-08T13:00:00.000Z',
@@ -463,9 +472,9 @@ export const DEFAULT_SESSIONS: AttendanceSession[] = [
     date: '2026-09-15',
     sessionTopic: 'OWASP Top 10 Web Exploitation & SQL Injection Hardening',
     recordedBy: {
-      name: 'Dr. Adebayo Vance',
+      name: 'Olamide Akintola',
       role: 'Sub-Admin / Instructor',
-      email: 'adebayo.vance@orbitspace.academy',
+      email: 'olamide.sec@orbitspace.academy',
     },
     studentAttendance: {
       'std-cy-01': 'present',
@@ -474,13 +483,34 @@ export const DEFAULT_SESSIONS: AttendanceSession[] = [
       'std-cy-04': 'present',
     },
     teacherAttendance: {
-      'tch-adebayo-vance': 'present',
+      'tch-olamide-sec': 'present',
     },
     notes: 'Simulated CTF challenge on isolated lab boxes.',
     createdAt: '2026-09-15T13:00:00.000Z',
     updatedAt: '2026-09-15T13:00:00.000Z',
   },
 ];
+
+const DUMMY_ATTENDANCE_TEACHER_IDS = new Set([
+  'tch-sophia-chen',
+  'tch-fatima-bello',
+  'tch-adebayo-vance',
+  'tch-marcus-okafor',
+]);
+
+const DUMMY_ATTENDANCE_TEACHER_NAMES = [
+  'sophia chen',
+  'fatima bello',
+  'adebayo vance',
+  'marcus okafor',
+];
+
+export function isDummyTeacherRecord(t: TeacherRecord): boolean {
+  if (!t) return true;
+  if (DUMMY_ATTENDANCE_TEACHER_IDS.has(t.id)) return true;
+  const lowerName = (t.name || '').toLowerCase();
+  return DUMMY_ATTENDANCE_TEACHER_NAMES.some((dn) => lowerName.includes(dn));
+}
 
 const STORAGE_KEYS = {
   CLASSES: 'orbit_attendance_classes_v1',
@@ -494,7 +524,17 @@ const STORAGE_KEYS = {
 export function getLocalClasses(): ClassGroup[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.CLASSES);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed: ClassGroup[] = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Sanitize any dummy teacher IDs inside classes
+        const cleaned = parsed.map(c => ({
+          ...c,
+          assignedTeacherIds: (c.assignedTeacherIds || []).filter(id => !DUMMY_ATTENDANCE_TEACHER_IDS.has(id))
+        }));
+        return cleaned;
+      }
+    }
   } catch (e) {
     console.warn('Failed reading classes from localStorage', e);
   }
@@ -513,7 +553,20 @@ export function saveLocalClasses(classes: ClassGroup[]): void {
 export function getLocalTeachers(): TeacherRecord[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.TEACHERS);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed: TeacherRecord[] = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const filtered = parsed.filter((t) => !isDummyTeacherRecord(t));
+        // Ensure standard faculty exists
+        DEFAULT_TEACHERS.forEach((dt) => {
+          if (!filtered.some((ft) => ft.id === dt.id)) {
+            filtered.push(dt);
+          }
+        });
+        saveLocalTeachers(filtered);
+        return filtered;
+      }
+    }
   } catch (e) {
     console.warn('Failed reading teachers from localStorage', e);
   }
@@ -604,7 +657,9 @@ export async function syncTeachersFromFirestore(): Promise<TeacherRecord[]> {
     const colRef = collection(db, 'attendance_teachers');
     const snap = await getDocs(colRef);
     if (!snap.empty) {
-      const items = snap.docs.map((d) => d.data() as TeacherRecord);
+      const items = snap.docs
+        .map((d) => d.data() as TeacherRecord)
+        .filter((t) => !isDummyTeacherRecord(t));
       saveLocalTeachers(items);
       return items;
     }
@@ -1278,6 +1333,8 @@ export const AttendanceService = {
   ): Promise<{ success: boolean; session: ClassSessionRecord; recordsSaved: number }> {
     const sessionId = session.class_session_id;
     const tutor = session.tutor || this.getAssignedTutorForProgram(session.course);
+    const resolvedMentor = tutor?.id ? (TutorService.getTutorById(tutor.id) || TutorService.resolveInstructor(tutor.id)) : undefined;
+    const mentorId = resolvedMentor?.id || session.mentorId || tutor?.id;
 
     // Calculate summary counts
     let present = 0;
@@ -1303,6 +1360,7 @@ export const AttendanceService = {
 
     const enrichedSession: ClassSessionRecord = {
       ...session,
+      mentorId,
       tutor,
       tutor_attendance: session.tutor_attendance || 'present',
       tutor_check_in_time: session.tutor_check_in_time,
@@ -1359,6 +1417,28 @@ export const AttendanceService = {
       await Promise.allSettled(recordPromises);
     } catch (err) {
       console.error('Firestore save attendance error:', err);
+    }
+
+    // Automatically record teaching hours to Lecturer Teaching Hours Ledger
+    if (durationHours > 0 && mentorId) {
+      try {
+        const { TeachingHoursLedgerService } = await import('./teachingHoursLedgerService');
+        await TeachingHoursLedgerService.recordAttendanceSession({
+          sessionId,
+          lecturerId: mentorId,
+          lecturerName: resolvedMentor?.name || tutor?.name || 'Academic Mentor',
+          course: enrichedSession.course,
+          cohort: enrichedSession.cohort,
+          date: enrichedSession.date,
+          durationHours,
+          recordedBy: typeof (enrichedSession as any).recorded_by === 'object'
+            ? (enrichedSession as any).recorded_by?.name || 'Academic Instructor'
+            : ((enrichedSession as any).recorded_by || 'Academic Instructor'),
+          sessionTopic: enrichedSession.session_topic,
+        });
+      } catch (ledgerErr) {
+        console.warn('Failed recording attendance to TeachingHoursLedger:', ledgerErr);
+      }
     }
 
     return {
@@ -1560,15 +1640,38 @@ export const AttendanceService = {
   },
 
   /**
-   * Retrieves all class sessions taught by a specific tutor
+   * Retrieves all class sessions taught by a specific tutor or mentor ID
    */
   async getClassSessionsForTutor(tutorIdOrName: string): Promise<ClassSessionRecord[]> {
     const all = await this.getAllClassSessions();
+    if (!tutorIdOrName) return all;
+
     const query = tutorIdOrName.toLowerCase().trim();
+    const mentor = TutorService.getTutorById(tutorIdOrName) || TutorService.resolveInstructor(tutorIdOrName);
+    const allTargetIds = new Set<string>([
+      query,
+      ...(mentor ? [mentor.id.toLowerCase(), ...(mentor.aliasIds || []).map((a) => a.toLowerCase())] : []),
+    ]);
+    const mentorNames = mentor
+      ? [mentor.name.toLowerCase(), mentor.shortName.toLowerCase(), mentor.name.toLowerCase().replace(/[^a-z0-9]/g, '')]
+      : [];
+
     return all.filter((s) => {
+      // 1. Direct match on session mentorId
+      const sMentorId = (s.mentorId || '').toLowerCase().trim();
+      if (sMentorId && allTargetIds.has(sMentorId)) return true;
+
+      // 2. Match on nested tutor.id
       const tutorId = (s.tutor?.id || '').toLowerCase().trim();
+      if (tutorId && allTargetIds.has(tutorId)) return true;
+
+      // 3. Match on tutor name or short name
       const tutorName = (s.tutor?.name || '').toLowerCase().trim();
-      return tutorId === query || tutorName.includes(query) || query.includes(tutorName);
+      if (tutorName) {
+        if (tutorName === query || tutorName.includes(query) || query.includes(tutorName)) return true;
+        if (mentorNames.some((mn) => mn && (tutorName.includes(mn) || mn.includes(tutorName)))) return true;
+      }
+      return false;
     });
   },
 
@@ -1577,15 +1680,20 @@ export const AttendanceService = {
    */
   async getStudentsTaughtByTutor(
     tutorId: string,
-    tutorPrograms: string[]
+    tutorPrograms?: string[]
   ): Promise<StudentRecord[]> {
     const allStudents = await this.fetchRealStudents();
+    const mentor = TutorService.getTutorById(tutorId) || TutorService.resolveInstructor(tutorId);
+    const programs = (tutorPrograms && tutorPrograms.length > 0)
+      ? tutorPrograms
+      : (mentor?.programs || []);
+
     const sessions = await this.getClassSessionsForTutor(tutorId);
 
     const studentIdSet = new Set<string>();
     const result: StudentRecord[] = [];
 
-    // 1. Students in sessions where this tutor taught and student was marked present/late/excused
+    // 1. Students in sessions where this mentor taught and student was marked present/late/excused
     sessions.forEach((sess) => {
       if (sess.student_attendance) {
         Object.entries(sess.student_attendance).forEach(([stId, status]) => {
@@ -1596,10 +1704,10 @@ export const AttendanceService = {
       }
     });
 
-    // 2. Students enrolled in tutor's assigned programs
+    // 2. Students enrolled in mentor's assigned programs
     allStudents.forEach((st) => {
-      const matchesProgram = tutorPrograms.some(
-        (p) => this.isCourseMatch(st.course, p)
+      const matchesProgram = programs.some(
+        (p) => this.isCourseMatch(st.course || '', p)
       );
       if (matchesProgram || studentIdSet.has(st.id) || (st.student_id && studentIdSet.has(st.student_id))) {
         if (!studentIdSet.has(st.id)) {

@@ -1,6 +1,7 @@
 import { collection, doc, getDocs, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './firebase';
 import { isAdminAuthenticated, getCertificates } from './certificateService';
+import { isSubAdminAuthenticated } from './subAdminService';
 import { getLocalTimetableSlots, saveTimetableSlot } from './timetableService';
 import { VerificationDataService } from './verificationDataService';
 import { getArticlesByTutorName } from './articleService';
@@ -24,7 +25,7 @@ export interface TutorProfile {
   phone?: string;
   specialization: string;
   role: string;
-  programs: string[];
+  programs: string[]; // multi-course assignment
   avatar?: string;
   photoUrl?: string; // High-res verified profile picture
   color?: string;
@@ -35,65 +36,149 @@ export interface TutorProfile {
   qualifications?: string[];
   linkedinUrl?: string;
   githubUrl?: string;
-  portfolioUrl?: string;
-  historicalBaseline?: TutorHistoricalBaseline; // Admin-Entered Historical Records (distinct from system records)
+  portfolioUrl?: string; // Portfolio / website URL
+  aliasIds?: string[]; // IDs of any merged profiles (e.g. ['tch-lawal-frontend', 'tch-lawal-backend'])
+  aliasSlugs?: string[]; // Slugs of any merged profiles
+  historicalBaseline?: TutorHistoricalBaseline; // Admin-Entered Historical Records
   baseTeachingHours?: number; // Legacy compatibility
   baseStudentsCount?: number; // Legacy compatibility
   isCustom?: boolean;
 }
 
+export const AVAILABLE_COURSES = [
+  'UI/UX Design',
+  'Graphics Design',
+  'Brand Identity',
+  'Product Design',
+  'UI/UX & Product Engineering',
+  'Front End Development',
+  'Back End Development',
+  'Full Stack Development',
+  'Web Development',
+  'Software Engineering',
+  'Cybersecurity',
+  'Network Defense',
+  'Ethical Hacking',
+  'Data Analysis',
+  'Data Science',
+  'Statistics',
+  'AI & Automation',
+  'Artificial Intelligence',
+  'Video Editing',
+  'Creative Media',
+  'Content Creation',
+  'Digital Storytelling',
+  'Robotics & IoT',
+  'Hardware & System Design',
+  'Embedded Systems'
+];
+
 const TUTORS_STORAGE_KEY = 'orbit_space_tutors_v1';
 
 export const DEFAULT_TUTORS: TutorProfile[] = [
   {
-    id: 'tch-lawal-frontend',
-    slug: 'lawal-frontend-lead',
-    name: 'Lawal (Senior Frontend Lead)',
+    id: 'tch-lawal',
+    slug: 'lawal-lead',
+    name: 'Lawal Kehinde',
     shortName: 'Lawal',
-    email: 'lawal.frontend@orbitspace.academy',
+    email: 'lawal.engineering@orbitspace.academy',
     phone: '+234 803 234 5678',
-    specialization: 'React, TypeScript, Modern UI Architectures',
-    role: 'Senior Full Stack Lead',
-    programs: ['Front End Development', 'Web Development', 'Software Engineering'],
-    avatar: 'LW',
+    specialization: 'Full Stack Architecture, React, Node.js, TypeScript & Cloud Systems',
+    role: 'Senior Full Stack & Cloud Architect',
+    programs: [
+      'Front End Development',
+      'Back End Development',
+      'Full Stack Development',
+      'Web Development',
+      'Software Engineering'
+    ],
+    avatar: 'LK',
+    photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
     color: '#38bdf8',
     status: 'active',
     verificationStatus: 'verified',
     joinedDate: '2024-03-15',
-    bio: 'Senior engineering mentor specializing in high-performance frontend micro-architectures, React design tokens, and production full-stack systems.',
-    qualifications: ['B.Sc Computer Science', 'Meta Certified Frontend Developer', 'AWS Certified Cloud Practitioner'],
+    bio: 'Senior engineering mentor specializing in high-performance frontend micro-architectures, React design tokens, Node.js cloud APIs, and distributed microservices.',
+    qualifications: [
+      'B.Sc Computer Science',
+      'Meta Certified Frontend Developer',
+      'PostgreSQL Certified Professional',
+      'AWS Certified Cloud Practitioner',
+      'Node.js Core Contributor'
+    ],
     linkedinUrl: 'https://linkedin.com/in/orbitspace-lawal',
+    portfolioUrl: 'https://lawal.dev',
+    aliasIds: ['tch-lawal-frontend', 'tch-lawal-backend'],
+    aliasSlugs: ['lawal-frontend-lead', 'lawal-backend-architect'],
+    historicalBaseline: {
+      historicalTeachingHours: 146,
+      historicalStudentsTaught: 68,
+      historicalStudentsCertified: 42,
+      historicalProjectsSupervised: 18,
+      historicalBaselineNote: 'Imported verified manual attendance registers (Q1 2024 – Q4 2025 Foundation Cohorts)',
+      historicalAuditedBy: 'Super Admin (Engr. Precious Ogunleye)',
+      historicalAuditDate: '2026-01-15'
+    },
+    baseTeachingHours: 146,
+    baseStudentsCount: 68
   },
   {
-    id: 'tch-lawal-backend',
-    slug: 'lawal-backend-architect',
-    name: 'Lawal (Backend & Cloud Architect)',
-    shortName: 'Lawal',
-    email: 'lawal.backend@orbitspace.academy',
-    phone: '+234 803 234 5678',
-    specialization: 'Node.js, PostgreSQL, APIs & Cloud Systems',
-    role: 'Backend Systems Lead',
-    programs: ['Back End Development', 'Backend Engineering'],
-    avatar: 'LW',
-    color: '#38bdf8',
+    id: 'tch-precious',
+    slug: 'precious-creative-lead',
+    name: 'Engr. Precious Ogunleye',
+    shortName: 'Precious',
+    email: 'creative.media@orbitspace.academy',
+    phone: '+234 810 456 7890',
+    specialization: 'Premiere Pro, DaVinci Resolve, AI Workflows & Autonomous Bots',
+    role: 'Creative Director & AI Automation Mentor',
+    programs: [
+      'Video Editing',
+      'Creative Media',
+      'AI & Automation',
+      'Artificial Intelligence',
+      'Content Creation'
+    ],
+    avatar: 'PO',
+    photoUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=600&q=80',
+    color: '#10b981',
     status: 'active',
     verificationStatus: 'verified',
-    joinedDate: '2024-05-10',
-    bio: 'Distributed systems architect leading cloud native API integrations, database normalization, and asynchronous message broker designs.',
-    qualifications: ['PostgreSQL Certified Professional', 'Node.js Core Contributor'],
-    linkedinUrl: 'https://linkedin.com/in/orbitspace-lawal-be',
+    joinedDate: '2023-11-01',
+    bio: 'Award-winning video producer, AI systems architect, and creative technologist training developers in commercial media editing, visual storytelling, and autonomous agent workflows.',
+    qualifications: [
+      'Adobe Certified Professional in Video Design',
+      'DaVinci Resolve Certified Editor',
+      'Google Cloud Certified AI Engineer',
+      'Python Institute Certified'
+    ],
+    linkedinUrl: 'https://linkedin.com/in/precious-ogunleye',
+    portfolioUrl: 'https://preciousogunleye.com',
+    aliasIds: ['tch-precious-video', 'tch-precious-auto', 'tch-precious-ogunleye'],
+    aliasSlugs: ['precious-creative-director', 'precious-ai-automation'],
+    historicalBaseline: {
+      historicalTeachingHours: 110,
+      historicalStudentsTaught: 54,
+      historicalStudentsCertified: 38,
+      historicalProjectsSupervised: 14,
+      historicalBaselineNote: 'Archival creative media and automation workshop logs (2024 – 2025)',
+      historicalAuditedBy: 'Super Admin',
+      historicalAuditDate: '2026-01-15'
+    },
+    baseTeachingHours: 110,
+    baseStudentsCount: 54
   },
   {
     id: 'tch-olamide-sec',
     slug: 'olamide-security-lead',
-    name: 'Olamide (Lead Security Engineer)',
+    name: 'Olamide Akintola',
     shortName: 'Olamide',
     email: 'olamide.cyber@orbitspace.academy',
     phone: '+234 809 111 2233',
     specialization: 'SOC Defense, Penetration Testing & Network Security',
     role: 'Lead Security Engineer & SOC Analyst',
-    programs: ['Cyber Security', 'Network Defense', 'Ethical Hacking'],
-    avatar: 'OL',
+    programs: ['Cybersecurity', 'Network Defense', 'Ethical Hacking'],
+    avatar: 'OA',
+    photoUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=600&q=80',
     color: '#a855f7',
     status: 'active',
     verificationStatus: 'verified',
@@ -101,18 +186,31 @@ export const DEFAULT_TUTORS: TutorProfile[] = [
     bio: 'Cybersecurity defense lead managing active threat hunting, incident mitigation pipelines, and enterprise SIEM architectures in Ilorin.',
     qualifications: ['CompTIA Security+', 'CEH Certified Ethical Hacker', 'Cisco CCNA CyberOps'],
     linkedinUrl: 'https://linkedin.com/in/olamide-security',
+    aliasIds: ['tch-olamide', 'tch-adebayo-vance'],
+    historicalBaseline: {
+      historicalTeachingHours: 132,
+      historicalStudentsTaught: 48,
+      historicalStudentsCertified: 32,
+      historicalProjectsSupervised: 15,
+      historicalBaselineNote: 'Manual Cyber Security & SOC Lab registers (2024 – 2025 Cohorts)',
+      historicalAuditedBy: 'Academic Director',
+      historicalAuditDate: '2026-01-15'
+    },
+    baseTeachingHours: 132,
+    baseStudentsCount: 48
   },
   {
     id: 'tch-stat-data',
     slug: 'mr-stat-data-science',
-    name: 'Mr. Stat (Lead Data Science Mentor)',
+    name: 'Babatunde Adeleke (Mr. Stat)',
     shortName: 'Mr. Stat',
     email: 'data.mentor@orbitspace.academy',
     phone: '+234 812 345 6789',
     specialization: 'PowerBI, Statistics, Python Data Science & SQL',
-    role: 'Statistics & Analytics Lead',
+    role: 'Lead Data Science & Analytics Mentor',
     programs: ['Data Analysis', 'Statistics', 'Data Science'],
     avatar: 'ST',
+    photoUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=600&q=80',
     color: '#06b6d4',
     status: 'active',
     verificationStatus: 'verified',
@@ -120,37 +218,31 @@ export const DEFAULT_TUTORS: TutorProfile[] = [
     bio: 'Data strategist and statistical modeler equipping students with real-world business intelligence, automated ETL scripts, and predictive modeling.',
     qualifications: ['M.Sc Applied Statistics', 'Microsoft Certified Power BI Data Analyst Associate'],
     linkedinUrl: 'https://linkedin.com/in/mr-stat-orbitspace',
-  },
-  {
-    id: 'tch-precious-video',
-    slug: 'precious-creative-director',
-    name: 'Precious (Creative Media Lead)',
-    shortName: 'Precious',
-    email: 'creative.media@orbitspace.academy',
-    phone: '+234 810 456 7890',
-    specialization: 'Premiere Pro, DaVinci Resolve & VFX Production',
-    role: 'Creative Director & AI Mentor',
-    programs: ['Video Editing', 'Creative Media'],
-    avatar: 'PR',
-    color: '#10b981',
-    status: 'active',
-    verificationStatus: 'verified',
-    joinedDate: '2023-11-01',
-    bio: 'Award-winning video producer and creative technologist training the next generation of visual storytellers and commercial media editors.',
-    qualifications: ['Adobe Certified Professional in Video Design', 'DaVinci Resolve Certified Editor'],
-    linkedinUrl: 'https://linkedin.com/in/precious-ogunleye',
+    aliasIds: ['tch-stat', 'tch-mr-stat', 'tch-marcus-okafor'],
+    historicalBaseline: {
+      historicalTeachingHours: 95,
+      historicalStudentsTaught: 42,
+      historicalStudentsCertified: 28,
+      historicalProjectsSupervised: 10,
+      historicalBaselineNote: 'Audited physical sign-in sheets for Data Analytics cohorts',
+      historicalAuditedBy: 'Academic Board',
+      historicalAuditDate: '2026-01-15'
+    },
+    baseTeachingHours: 95,
+    baseStudentsCount: 42
   },
   {
     id: 'tch-rekay-content',
     slug: 'rekay-content-strategist',
-    name: 'Rekay (Lead Content Strategist)',
+    name: 'Rebekah Ayomide (Rekay)',
     shortName: 'Rekay',
     email: 'rekay.content@orbitspace.academy',
     phone: '+234 805 678 9012',
     specialization: 'Mobile Photography, Brand Storytelling & Videography',
-    role: 'Lead Content Strategist',
-    programs: ['Content Creation', 'Digital Storytelling'],
+    role: 'Lead Content Strategist & Media Producer',
+    programs: ['Content Creation', 'Digital Storytelling', 'Brand Identity'],
     avatar: 'RK',
+    photoUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80',
     color: '#f59e0b',
     status: 'active',
     verificationStatus: 'verified',
@@ -158,82 +250,51 @@ export const DEFAULT_TUTORS: TutorProfile[] = [
     bio: 'Viral content architect helping brand creators and influencers execute viral marketing campaigns and high-engagement reels.',
     qualifications: ['Digital Storytelling Fellow', 'Meta Certified Digital Creator'],
     linkedinUrl: 'https://linkedin.com/in/rekay-orbitspace',
+    aliasIds: ['tch-rekay'],
+    historicalBaseline: {
+      historicalTeachingHours: 64,
+      historicalStudentsTaught: 35,
+      historicalStudentsCertified: 25,
+      historicalProjectsSupervised: 8
+    },
+    baseTeachingHours: 64,
+    baseStudentsCount: 35
   },
   {
     id: 'tch-ayo-product',
     slug: 'ayo-product-engineer',
-    name: 'Ayo (Principal Product Engineer)',
+    name: 'Ayodeji Adeleke (Ayo)',
     shortName: 'Ayo',
     email: 'ayo.product@orbitspace.academy',
     phone: '+234 802 345 6789',
-    specialization: 'System Architecture & Product Engineering',
-    role: 'Principal Product Engineer',
-    programs: ['Product Engineering', 'Hardware & System Design'],
+    specialization: 'System Architecture, Hardware Prototyping & Embedded Robotics',
+    role: 'Principal Product Engineer & Robotics Lead',
+    programs: [
+      'Product Engineering',
+      'Hardware & System Design',
+      'Full Stack Development',
+      'Robotics & Embedded Systems',
+      'Robotics & Hardware Engineering',
+      'Robotics & IoT'
+    ],
     avatar: 'AY',
+    photoUrl: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=600&q=80',
     color: '#ec4899',
     status: 'active',
     verificationStatus: 'verified',
     joinedDate: '2024-03-01',
-    bio: 'Product systems engineer combining industrial hardware prototyping with cloud scale backends.',
-    qualifications: ['B.Eng Mechanical Engineering', 'Embedded Systems Specialist'],
+    bio: 'Product systems engineer combining industrial hardware prototyping, embedded microcontrollers, IoT telemetry, and cloud scale backends.',
+    qualifications: ['B.Eng Mechanical Engineering', 'Embedded Systems Specialist', 'COREN Registered Engineer'],
     linkedinUrl: 'https://linkedin.com/in/ayo-orbitspace',
-  },
-  {
-    id: 'tch-sophia-chen',
-    slug: 'sophia-chen-design-systems',
-    name: 'Sophia Chen (Design Systems Lead)',
-    shortName: 'Sophia Chen',
-    email: 'sophia.chen@orbitspace.academy',
-    phone: '+234 812 987 6543',
-    specialization: 'Figma Systems, Design Thinking & UX Prototyping',
-    role: 'Design Systems Lead',
-    programs: ['UI/UX Design', 'Product Design'],
-    avatar: 'SC',
-    color: '#f43f5e',
-    status: 'active',
-    verificationStatus: 'verified',
-    joinedDate: '2024-06-01',
-    bio: 'User experience strategist focused on accessible design tokens, micro-interactions, and design-to-code velocity.',
-    qualifications: ['Nielsen Norman Group UX Master', 'Figma Certified Creator'],
-    linkedinUrl: 'https://linkedin.com/in/sophia-chen-ux',
-  },
-  {
-    id: 'tch-precious-auto',
-    slug: 'precious-ai-automation',
-    name: 'Precious (AI & Automation Mentor)',
-    shortName: 'Precious',
-    email: 'automation@orbitspace.academy',
-    phone: '+234 810 456 7890',
-    specialization: 'AI Workflows, Python Scripting & Autonomous Bots',
-    role: 'AI & Automation Mentor',
-    programs: ['AI & Automation', 'Artificial Intelligence'],
-    avatar: 'PR',
-    color: '#10b981',
-    status: 'active',
-    verificationStatus: 'verified',
-    joinedDate: '2024-01-15',
-    bio: 'AI solutions architect mentoring engineers on autonomous agents, tool use, and enterprise process automation.',
-    qualifications: ['Google Cloud Certified AI Engineer', 'Python Institute Certified'],
-    linkedinUrl: 'https://linkedin.com/in/precious-ai',
-  },
-  {
-    id: 'tch-fatima-bello',
-    slug: 'fatima-bello-robotics',
-    name: 'Engr. Fatima Bello (Robotics & IoT)',
-    shortName: 'Fatima Bello',
-    email: 'fatima.bello@orbitspace.academy',
-    phone: '+234 809 345 6789',
-    specialization: 'Microcontrollers, Embedded C & Sensor IoT',
-    role: 'Robotics & Embedded Systems Lead',
-    programs: ['Robotics', 'Hardware & IoT', 'Embedded Systems'],
-    avatar: 'FB',
-    color: '#8b5cf6',
-    status: 'active',
-    verificationStatus: 'verified',
-    joinedDate: '2024-07-01',
-    bio: 'Robotics engineer developing sensory feedback microcontrollers and smart edge intelligence appliances.',
-    qualifications: ['COREN Registered Engineer', 'IEEE Senior Member'],
-    linkedinUrl: 'https://linkedin.com/in/fatima-bello-robotics',
+    aliasIds: ['tch-ayo', 'tch-fatima-bello'],
+    historicalBaseline: {
+      historicalTeachingHours: 78,
+      historicalStudentsTaught: 38,
+      historicalStudentsCertified: 22,
+      historicalProjectsSupervised: 9
+    },
+    baseTeachingHours: 78,
+    baseStudentsCount: 38
   }
 ];
 
@@ -245,8 +306,10 @@ export interface ComputedTutorStats {
   // 1. Teaching hours
   historicalTeachingHours: number;
   newAttendanceHours: number;
+  adjustmentHours: number;
   totalTeachingHours: number;
   attendanceSessionsCount: number;
+  ledgerEntries: any[];
 
   // 2. Students taught
   historicalStudentsTaught: number;
@@ -307,6 +370,74 @@ export interface ComputedTutorStats {
   };
 }
 
+const DUMMY_TEACHER_IDS = new Set([
+  'tch-sophia-chen',
+  'tch-fatima-bello',
+  'tch-adebayo-vance',
+  'tch-marcus-okafor'
+]);
+
+const DUMMY_TEACHER_NAMES = ['sophia chen', 'fatima bello', 'adebayo vance', 'marcus okafor'];
+
+function isDummyTeacher(t: TutorProfile): boolean {
+  if (!t) return true;
+  if (DUMMY_TEACHER_IDS.has(t.id)) return true;
+  const lowerName = (t.name || '').toLowerCase();
+  const lowerShort = (t.shortName || '').toLowerCase();
+  return DUMMY_TEACHER_NAMES.some(dn => lowerName.includes(dn) || lowerShort.includes(dn));
+}
+
+function consolidateAndMigrateTutors(savedTutors: TutorProfile[]): TutorProfile[] {
+  const canonicalMap = new Map<string, TutorProfile>();
+  DEFAULT_TUTORS.forEach(t => {
+    if (!isDummyTeacher(t)) {
+      canonicalMap.set(t.id, { ...t });
+    }
+  });
+
+  const findCanonical = (t: TutorProfile): TutorProfile | undefined => {
+    if (isDummyTeacher(t)) return undefined;
+    if (canonicalMap.has(t.id)) return canonicalMap.get(t.id);
+    for (const [_, canon] of canonicalMap.entries()) {
+      if (canon.aliasIds?.includes(t.id)) return canon;
+      if (canon.aliasSlugs && t.slug && canon.aliasSlugs.includes(t.slug)) return canon;
+    }
+    const normName = t.name.toLowerCase();
+    const normShort = (t.shortName || '').toLowerCase();
+    if (normName.includes('lawal') || normShort === 'lawal') return canonicalMap.get('tch-lawal');
+    if (normName.includes('precious') || normShort === 'precious') return canonicalMap.get('tch-precious');
+    if (normName.includes('olamide') || normShort === 'olamide') return canonicalMap.get('tch-olamide-sec');
+    if (normName.includes('stat') || normShort.includes('stat')) return canonicalMap.get('tch-stat-data');
+    if (normName.includes('rekay') || normShort === 'rekay') return canonicalMap.get('tch-rekay-content');
+    if (normName.includes('ayo') || normShort === 'ayo') return canonicalMap.get('tch-ayo-product');
+    return undefined;
+  };
+
+  savedTutors.forEach((t) => {
+    if (!t || !t.id || isDummyTeacher(t)) return;
+    const canon = findCanonical(t);
+    if (canon) {
+      const mergedPrograms = Array.from(new Set([...(canon.programs || []), ...(t.programs || [])]));
+      const mergedQualifications = Array.from(new Set([...(canon.qualifications || []), ...(t.qualifications || [])]));
+      const mergedAliases = Array.from(new Set([...(canon.aliasIds || []), ...(t.aliasIds || []), t.id].filter(id => id !== canon.id)));
+      canon.programs = mergedPrograms;
+      canon.qualifications = mergedQualifications;
+      canon.aliasIds = mergedAliases;
+      if (t.portfolioUrl && !canon.portfolioUrl) canon.portfolioUrl = t.portfolioUrl;
+      if (t.phone && !canon.phone) canon.phone = t.phone;
+      if (t.linkedinUrl && !canon.linkedinUrl) canon.linkedinUrl = t.linkedinUrl;
+      if (t.githubUrl && !canon.githubUrl) canon.githubUrl = t.githubUrl;
+      if (t.status === 'deactivated' && canon.status !== 'deactivated') {
+        canon.status = t.status;
+      }
+    } else {
+      canonicalMap.set(t.id, t);
+    }
+  });
+
+  return Array.from(canonicalMap.values());
+}
+
 export const TutorService = {
   /**
    * Get all tutors (active & deactivated)
@@ -321,22 +452,12 @@ export const TutorService = {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const map = new Map<string, TutorProfile>();
-          DEFAULT_TUTORS.forEach(t => map.set(t.id, t));
-          parsed.forEach((t: TutorProfile) => {
-            if (t && t.id) {
-              const existing = map.get(t.id);
-              map.set(t.id, { 
-                ...existing, 
-                ...t,
-                slug: t.slug || (existing ? existing.slug : t.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')),
-                status: t.status || 'active',
-                verificationStatus: t.verificationStatus || 'verified'
-              });
-            }
-          });
-          tutorsMemoryCache = Array.from(map.values());
-          return tutorsMemoryCache;
+          const consolidated = consolidateAndMigrateTutors(parsed);
+          tutorsMemoryCache = consolidated;
+          try {
+            localStorage.setItem(TUTORS_STORAGE_KEY, JSON.stringify(consolidated));
+          } catch {}
+          return consolidated;
         }
       }
     } catch (e) {
@@ -344,6 +465,9 @@ export const TutorService = {
     }
 
     tutorsMemoryCache = [...DEFAULT_TUTORS];
+    try {
+      localStorage.setItem(TUTORS_STORAGE_KEY, JSON.stringify(DEFAULT_TUTORS));
+    } catch {}
     return tutorsMemoryCache;
   },
 
@@ -358,13 +482,23 @@ export const TutorService = {
    * Find tutor by slug (for public verification link /tutor/[slug])
    */
   getTutorBySlug(slug: string): TutorProfile | undefined {
+    if (!slug) return undefined;
     const all = this.getAllTutors();
     const clean = slug.toLowerCase().trim();
+    // 1. Direct slug match
+    const direct = all.find(t => t.slug.toLowerCase() === clean);
+    if (direct) return direct;
+    // 2. Alias slugs
+    const byAliasSlug = all.find(t => t.aliasSlugs && t.aliasSlugs.some(s => s.toLowerCase() === clean));
+    if (byAliasSlug) return byAliasSlug;
+    // 3. ID match or Alias ID match
+    const byId = this.getTutorById(slug);
+    if (byId) return byId;
+    // 4. Short name / sanitized name match
     return all.find(t => 
-      t.slug.toLowerCase() === clean || 
-      t.id.toLowerCase() === clean ||
-      t.shortName.toLowerCase() === clean ||
-      t.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === clean
+      t.shortName.toLowerCase() === clean || 
+      t.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === clean ||
+      clean.includes(t.shortName.toLowerCase())
     );
   },
 
@@ -372,7 +506,43 @@ export const TutorService = {
    * Find tutor by ID
    */
   getTutorById(id: string): TutorProfile | undefined {
-    return this.getAllTutors().find(t => t.id === id);
+    if (!id) return undefined;
+    const all = this.getAllTutors();
+    const clean = id.toLowerCase().trim();
+    const direct = all.find(t => t.id.toLowerCase() === clean);
+    if (direct) return direct;
+    const byAlias = all.find(t => t.aliasIds && t.aliasIds.some(a => a.toLowerCase() === clean));
+    if (byAlias) return byAlias;
+    const bySlug = all.find(t => t.slug.toLowerCase() === clean || (t.aliasSlugs && t.aliasSlugs.some(s => s.toLowerCase() === clean)));
+    if (bySlug) return bySlug;
+    return all.find(t => 
+      t.name.toLowerCase() === clean || 
+      t.shortName.toLowerCase() === clean ||
+      t.name.toLowerCase().includes(clean) ||
+      clean.includes(t.name.toLowerCase())
+    );
+  },
+
+  /**
+   * Resolve an instructor from a name string or ID
+   */
+  resolveInstructor(nameOrId: string): TutorProfile | undefined {
+    if (!nameOrId) return undefined;
+    return this.getTutorById(nameOrId) || this.getTutorBySlug(nameOrId);
+  },
+
+  /**
+   * Get all mentors assigned to a specific course title
+   */
+  getMentorsForCourse(courseTitle: string): TutorProfile[] {
+    if (!courseTitle) return [];
+    const norm = courseTitle.toLowerCase().trim();
+    return this.getActiveTutors().filter(t => 
+      t.programs?.some(p => {
+        const pNorm = p.toLowerCase().trim();
+        return pNorm === norm || norm.includes(pNorm) || pNorm.includes(norm);
+      })
+    );
   },
 
   /**
@@ -456,40 +626,39 @@ export const TutorService = {
     }
 
     // 2. Keyword fallback matching
-    if (norm.includes('front') || norm.includes('web dev') || norm.includes('software')) {
-      const match = tutors.find(t => t.id === 'tch-lawal-frontend');
+    if (norm.includes('front') || norm.includes('web dev') || norm.includes('software') || norm.includes('back') || norm.includes('full stack') || norm.includes('node') || norm.includes('react')) {
+      const match = tutors.find(t => t.id === 'tch-lawal' || t.aliasIds?.includes('tch-lawal-frontend') || t.aliasIds?.includes('tch-lawal-backend'));
       if (match) return match;
     }
-    if (norm.includes('back')) {
-      const match = tutors.find(t => t.id === 'tch-lawal-backend');
-      if (match) return match;
-    }
-    if (norm.includes('cyber') || norm.includes('security')) {
+    if (norm.includes('cyber') || norm.includes('security') || norm.includes('ethical') || norm.includes('network')) {
       const match = tutors.find(t => t.id === 'tch-olamide-sec');
       if (match) return match;
     }
-    if (norm.includes('data') || norm.includes('stat') || norm.includes('anal')) {
+    if (norm.includes('data') || norm.includes('stat') || norm.includes('anal') || norm.includes('powerbi') || norm.includes('sql')) {
       const match = tutors.find(t => t.id === 'tch-stat-data');
       if (match) return match;
     }
-    if (norm.includes('video') || norm.includes('media') || norm.includes('edit')) {
-      const match = tutors.find(t => t.id === 'tch-precious-video');
+    if (norm.includes('video') || norm.includes('media') || norm.includes('edit') || norm.includes('davinci') || norm.includes('premiere') || norm.includes('auto') || norm.includes('ai')) {
+      const match = tutors.find(t => t.id === 'tch-precious' || t.aliasIds?.includes('tch-precious-video') || t.aliasIds?.includes('tch-precious-auto'));
       if (match) return match;
     }
-    if (norm.includes('content') || norm.includes('photo')) {
+    if (norm.includes('content') || norm.includes('photo') || norm.includes('story')) {
       const match = tutors.find(t => t.id === 'tch-rekay-content');
       if (match) return match;
     }
-    if (norm.includes('auto') || norm.includes('ai')) {
-      const match = tutors.find(t => t.id === 'tch-precious-auto');
+    if (norm.includes('design') || norm.includes('ui') || norm.includes('ux') || norm.includes('figma') || norm.includes('brand') || norm.includes('graphic')) {
+      const match = tutors.find(t => 
+        t.programs?.some(p => p.toLowerCase().includes('design') || p.toLowerCase().includes('graphic')) ||
+        t.id === 'tch-precious' || 
+        t.id === 'tch-rekay-content'
+      );
       if (match) return match;
     }
-    if (norm.includes('design') || norm.includes('ui') || norm.includes('ux')) {
-      const match = tutors.find(t => t.id === 'tch-sophia-chen');
-      if (match) return match;
-    }
-    if (norm.includes('robot') || norm.includes('hardw') || norm.includes('iot')) {
-      const match = tutors.find(t => t.id === 'tch-fatima-bello');
+    if (norm.includes('robot') || norm.includes('hardw') || norm.includes('iot') || norm.includes('embedded')) {
+      const match = tutors.find(t => 
+        t.programs?.some(p => p.toLowerCase().includes('robot') || p.toLowerCase().includes('hardw') || p.toLowerCase().includes('iot')) ||
+        t.id === 'tch-ayo-product'
+      );
       if (match) return match;
     }
     if (norm.includes('product') || norm.includes('engineer')) {
@@ -501,6 +670,90 @@ export const TutorService = {
   },
 
   /**
+   * Get all tutors assigned to a specific program or subject
+   */
+  getTutorsForProgram(programName: string): TutorProfile[] {
+    const tutors = this.getActiveTutors();
+    if (!programName) return tutors;
+    const norm = programName.toLowerCase().trim();
+    return tutors.filter(t => 
+      t.programs?.some(p => p.toLowerCase() === norm || norm.includes(p.toLowerCase()) || p.toLowerCase().includes(norm))
+    );
+  },
+
+  /**
+   * Assign multiple programs/subjects to a tutor
+   */
+  async assignProgramsToTutor(tutorId: string, programs: string[]): Promise<TutorProfile> {
+    const tutor = this.getTutorById(tutorId);
+    if (!tutor) throw new Error('Tutor not found');
+    const updated: TutorProfile = {
+      ...tutor,
+      programs: Array.from(new Set(programs.map(p => p.trim()).filter(Boolean)))
+    };
+    return await this.updateTutor(updated);
+  },
+
+  /**
+   * Create a new Faculty Mentor
+   */
+  async createTutor(tutorData: Omit<TutorProfile, 'id' | 'slug'> & { id?: string; slug?: string }): Promise<TutorProfile> {
+    if (!isAdminAuthenticated() && !isSubAdminAuthenticated()) {
+      throw new Error('Access Denied: Only authenticated administrators can add new faculty mentors.');
+    }
+
+    const cleanName = tutorData.name.trim();
+    const baseSlug = (tutorData.slug || cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')) || 'mentor';
+    let slug = baseSlug;
+    const all = this.getAllTutors();
+    
+    // Ensure slug uniqueness
+    let counter = 1;
+    while (all.some(t => t.slug === slug)) {
+      slug = `${baseSlug}-${counter++}`;
+    }
+
+    const newId = tutorData.id || `tch-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const newTutor: TutorProfile = {
+      ...tutorData,
+      id: newId,
+      slug,
+      shortName: tutorData.shortName || cleanName.split(' ')[0],
+      programs: Array.isArray(tutorData.programs) && tutorData.programs.length > 0 ? tutorData.programs : ['General Mentorship'],
+      status: tutorData.status || 'active',
+      verificationStatus: tutorData.verificationStatus || 'verified',
+      joinedDate: tutorData.joinedDate || new Date().toISOString().split('T')[0],
+      color: tutorData.color || '#a855f7',
+      isCustom: true
+    };
+
+    const updatedList = [...all, newTutor];
+    tutorsMemoryCache = updatedList;
+    try {
+      localStorage.setItem(TUTORS_STORAGE_KEY, JSON.stringify(updatedList));
+    } catch {}
+
+    tutorListeners.forEach(cb => cb(updatedList));
+
+    if (isFirebaseConfigured() && db) {
+      try {
+        await setDoc(doc(db, 'tutors', newTutor.id), {
+          ...newTutor,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      } catch (e) {
+        console.warn('Notice saving new tutor to Firebase:', e);
+      }
+    }
+
+    window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new CustomEvent('orbit-tutors-updated', { detail: newTutor }));
+
+    return newTutor;
+  },
+
+  /**
    * Update or Edit Tutor profile
    * Propagates changes across:
    * 1. Attendance registers & assigned faculty
@@ -509,8 +762,8 @@ export const TutorService = {
    * 4. Firestore & LocalStorage
    */
   async updateTutor(updatedTutor: TutorProfile, previousShortName?: string): Promise<{ success: boolean; tutor: TutorProfile }> {
-    if (!isAdminAuthenticated()) {
-      throw new Error('Access Denied: Only authenticated administrators can edit tutor information.');
+    if (!isAdminAuthenticated() && !isSubAdminAuthenticated()) {
+      throw new Error('Access Denied: Only authenticated academic administrators or authorized sub-admins can edit tutor information.');
     }
 
     const currentTutors = this.getAllTutors();
@@ -633,16 +886,28 @@ export const TutorService = {
     }
 
     const { AttendanceService } = await import('./attendanceService');
+    const { TeachingHoursLedgerService } = await import('./teachingHoursLedgerService');
 
     // 1. Admin-Entered Historical Baseline (Distinct from digital platform attendance)
     const baseline = tutor.historicalBaseline;
-    const historicalTeachingHours = Number(baseline?.historicalTeachingHours ?? tutor.baseTeachingHours ?? 0);
     const historicalStudentsTaught = Number(baseline?.historicalStudentsTaught ?? tutor.baseStudentsCount ?? 0);
     const historicalStudentsCertified = Number(baseline?.historicalStudentsCertified ?? 0);
     const historicalProjectsSupervised = Number(baseline?.historicalProjectsSupervised ?? 0);
 
-    // 2. Real Verified Teaching Sessions from Attendance check-in / check-out
-    const sessions = await AttendanceService.getClassSessionsForTutor(tutor.id);
+    const allTargetIds = new Set<string>([tutor.id.toLowerCase(), ...(tutor.aliasIds || []).map(a => a.toLowerCase())]);
+    const cleanShort = tutor.shortName.toLowerCase().trim();
+    const cleanName = tutor.name.toLowerCase().trim();
+    const cleanSlug = tutor.slug.toLowerCase().trim();
+    const cleanId = tutor.id.toLowerCase().trim();
+
+    // 2. Real Verified Teaching Sessions from Attendance check-in / check-out across canonical ID and aliases
+    const allClassSessions = await AttendanceService.getAllClassSessions();
+    const sessions = allClassSessions.filter(s => {
+      const sId = (s.tutor?.id || '').toLowerCase().trim();
+      const sName = (s.tutor?.name || '').toLowerCase().trim();
+      return (sId && allTargetIds.has(sId)) || (sName && (sName.includes(cleanShort) || cleanName.includes(sName)));
+    });
+
     const teachingHistory = sessions.map((s) => {
       const dur = (s.duration_hours && s.duration_hours > 0)
         ? s.duration_hours
@@ -661,21 +926,80 @@ export const TutorService = {
       };
     });
 
-    // Also get verified teaching hours from VerificationDataService
-    const additionalHours = VerificationDataService.getTeachingHoursForTutor(tutor.id)
-      .filter((h) => h.verificationStatus === 'verified');
-
-    let attendanceHoursSum = teachingHistory.reduce((acc, curr) => acc + (curr.durationHours || 0), 0);
-    additionalHours.forEach((h) => {
-      const isDupe = teachingHistory.some((s) => s.sessionId === h.id || (s.date === h.date && s.course === h.program));
-      if (!isDupe) {
-        attendanceHoursSum += (h.durationHours || 0);
+    // Sync any un-recorded digital sessions into TeachingHoursLedger (avoiding duplicate entries via sessionId)
+    teachingHistory.forEach((s) => {
+      if (s.durationHours > 0) {
+        TeachingHoursLedgerService.recordAttendanceSession({
+          sessionId: s.sessionId,
+          lecturerId: tutor.id,
+          lecturerName: tutor.name,
+          course: s.course,
+          cohort: s.cohort,
+          date: s.date,
+          durationHours: s.durationHours,
+          sessionTopic: s.topic
+        }).catch(() => {});
       }
     });
-    const newAttendanceHours = Math.round(attendanceHoursSum * 10) / 10;
-    const totalTeachingHours = Math.round((historicalTeachingHours + newAttendanceHours) * 10) / 10;
 
-    // 3. Students Taught (from actual class enrollment & session attendance)
+    // Also sync verified teaching hours from VerificationDataService into ledger if needed
+    allTargetIds.forEach(targetId => {
+      const additionalHours = VerificationDataService.getTeachingHoursForTutor(targetId)
+        .filter((h) => h.verificationStatus === 'verified');
+      additionalHours.forEach((h) => {
+        if (h.durationHours > 0) {
+          TeachingHoursLedgerService.recordAttendanceSession({
+            sessionId: h.id,
+            lecturerId: tutor.id,
+            lecturerName: tutor.name,
+            course: h.program,
+            date: h.date,
+            durationHours: h.durationHours,
+            sessionTopic: h.topicCovered
+          }).catch(() => {});
+        }
+      });
+    });
+
+    // Compute verified ledger summary across all target IDs
+    let historicalTeachingHours = 0;
+    let newAttendanceHours = 0;
+    let adjustmentHours = 0;
+    const allLedgerEntries = TeachingHoursLedgerService.getAllEntries();
+    const lecturerLedgerEntries = allLedgerEntries.filter(e => {
+      const eId = (e.lecturerId || '').toLowerCase().trim();
+      const eName = (e.lecturerName || '').toLowerCase().trim();
+      return allTargetIds.has(eId) || (eName && (eName.includes(cleanShort) || cleanName.includes(eName)));
+    });
+    lecturerLedgerEntries.forEach(e => {
+      const h = Number(e.hours) || 0;
+      if (e.type === 'historical') historicalTeachingHours += h;
+      else if (e.type === 'attendance') newAttendanceHours += h;
+      else if (e.type === 'adjustment') adjustmentHours += h;
+    });
+
+    // If no historical entries in ledger yet, but tutor has historical baseline or baseTeachingHours, seed it
+    if (historicalTeachingHours === 0 && (baseline?.historicalTeachingHours || tutor.baseTeachingHours)) {
+      const baseHours = Number(baseline?.historicalTeachingHours ?? tutor.baseTeachingHours ?? 0);
+      if (baseHours > 0) {
+        TeachingHoursLedgerService.addHistoricalEntry({
+          lecturerId: tutor.id,
+          lecturerName: tutor.name,
+          hours: baseHours,
+          reason: baseline?.historicalBaselineNote || 'Imported manual attendance records before digital system',
+          note: baseline?.historicalBaselineNote,
+          addedBy: baseline?.historicalAuditedBy || 'Super Admin (Engr. Precious Ogunleye)'
+        }).catch(() => {});
+        historicalTeachingHours = baseHours;
+      }
+    }
+
+    historicalTeachingHours = Math.round(historicalTeachingHours * 10) / 10;
+    newAttendanceHours = Math.round(newAttendanceHours * 10) / 10;
+    adjustmentHours = Math.round(adjustmentHours * 10) / 10;
+    const totalTeachingHours = Math.round((historicalTeachingHours + newAttendanceHours + adjustmentHours) * 10) / 10;
+
+    // 3. Students Taught (from actual class enrollment & session attendance across all tutor's programs)
     const realStudents = await AttendanceService.getStudentsTaughtByTutor(tutor.id, tutor.programs);
     const studentsTaughtList = realStudents.map((st) => ({
       id: st.id,
@@ -685,10 +1009,6 @@ export const TutorService = {
     }));
     // 4. Students Certified (calculated from students taught who subsequently received certificates)
     const allCerts = getCertificates().filter((c) => c.status !== 'revoked');
-    const cleanId = tutor.id.toLowerCase().trim();
-    const cleanName = tutor.name.toLowerCase().trim();
-    const cleanShort = tutor.shortName.toLowerCase().trim();
-    const cleanSlug = tutor.slug.toLowerCase().trim();
 
     const studentNamesTaughtSet = new Set(studentsTaughtList.map((s) => s.name.toLowerCase().trim()));
 
@@ -700,10 +1020,9 @@ export const TutorService = {
       const certCourse = (cert.course || '').toLowerCase().trim();
       const certNotes = (cert.additionalNotes || '').toLowerCase();
 
-      // 1. Direct tutor match on certificate record
+      // 1. Direct tutor match on certificate record or aliases
       if (supId) {
-        if (supId === cleanId || (supSlug && supSlug === cleanSlug)) return true;
-        // If a different tutor ID is explicitly assigned, don't claim it
+        if (allTargetIds.has(supId) || (supSlug && (supSlug === cleanSlug || (tutor.aliasSlugs && tutor.aliasSlugs.includes(supSlug))))) return true;
         return false;
       }
 
@@ -726,16 +1045,18 @@ export const TutorService = {
 
       // 5. Automatic assignment from program curriculum track
       const assignedTutor = TutorService.getAssignedTutorForProgram(cert.course);
-      if (assignedTutor && assignedTutor.id.toLowerCase() === cleanId) {
+      if (assignedTutor && (allTargetIds.has(assignedTutor.id.toLowerCase()) || assignedTutor.id.toLowerCase() === cleanId)) {
         return true;
       }
 
-      // 6. Direct program track match
-      const matchesProg = tutor.programs.some((p) => {
-        const pNorm = p.toLowerCase().trim();
-        return certCourse === pNorm || certCourse.includes(pNorm) || pNorm.includes(certCourse);
+      // 6. Direct match with any of tutor's programs
+      const matchesProgram = (tutor.programs || []).some(p => {
+        const normP = p.toLowerCase().trim();
+        return certCourse === normP || certCourse.includes(normP) || normP.includes(certCourse);
       });
-      if (matchesProg) return true;
+      if (matchesProgram) {
+        return true;
+      }
 
       return false;
     });
@@ -772,9 +1093,14 @@ export const TutorService = {
     const newStudentsTaught = studentsTaughtList.length;
     const totalStudentsTaught = historicalStudentsTaught + newStudentsTaught;
 
-    // 5. Student Projects Supervised (from verified projects in the system)
-    const supervisedProjectsList = VerificationDataService.getProjectsForTutor(tutor.id)
-      .filter((p) => p.verificationStatus === 'verified');
+    // 5. Student Projects Supervised (from verified projects across canonical ID and aliases)
+    const allProjects = VerificationDataService.getAllSupervisedProjects();
+    const supervisedProjectsList = allProjects.filter((p) => {
+      const pTutorId = (p.tutorId || '').toLowerCase().trim();
+      const pTutorName = (p.tutorName || '').toLowerCase().trim();
+      const matches = allTargetIds.has(pTutorId) || pTutorName.includes(cleanShort) || cleanName.includes(pTutorName);
+      return matches && p.verificationStatus === 'verified';
+    });
     const newProjectsSupervised = supervisedProjectsList.length;
     const totalProjectsSupervised = historicalProjectsSupervised + newProjectsSupervised;
 
@@ -804,8 +1130,10 @@ export const TutorService = {
       tutor,
       historicalTeachingHours,
       newAttendanceHours,
+      adjustmentHours,
       totalTeachingHours,
       attendanceSessionsCount: teachingHistory.length,
+      ledgerEntries: lecturerLedgerEntries,
 
       historicalStudentsTaught,
       newStudentsTaught,

@@ -162,6 +162,22 @@
         "verificationStatus": { "type": "string", "description": "verified or pending" },
         "linkedCertificateId": { "type": "string", "description": "Linked student certificate ID" }
       }
+    },
+    "teaching_hours_ledger": {
+      "fields": {
+        "id": { "type": "string", "description": "Unique ledger entry identifier" },
+        "lecturerId": { "type": "string", "description": "Foreign key to tutor profile ID" },
+        "lecturerName": { "type": "string", "description": "Full name of lecturer" },
+        "date": { "type": "string", "description": "Date of transaction YYYY-MM-DD" },
+        "type": { "type": "string", "description": "historical, attendance, or adjustment" },
+        "description": { "type": "string", "description": "Audit description of hours source or adjustment reason" },
+        "hours": { "type": "number", "description": "Number of hours signed positive or negative" },
+        "addedBy": { "type": "string", "description": "Admin or automated system that added entry" },
+        "createdAt": { "type": "string", "description": "ISO timestamp" },
+        "attendanceSessionId": { "type": "string", "description": "Optional session ID to prevent double counting" },
+        "auditReason": { "type": "string", "description": "Reason logged for adjustment or historical import" },
+        "referenceNote": { "type": "string", "description": "Optional administrative note or reference document" }
+      }
     }
   },
   "relations": [],
@@ -172,6 +188,7 @@
     "tutors": "Publicly readable; writable by verified administrators.",
     "programs": "Publicly readable; writable by administrators.",
     "teaching_hours": "Publicly readable for verified totals; writable by administrators.",
+    "teaching_hours_ledger": "Publicly readable audit ledger; writable by authorized administrators and attendance events.",
     "supervised_projects": "Publicly readable for approved public projects; writable by tutors and admins.",
     "articles": "Publicly readable for published articles; writable by authorized administrators and sub-administrators.",
     "attendance_classes": "Readable and writable by super admin and sub admin.",

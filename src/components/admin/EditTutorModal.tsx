@@ -1,9 +1,28 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'motion/react';
-import { X, User, Mail, Phone, BookOpen, Briefcase, Save, AlertCircle, CheckCircle2, Upload, Image as ImageIcon, Trash2, Link as LinkIcon } from 'lucide-react';
+import { X, User, Mail, Phone, BookOpen, Briefcase, Save, AlertCircle, CheckCircle2, Upload, Image as ImageIcon, Trash2, Link as LinkIcon, Clock, Plus, Check } from 'lucide-react';
 import { TutorProfile, TutorService } from '../../services/tutorService';
+import { TeachingHoursLedgerService } from '../../services/teachingHoursLedgerService';
 import { isAdminAuthenticated } from '../../services/certificateService';
+import { isSubAdminAuthenticated } from '../../services/subAdminService';
+import { AdminTeachingHoursLedgerModal } from './AdminTeachingHoursLedgerModal';
 import { playSound } from '../../utils/soundEffects';
+
+const AVAILABLE_COURSES = [
+  'UI/UX Design & Product Design',
+  'Graphics Design & Brand Identity',
+  'Frontend Web Development',
+  'Backend Web Development',
+  'Fullstack Web Development',
+  'Data Analysis & Business Intelligence',
+  'Cybersecurity & Ethical Hacking',
+  'Video Editing & Motion Graphics',
+  'Content Creation & Digital Media',
+  'AI Automation & Prompt Engineering',
+  'Robotics & Hardware Engineering',
+  'Statistics & Data Science',
+  'Product Engineering'
+];
 
 interface EditTutorModalProps {
   tutor: TutorProfile | null;
@@ -30,7 +49,21 @@ export const EditTutorModal: React.FC<EditTutorModalProps> = ({
   const [bio, setBio] = useState(tutor.bio || '');
   const [linkedinUrl, setLinkedinUrl] = useState(tutor.linkedinUrl || '');
   const [qualificationsStr, setQualificationsStr] = useState((tutor.qualifications || []).join(', '));
-  const [programsStr, setProgramsStr] = useState(tutor.programs.join(', '));
+  const [selectedPrograms, setSelectedPrograms] = useState<string[]>(tutor.programs || []);
+  const [customProgramInput, setCustomProgramInput] = useState('');
+  const [isLedgerModalOpen, setIsLedgerModalOpen] = useState(false);
+  const [teachingHours, setTeachingHours] = useState<number>(
+    tutor.historicalBaseline?.historicalTeachingHours ?? tutor.baseTeachingHours ?? 0
+  );
+  const [studentsTaught, setStudentsTaught] = useState<number>(
+    tutor.historicalBaseline?.historicalStudentsTaught ?? tutor.baseStudentsCount ?? 0
+  );
+  const [certifiedStudents, setCertifiedStudents] = useState<number>(
+    tutor.historicalBaseline?.historicalStudentsCertified ?? 0
+  );
+  const [projectsSupervised, setProjectsSupervised] = useState<number>(
+    tutor.historicalBaseline?.historicalProjectsSupervised ?? 0
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -81,8 +114,8 @@ export const EditTutorModal: React.FC<EditTutorModalProps> = ({
     e.preventDefault();
     setError(null);
 
-    if (!isAdminAuthenticated()) {
-      setError('Access Denied: Only Orbit Space Administrators can edit tutor details.');
+    if (!isAdminAuthenticated() && !isSubAdminAuthenticated()) {
+      setError('Access Denied: Only Orbit Space Administrators or authorized staff can edit tutor details.');
       playSound('error');
       return;
     }
@@ -101,15 +134,12 @@ export const EditTutorModal: React.FC<EditTutorModalProps> = ({
     playSound('click');
 
     try {
-      const parsedPrograms = programsStr
-        .split(',')
-        .map(p => p.trim())
-        .filter(Boolean);
-
       const parsedQualifications = qualificationsStr
         .split(',')
         .map(q => q.trim())
         .filter(Boolean);
+
+      const finalPrograms = selectedPrograms.map(p => p.trim()).filter(Boolean);
 
       const updated: TutorProfile = {
         ...tutor,
@@ -123,7 +153,18 @@ export const EditTutorModal: React.FC<EditTutorModalProps> = ({
         bio: bio.trim() || undefined,
         linkedinUrl: linkedinUrl.trim() || undefined,
         qualifications: parsedQualifications.length > 0 ? parsedQualifications : undefined,
-        programs: parsedPrograms.length > 0 ? parsedPrograms : tutor.programs,
+        programs: finalPrograms,
+        historicalBaseline: {
+          historicalTeachingHours: Number(teachingHours) || 0,
+          historicalStudentsTaught: Number(studentsTaught) || 0,
+          historicalStudentsCertified: Number(certifiedStudents) || 0,
+          historicalProjectsSupervised: Number(projectsSupervised) || 0,
+          historicalBaselineNote: 'Admin audited & configured',
+          historicalAuditedBy: 'Academic Administration',
+          historicalAuditDate: new Date().toISOString().split('T')[0]
+        },
+        baseTeachingHours: Number(teachingHours) || 0,
+        baseStudentsCount: Number(studentsTaught) || 0
       };
 
       const result = await TutorService.updateTutor(updated, tutor.shortName);
@@ -409,20 +450,180 @@ export const EditTutorModal: React.FC<EditTutorModalProps> = ({
           </div>
 
           {/* Programs / Classes Managed */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-medium text-neutral-300">
-              Assigned Programs / Tracks (Comma-separated)
-            </label>
-            <input
-              type="text"
-              value={programsStr}
-              onChange={(e) => setProgramsStr(e.target.value)}
-              placeholder="e.g. Front End Development, Web Development"
-              className="w-full bg-neutral-950 border border-neutral-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-xl px-3 py-2 text-xs text-white outline-none transition"
-            />
+          <div className="space-y-2.5 p-3.5 rounded-2xl bg-neutral-950/80 border border-neutral-800">
+            <div className="flex items-center justify-between gap-2">
+              <label className="block text-xs font-semibold text-white flex items-center gap-1.5">
+                <BookOpen className="w-3.5 h-3.5 text-purple-400" />
+                Assigned Programs & Tracks ({selectedPrograms.length})
+              </label>
+              <span className="text-[10px] text-neutral-400">Click to toggle or add custom tracks</span>
+            </div>
+
+            {/* Currently Selected Badges */}
+            {selectedPrograms.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {selectedPrograms.map((prog) => (
+                  <span
+                    key={prog}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/15 border border-purple-500/30 text-purple-200 text-xs font-medium"
+                  >
+                    <span>{prog}</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPrograms((prev) => prev.filter((p) => p !== prog))}
+                      className="text-purple-400 hover:text-white transition-colors cursor-pointer"
+                      title={`Remove ${prog}`}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-amber-400/80 flex items-center gap-1.5 py-1">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                No programs assigned yet. Select from available academy courses below.
+              </p>
+            )}
+
+            {/* Available Course Quick-Toggle Chips */}
+            <div className="space-y-1.5 pt-1">
+              <span className="text-[11px] font-medium text-neutral-400 block">Available Academy Programs:</span>
+              <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
+                {AVAILABLE_COURSES.map((course) => {
+                  const isSelected = selectedPrograms.includes(course);
+                  return (
+                    <button
+                      key={course}
+                      type="button"
+                      onClick={() => {
+                        setSelectedPrograms((prev) =>
+                          isSelected ? prev.filter((p) => p !== course) : [...prev, course]
+                        );
+                      }}
+                      className={`text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1 cursor-pointer ${
+                        isSelected
+                          ? 'bg-purple-600 text-white border-purple-500 shadow-sm shadow-purple-900/30'
+                          : 'bg-neutral-900 hover:bg-neutral-850 text-neutral-300 border-neutral-800 hover:border-neutral-700'
+                      }`}
+                    >
+                      {isSelected ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3 text-neutral-500" />}
+                      <span>{course}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Custom Track Input */}
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                type="text"
+                value={customProgramInput}
+                onChange={(e) => setCustomProgramInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const trimmed = customProgramInput.trim();
+                    if (trimmed && !selectedPrograms.includes(trimmed)) {
+                      setSelectedPrograms((prev) => [...prev, trimmed]);
+                      setCustomProgramInput('');
+                    }
+                  }
+                }}
+                placeholder="Or type custom track name and press Enter..."
+                className="flex-1 bg-neutral-900 border border-neutral-800 focus:border-purple-500 rounded-xl px-3 py-1.5 text-xs text-white outline-none transition"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const trimmed = customProgramInput.trim();
+                  if (trimmed && !selectedPrograms.includes(trimmed)) {
+                    setSelectedPrograms((prev) => [...prev, trimmed]);
+                    setCustomProgramInput('');
+                  }
+                }}
+                className="px-3 py-1.5 rounded-xl bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-medium flex items-center gap-1 transition-all cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Track</span>
+              </button>
+            </div>
+
             <p className="text-[10px] text-neutral-500">
-              Issued certificates and enrolled students in these tracks will automatically link to this faculty profile.
+              Students, attendance sessions, and certificates in these tracks automatically link to this mentor profile.
             </p>
+          </div>
+
+          {/* Verified Instructional Hours & Supervisory Records */}
+          <div className="p-4 rounded-2xl bg-neutral-950 border border-neutral-800 space-y-3">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div>
+                <h3 className="text-xs font-semibold text-white flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-purple-400" />
+                  Teaching Hours, Students & Supervisory Baseline
+                </h3>
+                <p className="text-[10px] text-neutral-400 mt-0.5">
+                  These audited baseline figures combine with live check-in logs and audited ledger adjustments.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsLedgerModalOpen(true)}
+                className="px-2.5 py-1 rounded-lg bg-purple-950/70 hover:bg-purple-900 border border-purple-800/60 text-purple-300 text-[11px] font-medium flex items-center gap-1.5 transition-all cursor-pointer"
+                title="View tripartite ledger, upload CSV, or make audited adjustments"
+              >
+                <Clock className="w-3 h-3 text-purple-400" />
+                <span>Open Hours Ledger</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-neutral-300">Teaching Hours</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={teachingHours}
+                  onChange={(e) => setTeachingHours(Math.max(0, parseInt(e.target.value) || 0))}
+                  className="w-full bg-neutral-900 border border-neutral-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-xl px-3 py-1.5 text-xs text-white outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-neutral-300">Students Taught</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={studentsTaught}
+                  onChange={(e) => setStudentsTaught(Math.max(0, parseInt(e.target.value) || 0))}
+                  className="w-full bg-neutral-900 border border-neutral-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-xl px-3 py-1.5 text-xs text-white outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-neutral-300">Certified Students</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={certifiedStudents}
+                  onChange={(e) => setCertifiedStudents(Math.max(0, parseInt(e.target.value) || 0))}
+                  className="w-full bg-neutral-900 border border-neutral-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-xl px-3 py-1.5 text-xs text-white outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-neutral-300">Projects Supervised</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={projectsSupervised}
+                  onChange={(e) => setProjectsSupervised(Math.max(0, parseInt(e.target.value) || 0))}
+                  className="w-full bg-neutral-900 border border-neutral-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-xl px-3 py-1.5 text-xs text-white outline-none"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Action Buttons */}
@@ -446,6 +647,20 @@ export const EditTutorModal: React.FC<EditTutorModalProps> = ({
           </div>
         </form>
       </motion.div>
+
+      {/* Teaching Hours Ledger Modal */}
+      <AdminTeachingHoursLedgerModal
+        isOpen={isLedgerModalOpen}
+        initialLecturerId={tutor.id}
+        onClose={() => setIsLedgerModalOpen(false)}
+        onUpdated={() => {
+          // Re-fetch tutor stats or update baseline hours if needed
+          const sum = TeachingHoursLedgerService.getLecturerLedgerSummary(tutor.id);
+          if (sum.historicalHours > 0) {
+            setTeachingHours(sum.historicalHours);
+          }
+        }}
+      />
     </div>
   );
 };

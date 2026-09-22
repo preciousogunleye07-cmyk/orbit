@@ -23,7 +23,10 @@ import {
   History,
   FileCheck,
   CalendarCheck,
-  BadgeCheck
+  BadgeCheck,
+  Building,
+  Globe,
+  Calendar
 } from 'lucide-react';
 import { TutorProfile, TutorService, ComputedTutorStats } from '../services/tutorService';
 import { VerificationDataService, SupervisedProjectRecord, TeachingHourRecord } from '../services/verificationDataService';
@@ -57,32 +60,84 @@ export const PublicTutorProfilePage: React.FC<PublicTutorProfilePageProps> = ({
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    const profile = TutorService.getTutorBySlug(tutorSlug);
-    setTutor(profile || null);
 
-    if (profile) {
-      // 1. Fetch system-calculated dynamic stats
-      TutorService.getComputedTutorStats(profile.id)
-        .then((stats) => {
-          setComputedStats(stats);
-        })
-        .catch((err) => {
-          console.error('Error fetching computed tutor stats:', err);
+    const loadProfileData = () => {
+      const profile = TutorService.getTutorBySlug(tutorSlug);
+      setTutor(profile || null);
+
+      if (profile) {
+        // SEO Metadata
+        document.title = `${profile.name} | Verified Faculty Profile – Orbit Space`;
+        const metaDesc = document.querySelector('meta[name="description"]');
+        if (metaDesc) {
+          metaDesc.setAttribute('content', `${profile.name} (${profile.role}) at Orbit Space. Specialization: ${profile.specialization}. Verified instructional hours and capstone supervisory records.`);
+        }
+
+        // Inject Schema.org Person JSON-LD
+        const scriptId = 'tutor-schema-jsonld';
+        let script = document.getElementById(scriptId) as HTMLScriptElement | null;
+        if (!script) {
+          script = document.createElement('script');
+          script.id = scriptId;
+          script.type = 'application/ld+json';
+          document.head.appendChild(script);
+        }
+        script.text = JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Person',
+          name: profile.name,
+          jobTitle: profile.role,
+          worksFor: {
+            '@type': 'EducationalOrganization',
+            name: 'Orbit Space Academy',
+            url: 'https://orbitspace.academy'
+          },
+          description: profile.bio || profile.specialization,
+          image: profile.photoUrl || undefined,
+          knowsAbout: profile.programs,
+          sameAs: profile.linkedinUrl ? [profile.linkedinUrl] : undefined
         });
 
-      // 2. Fetch projects
-      const projs = VerificationDataService.getProjectsForTutor(profile.id, true);
-      setProjects(projs);
+        // 1. Fetch system-calculated dynamic stats
+        TutorService.getComputedTutorStats(profile.id)
+          .then((stats) => {
+            setComputedStats(stats);
+          })
+          .catch((err) => {
+            console.error('Error fetching computed tutor stats:', err);
+          });
 
-      // 3. Fetch teaching hours
-      const sessions = VerificationDataService.getTeachingHoursForTutor(profile.id);
-      setTeachingSessions(sessions);
+        // 2. Fetch projects
+        const projs = VerificationDataService.getProjectsForTutor(profile.id, true);
+        setProjects(projs);
 
-      // 4. Fetch supervised articles
-      const arts = getArticlesByTutorName(profile.name);
-      setSupervisedArticles(arts);
-    }
-    setLoading(false);
+        // 3. Fetch teaching hours
+        const sessions = VerificationDataService.getTeachingHoursForTutor(profile.id);
+        setTeachingSessions(sessions);
+
+        // 4. Fetch supervised articles
+        const arts = getArticlesByTutorName(profile.name);
+        setSupervisedArticles(arts);
+      }
+      setLoading(false);
+    };
+
+    loadProfileData();
+
+    // Live subscription to tutor changes across tabs and modal updates
+    const unsubscribe = TutorService.subscribeTutors(() => {
+      loadProfileData();
+    });
+
+    const handleTutorEvent = () => loadProfileData();
+    window.addEventListener('storage', handleTutorEvent);
+    window.addEventListener('orbit-tutors-updated', handleTutorEvent);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('storage', handleTutorEvent);
+      window.removeEventListener('orbit-tutors-updated', handleTutorEvent);
+    };
   }, [tutorSlug]);
 
   const handleCopyLink = () => {
@@ -133,6 +188,8 @@ export const PublicTutorProfilePage: React.FC<PublicTutorProfilePageProps> = ({
   const totalVerifiedHours = computedStats?.totalTeachingHours ?? 0;
   const newAttendanceHours = computedStats?.newAttendanceHours ?? 0;
   const historicalTeachingHours = computedStats?.historicalTeachingHours ?? 0;
+  const adjustmentHours = computedStats?.adjustmentHours ?? 0;
+  const ledgerEntries = computedStats?.ledgerEntries || [];
 
   const totalStudentsTaught = computedStats?.totalStudentsTaught ?? 0;
   const newStudentsTaught = computedStats?.newStudentsTaught ?? 0;
@@ -153,6 +210,19 @@ export const PublicTutorProfilePage: React.FC<PublicTutorProfilePageProps> = ({
   const isDeactivated = tutor.status === 'deactivated';
   const hasHistoricalBaseline = Boolean(computedStats?.hasHistoricalBaseline);
   const baselineDetails = computedStats?.historicalBaselineDetails;
+
+  const calculateLengthOfService = (startDateStr?: string) => {
+    if (!startDateStr) return 'Active Academic Service';
+    const start = new Date(startDateStr);
+    const now = new Date();
+    if (isNaN(start.getTime())) return 'Active Academic Service';
+    const diffMonths = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+    const years = Math.floor(diffMonths / 12);
+    const months = diffMonths % 12;
+    if (years === 0) return `${months} month${months !== 1 ? 's' : ''}`;
+    if (months === 0) return `${years} year${years !== 1 ? 's' : ''}`;
+    return `${years} yr${years !== 1 ? 's' : ''}, ${months} mo${months !== 1 ? 's' : ''}`;
+  };
 
   return (
     <div className="min-h-screen bg-[#0c0a13] text-[#e5e2e1] flex flex-col justify-between pt-24 pb-16 px-4 sm:px-6 relative overflow-hidden">
@@ -199,10 +269,21 @@ export const PublicTutorProfilePage: React.FC<PublicTutorProfilePageProps> = ({
           
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
             
-            {/* Avatar Badge */}
+            {/* Avatar Badge with Profile Picture */}
             <div className="relative shrink-0">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-br from-purple-900/60 to-indigo-950/80 border-2 border-purple-500/40 flex items-center justify-center text-3xl sm:text-4xl font-black text-white shadow-xl shadow-purple-950/50">
-                {tutor.avatar || tutor.shortName.slice(0, 2).toUpperCase()}
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-br from-purple-900/60 to-indigo-950/80 border-2 border-purple-500/40 flex items-center justify-center text-3xl sm:text-4xl font-black text-white shadow-xl shadow-purple-950/50 overflow-hidden relative">
+                {tutor.photoUrl ? (
+                  <img
+                    src={tutor.photoUrl}
+                    alt={tutor.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  tutor.avatar || tutor.shortName.slice(0, 2).toUpperCase()
+                )}
               </div>
               <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-slate-950 rounded-full p-1 shadow-lg" title="Academic Status Verified">
                 <CheckCircle2 className="w-5 h-5 fill-white text-emerald-600" />
@@ -234,6 +315,27 @@ export const PublicTutorProfilePage: React.FC<PublicTutorProfilePageProps> = ({
                 {tutor.specialization}
               </p>
 
+              {tutor.bio && (
+                <p className="text-xs sm:text-sm text-[#cbd5e1] font-light leading-relaxed max-w-3xl pt-1">
+                  {tutor.bio}
+                </p>
+              )}
+
+              {/* Qualifications */}
+              {tutor.qualifications && tutor.qualifications.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="text-[10px] font-mono text-purple-400 uppercase tracking-wider font-semibold">Qualifications:</span>
+                  {tutor.qualifications.map((q, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2 py-0.5 rounded-md bg-purple-950/60 border border-purple-800/40 text-[10px] font-mono text-purple-200"
+                    >
+                      {q}
+                    </span>
+                  ))}
+                </div>
+              )}
+
               {/* Programs Covered Tags */}
               <div className="flex flex-wrap gap-1.5 pt-2">
                 {tutor.programs.map((prog, idx) => (
@@ -244,6 +346,64 @@ export const PublicTutorProfilePage: React.FC<PublicTutorProfilePageProps> = ({
                     {prog}
                   </span>
                 ))}
+              </div>
+
+              {/* Verified Lecturer Status, Academic Institution & Length of Service Bar */}
+              <div className="pt-3 border-t border-[#251f38] flex flex-wrap items-center gap-2">
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/70 border border-emerald-700/50 text-emerald-300 font-mono text-[11px] font-semibold">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Verified Lecturer</span>
+                </span>
+
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#1a1528] border border-[#322849] text-white font-mono text-[11px]">
+                  <Building className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Orbit Space Academy</span>
+                </span>
+
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#1a1528] border border-[#322849] text-[#c4bfd4] font-mono text-[11px]">
+                  <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Joined: {tutor.joinedDate ? new Date(tutor.joinedDate).toLocaleDateString(undefined, { year: 'numeric', month: 'short' }) : 'Active Academic Service'}</span>
+                </span>
+
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#1a1528] border border-[#322849] text-purple-300 font-mono text-[11px] font-bold">
+                  <Clock className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Tenure: {calculateLengthOfService(tutor.joinedDate)}</span>
+                </span>
+
+                {/* Professional Links */}
+                {tutor.linkedinUrl && (
+                  <a
+                    href={tutor.linkedinUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0077b5]/20 hover:bg-[#0077b5]/30 border border-[#0077b5]/40 text-blue-300 font-mono text-[11px] transition-colors"
+                  >
+                    <Linkedin className="w-3.5 h-3.5 text-[#0077b5]" />
+                    <span>LinkedIn</span>
+                  </a>
+                )}
+
+                {tutor.portfolioUrl && (
+                  <a
+                    href={tutor.portfolioUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-950/40 hover:bg-cyan-900/50 border border-cyan-800/40 text-cyan-300 font-mono text-[11px] transition-colors"
+                  >
+                    <Globe className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Portfolio</span>
+                  </a>
+                )}
+
+                {tutor.email && (
+                  <a
+                    href={`mailto:${tutor.email}`}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#1a1528] hover:bg-[#251f38] border border-[#322849] text-[#c4bfd4] hover:text-white font-mono text-[11px] transition-colors"
+                  >
+                    <Mail className="w-3.5 h-3.5 text-purple-400" />
+                    <span>{tutor.email}</span>
+                  </a>
+                )}
               </div>
             </div>
           </div>
@@ -283,10 +443,13 @@ export const PublicTutorProfilePage: React.FC<PublicTutorProfilePageProps> = ({
                 {totalVerifiedHours} <span className="text-xs font-normal text-[#a49faf]">hrs</span>
               </div>
               <div className="text-[10px] text-[#8e8a9f] font-mono pt-1 leading-tight">
-                {hasHistoricalBaseline ? (
-                  <span>Digital: {newAttendanceHours}h | Audited: {historicalTeachingHours}h</span>
+                {historicalTeachingHours > 0 || adjustmentHours !== 0 ? (
+                  <span>
+                    Hist: +{historicalTeachingHours}h | Live: +{newAttendanceHours}h
+                    {adjustmentHours !== 0 && ` | Adj: ${adjustmentHours > 0 ? `+${adjustmentHours}` : adjustmentHours}h`}
+                  </span>
                 ) : (
-                  <span className="text-emerald-400">Calculated from check-in/out</span>
+                  <span className="text-emerald-400">SUM(Historical + Live Attendance)</span>
                 )}
               </div>
             </div>
@@ -553,100 +716,235 @@ export const PublicTutorProfilePage: React.FC<PublicTutorProfilePageProps> = ({
 
         {/* Tab 2: Verified Teaching Ledger */}
         {activeTab === 'hours' && (
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-bold text-white">Verified Academic Teaching Ledger</h3>
-              <p className="text-xs text-[#9d98af]">
-                System-derived teaching hours calculated strictly from check-in and check-out timestamps.
-              </p>
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-purple-400" />
+                  <span>Verified Teaching Hours Ledger & Audit Trail</span>
+                </h3>
+                <p className="text-xs text-[#9d98af]">
+                  Calculated dynamically from: Historical Baseline + Digital Class Check-ins + Approved Adjustments.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-800/60 text-emerald-400 text-[11px] font-mono shrink-0">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Audited Balance: {totalVerifiedHours} hrs</span>
+              </div>
             </div>
 
-            {teachingHistoryList.length === 0 && teachingSessions.length === 0 ? (
-              <div className="bg-[#141120] rounded-2xl p-8 text-center border border-[#2d2740] space-y-3">
-                <Clock className="w-10 h-10 text-purple-400/60 mx-auto" />
-                <p className="text-xs text-[#9d98af]">No digital check-in records logged yet.</p>
-                {hasHistoricalBaseline && historicalTeachingHours > 0 && (
-                  <p className="text-[11px] font-mono text-amber-300">
-                    Faculty has {historicalTeachingHours} audited teaching hours on record via historical baseline.
-                  </p>
-                )}
+            {/* Tripartite Breakdown Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3.5 rounded-2xl bg-amber-950/20 border border-amber-800/40 space-y-1">
+                <div className="text-[10px] font-mono uppercase tracking-wider text-amber-400 font-semibold flex items-center justify-between">
+                  <span>Historical Baseline</span>
+                  <History className="w-3.5 h-3.5 text-amber-400/80" />
+                </div>
+                <div className="text-xl sm:text-2xl font-black text-amber-200">
+                  +{historicalTeachingHours}
+                  <span className="text-xs font-normal text-amber-400/80 ml-1">hrs</span>
+                </div>
+                <p className="text-[10px] text-[#9f99ad] leading-tight">Pre-platform manual logs</p>
               </div>
-            ) : (
-              <div className="bg-[#141120] rounded-2xl border border-[#2d2740] overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="border-b border-[#2d2740] bg-[#181427] text-[#9d98af] font-mono uppercase tracking-wider text-[10px]">
-                        <th className="p-3.5">Session Date</th>
-                        <th className="p-3.5">Course & Topic</th>
-                        <th className="p-3.5">Check-In / Out</th>
-                        <th className="p-3.5">Duration</th>
-                        <th className="p-3.5">Students Present</th>
-                        <th className="p-3.5">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#231e33]">
-                      {teachingHistoryList.map((session) => (
-                        <tr key={session.sessionId} className="hover:bg-[#1a162b] transition-colors">
-                          <td className="p-3.5 font-mono text-purple-300 shrink-0">
-                            {session.date}
-                          </td>
-                          <td className="p-3.5">
-                            <div className="font-semibold text-white">{session.topic}</div>
-                            <div className="text-[11px] text-purple-400 font-mono">
-                              {session.course} • {session.cohort}
-                            </div>
-                          </td>
-                          <td className="p-3.5 font-mono text-[#c4c0d4] text-[11px]">
-                            {session.checkInTime || '—'} → {session.checkOutTime || '—'}
-                          </td>
-                          <td className="p-3.5 font-mono font-bold text-white">
-                            {session.durationHours} hrs
-                          </td>
-                          <td className="p-3.5 font-mono text-[#c4c0d4]">
-                            {session.studentsPresentCount} / {session.totalStudentsCount}
-                          </td>
-                          <td className="p-3.5">
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium bg-emerald-950/80 border border-emerald-800/60 text-emerald-400">
-                              <CheckCircle2 className="w-3 h-3" />
-                              <span>Verified Session</span>
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
 
-                      {/* Fallback to legacy logged sessions if present */}
-                      {teachingSessions.map((session) => (
-                        <tr key={session.id} className="hover:bg-[#1a162b] transition-colors">
-                          <td className="p-3.5 font-mono text-purple-300 shrink-0">
-                            {session.date}
-                          </td>
-                          <td className="p-3.5">
-                            <div className="font-semibold text-white">{session.topicCovered}</div>
-                            <div className="text-[11px] text-purple-400 font-mono">{session.program}</div>
-                          </td>
-                          <td className="p-3.5 font-mono text-[#c4c0d4] text-[11px]">
-                            Academic Log
-                          </td>
-                          <td className="p-3.5 font-mono font-bold text-white">
-                            {session.durationHours} hrs
-                          </td>
-                          <td className="p-3.5 font-mono text-[#c4c0d4]">
-                            {session.studentsCount} attended
-                          </td>
-                          <td className="p-3.5">
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium bg-emerald-950/80 border border-emerald-800/60 text-emerald-400">
-                              <CheckCircle2 className="w-3 h-3" />
-                              <span>{session.verifiedBy ? 'Verified' : 'Logged'}</span>
-                            </span>
-                          </td>
+              <div className="p-3.5 rounded-2xl bg-cyan-950/20 border border-cyan-800/40 space-y-1">
+                <div className="text-[10px] font-mono uppercase tracking-wider text-cyan-400 font-semibold flex items-center justify-between">
+                  <span>Digital Attendance</span>
+                  <FileCheck className="w-3.5 h-3.5 text-cyan-400/80" />
+                </div>
+                <div className="text-xl sm:text-2xl font-black text-cyan-200">
+                  +{newAttendanceHours}
+                  <span className="text-xs font-normal text-cyan-400/80 ml-1">hrs</span>
+                </div>
+                <p className="text-[10px] text-[#9f99ad] leading-tight">Live class check-ins</p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-purple-950/20 border border-purple-800/40 space-y-1">
+                <div className="text-[10px] font-mono uppercase tracking-wider text-purple-400 font-semibold flex items-center justify-between">
+                  <span>Manual Adjustments</span>
+                  <Clock className="w-3.5 h-3.5 text-purple-400/80" />
+                </div>
+                <div className={`text-xl sm:text-2xl font-black ${
+                  adjustmentHours >= 0 ? 'text-purple-200' : 'text-rose-300'
+                }`}>
+                  {adjustmentHours > 0 ? `+${adjustmentHours}` : adjustmentHours}
+                  <span className="text-xs font-normal text-purple-400/80 ml-1">hrs</span>
+                </div>
+                <p className="text-[10px] text-[#9f99ad] leading-tight">Audited corrections (+/-)</p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-purple-900/30 to-indigo-950/50 border border-purple-500/50 space-y-1">
+                <div className="text-[10px] font-mono uppercase tracking-wider text-purple-300 font-bold flex items-center justify-between">
+                  <span>Total Verified Hours</span>
+                  <ShieldCheck className="w-3.5 h-3.5 text-purple-300" />
+                </div>
+                <div className="text-2xl sm:text-3xl font-black text-white">
+                  {totalVerifiedHours}
+                  <span className="text-xs font-normal text-purple-300 ml-1">hrs</span>
+                </div>
+                <p className="text-[10px] text-purple-300/80 font-medium leading-tight">SUM(all ledger entries)</p>
+              </div>
+            </div>
+
+            {/* Teaching Hours Ledger Entries Table */}
+            {ledgerEntries.length > 0 && (
+              <div className="space-y-2">
+                <div className="text-xs font-mono font-semibold uppercase tracking-wider text-[#9d98af] flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Ledger Transactions & Audit Proof</span>
+                </div>
+                <div className="bg-[#141120] rounded-2xl border border-[#2d2740] overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-[#2d2740] bg-[#181427] text-[#9d98af] font-mono uppercase tracking-wider text-[10px]">
+                          <th className="p-3.5">Date</th>
+                          <th className="p-3.5">Type</th>
+                          <th className="p-3.5">Description & Audit Reason</th>
+                          <th className="p-3.5">Hours</th>
+                          <th className="p-3.5">Audited By</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-[#231e33]">
+                        {ledgerEntries.map((entry: any) => {
+                          const isHist = entry.type === 'historical';
+                          const isAtt = entry.type === 'attendance';
+                          const isPositive = entry.hours >= 0;
+
+                          return (
+                            <tr key={entry.id} className="hover:bg-[#1a162b] transition-colors">
+                              <td className="p-3.5 font-mono text-purple-300 whitespace-nowrap">
+                                {entry.date}
+                              </td>
+                              <td className="p-3.5 whitespace-nowrap">
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium border ${
+                                  isHist
+                                    ? 'bg-amber-950/50 border-amber-800/60 text-amber-300'
+                                    : isAtt
+                                    ? 'bg-cyan-950/50 border-cyan-800/60 text-cyan-300'
+                                    : 'bg-purple-950/50 border-purple-800/60 text-purple-300'
+                                }`}>
+                                  {isHist && <History className="w-2.5 h-2.5" />}
+                                  {isAtt && <FileCheck className="w-2.5 h-2.5" />}
+                                  <span className="capitalize">{entry.type}</span>
+                                </span>
+                              </td>
+                              <td className="p-3.5 max-w-sm">
+                                <div className="font-semibold text-white">{entry.description}</div>
+                                {entry.auditReason && (
+                                  <div className="text-[11px] text-[#9d98af]">{entry.auditReason}</div>
+                                )}
+                                {entry.referenceNote && (
+                                  <div className="text-[10px] font-mono text-[#787186]">Ref: {entry.referenceNote}</div>
+                                )}
+                              </td>
+                              <td className="p-3.5 font-mono font-bold whitespace-nowrap">
+                                <span className={isPositive ? 'text-emerald-400' : 'text-rose-400'}>
+                                  {isPositive ? `+${entry.hours}` : entry.hours} hrs
+                                </span>
+                              </td>
+                              <td className="p-3.5 text-[#9d98af] text-[11px] whitespace-nowrap">
+                                {entry.addedBy}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             )}
+
+            {/* Individual Digital Attendance Sessions */}
+            <div className="space-y-2">
+              <div className="text-xs font-mono font-semibold uppercase tracking-wider text-[#9d98af] flex items-center gap-1.5">
+                <CalendarCheck className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Class Session Check-In & Check-Out Logs</span>
+              </div>
+
+              {teachingHistoryList.length === 0 && teachingSessions.length === 0 ? (
+                <div className="bg-[#141120] rounded-2xl p-6 text-center border border-[#2d2740] space-y-2">
+                  <p className="text-xs text-[#9d98af]">No digital check-in sessions recorded on the platform yet.</p>
+                </div>
+              ) : (
+                <div className="bg-[#141120] rounded-2xl border border-[#2d2740] overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-[#2d2740] bg-[#181427] text-[#9d98af] font-mono uppercase tracking-wider text-[10px]">
+                          <th className="p-3.5">Session Date</th>
+                          <th className="p-3.5">Course & Topic</th>
+                          <th className="p-3.5">Check-In / Out</th>
+                          <th className="p-3.5">Duration</th>
+                          <th className="p-3.5">Students Present</th>
+                          <th className="p-3.5">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#231e33]">
+                        {teachingHistoryList.map((session) => (
+                          <tr key={session.sessionId} className="hover:bg-[#1a162b] transition-colors">
+                            <td className="p-3.5 font-mono text-purple-300 shrink-0">
+                              {session.date}
+                            </td>
+                            <td className="p-3.5">
+                              <div className="font-semibold text-white">{session.topic}</div>
+                              <div className="text-[11px] text-purple-400 font-mono">
+                                {session.course} • {session.cohort}
+                              </div>
+                            </td>
+                            <td className="p-3.5 font-mono text-[#c4c0d4] text-[11px]">
+                              {session.checkInTime || '—'} → {session.checkOutTime || '—'}
+                            </td>
+                            <td className="p-3.5 font-mono font-bold text-white">
+                              {session.durationHours} hrs
+                            </td>
+                            <td className="p-3.5 font-mono text-[#c4c0d4]">
+                              {session.studentsPresentCount} / {session.totalStudentsCount}
+                            </td>
+                            <td className="p-3.5">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium bg-emerald-950/80 border border-emerald-800/60 text-emerald-400">
+                                <CheckCircle2 className="w-3 h-3" />
+                                <span>Verified Session</span>
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+
+                        {/* Fallback to legacy logged sessions if present */}
+                        {teachingSessions.map((session) => (
+                          <tr key={session.id} className="hover:bg-[#1a162b] transition-colors">
+                            <td className="p-3.5 font-mono text-purple-300 shrink-0">
+                              {session.date}
+                            </td>
+                            <td className="p-3.5">
+                              <div className="font-semibold text-white">{session.topicCovered}</div>
+                              <div className="text-[11px] text-purple-400 font-mono">{session.program}</div>
+                            </td>
+                            <td className="p-3.5 font-mono text-[#c4c0d4] text-[11px]">
+                              Academic Log
+                            </td>
+                            <td className="p-3.5 font-mono font-bold text-white">
+                              {session.durationHours} hrs
+                            </td>
+                            <td className="p-3.5 font-mono text-[#c4c0d4]">
+                              {session.studentsCount} attended
+                            </td>
+                            <td className="p-3.5">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium bg-emerald-950/80 border border-emerald-800/60 text-emerald-400">
+                                <CheckCircle2 className="w-3 h-3" />
+                                <span>{session.verifiedBy ? 'Verified' : 'Logged'}</span>
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

@@ -43,6 +43,116 @@ export const ArticleDetailPage: React.FC<ArticleDetailPageProps> = ({
     if (current) {
       const all = getArticles().filter(a => a.status === 'published' && a.id !== current.id);
       setRelatedArticles(all.slice(0, 3));
+
+      // Dynamic SEO Title & Description
+      const previousTitle = document.title;
+      document.title = `${current.title} | Orbit Space Technical Publications`;
+
+      const metaDesc = document.querySelector('meta[name="description"]');
+      const originalDesc = metaDesc?.getAttribute('content') || '';
+      if (metaDesc) {
+        metaDesc.setAttribute('content', current.subtitle || current.title);
+      }
+
+      // Dynamic Canonical URL
+      const canonicalUrl = `${window.location.origin}/articles/${current.slug}`;
+      let canonicalLink = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+      if (!canonicalLink) {
+        canonicalLink = document.createElement('link');
+        canonicalLink.rel = 'canonical';
+        document.head.appendChild(canonicalLink);
+      }
+      canonicalLink.href = canonicalUrl;
+
+      // Helper function to set or create meta tags
+      const setMetaTag = (attr: 'property' | 'name', key: string, content: string) => {
+        let tag = document.querySelector(`meta[${attr}="${key}"]`);
+        if (!tag) {
+          tag = document.createElement('meta');
+          tag.setAttribute(attr, key);
+          document.head.appendChild(tag);
+        }
+        tag.setAttribute('content', content);
+      };
+
+      // Open Graph Tags
+      setMetaTag('property', 'og:type', 'article');
+      setMetaTag('property', 'og:title', current.title);
+      setMetaTag('property', 'og:description', current.subtitle || current.title);
+      setMetaTag('property', 'og:image', current.coverImage);
+      setMetaTag('property', 'og:url', canonicalUrl);
+      setMetaTag('property', 'og:site_name', 'Orbit Space Academy');
+      if (current.publishedAt) {
+        setMetaTag('property', 'article:published_time', current.publishedAt);
+      }
+      if (current.category) {
+        setMetaTag('property', 'article:section', current.category);
+      }
+
+      // Twitter Card Tags
+      setMetaTag('name', 'twitter:card', 'summary_large_image');
+      setMetaTag('name', 'twitter:title', current.title);
+      setMetaTag('name', 'twitter:description', current.subtitle || current.title);
+      setMetaTag('name', 'twitter:image', current.coverImage);
+
+      // Schema.org Structured Data (JSON-LD)
+      const scriptId = 'article-schema-jsonld';
+      let script = document.getElementById(scriptId) as HTMLScriptElement | null;
+      if (!script) {
+        script = document.createElement('script');
+        script.id = scriptId;
+        script.type = 'application/ld+json';
+        document.head.appendChild(script);
+      }
+
+      const authorsList = [
+        ...(current.studentAuthors || []).map(a => ({
+          '@type': 'Person',
+          name: a.name,
+          jobTitle: a.roleInProject || 'Student Researcher'
+        })),
+        ...(current.supervisingTutor?.name ? [{
+          '@type': 'Person',
+          name: current.supervisingTutor.name,
+          jobTitle: current.supervisingTutor.role
+        }] : []),
+        ...(current.thinkAcademyAuthor ? [{
+          '@type': 'Person',
+          name: current.thinkAcademyAuthor.name,
+          jobTitle: current.thinkAcademyAuthor.role
+        }] : [])
+      ];
+
+      script.text = JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'TechArticle',
+        headline: current.title,
+        description: current.subtitle || current.title,
+        image: [current.coverImage],
+        datePublished: current.publishedAt || current.createdAt,
+        dateModified: current.updatedAt || current.createdAt,
+        author: authorsList.length > 0 ? authorsList : [{ '@type': 'Organization', name: 'Orbit Space Academy' }],
+        publisher: {
+          '@type': 'Organization',
+          name: 'Orbit Space Academy',
+          url: 'https://orbitspace.academy'
+        },
+        mainEntityOfPage: {
+          '@type': 'WebPage',
+          '@id': canonicalUrl
+        },
+        articleSection: current.category,
+        keywords: current.tags?.join(', ') || current.category
+      });
+
+      return () => {
+        document.title = previousTitle;
+        if (metaDesc && originalDesc) {
+          metaDesc.setAttribute('content', originalDesc);
+        }
+        const existingScript = document.getElementById(scriptId);
+        if (existingScript) existingScript.remove();
+      };
     }
   }, [slug]);
 

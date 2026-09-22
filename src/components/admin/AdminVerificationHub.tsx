@@ -28,6 +28,7 @@ import {
 import { TutorProfile, TutorService } from '../../services/tutorService';
 import { CertificateRecord, getCertificates } from '../../services/certificateService';
 import { ProgramService, ProgramRecord } from '../../services/programService';
+import { AdminTeachingHoursLedgerModal } from './AdminTeachingHoursLedgerModal';
 import { playSound } from '../../utils/soundEffects';
 
 interface AdminVerificationHubProps {
@@ -44,6 +45,7 @@ export const AdminVerificationHub: React.FC<AdminVerificationHubProps> = ({
   onOpenPublicCertificate
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<'projects' | 'hours' | 'add-project' | 'log-hour'>('projects');
+  const [isLedgerOpen, setIsLedgerOpen] = useState(false);
   const [projects, setProjects] = useState<SupervisedProjectRecord[]>([]);
   const [hours, setHours] = useState<TeachingHourRecord[]>([]);
   const [tutors, setTutors] = useState<TutorProfile[]>([]);
@@ -551,6 +553,27 @@ export const AdminVerificationHub: React.FC<AdminVerificationHubProps> = ({
       {/* SUB-TAB 2: TEACHING HOURS LEDGER */}
       {activeSubTab === 'hours' && (
         <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#141120] p-4 rounded-2xl border border-[#2e2842]">
+            <div>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Clock className="w-4 h-4 text-purple-400" />
+                <span>Instructional Attendance & Teaching Records</span>
+              </h3>
+              <p className="text-xs text-[#9d98af]">
+                Session-by-session teaching hours credited into the tri-part ledger alongside historical baselines and manual adjustments.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsLedgerOpen(true)}
+              className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold flex items-center gap-2 transition-all shadow-lg shadow-purple-950/40 shrink-0 cursor-pointer"
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>Open Teaching Hours Ledger</span>
+            </button>
+          </div>
+
           <div className="bg-[#141120] rounded-2xl border border-[#2e2842] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
@@ -900,6 +923,13 @@ export const AdminVerificationHub: React.FC<AdminVerificationHubProps> = ({
           </form>
         </div>
       )}
+
+      {/* Teaching Hours Ledger Modal */}
+      <AdminTeachingHoursLedgerModal
+        isOpen={isLedgerOpen}
+        onClose={() => setIsLedgerOpen(false)}
+        onUpdated={refreshData}
+      />
 
     </div>
   );

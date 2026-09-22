@@ -1,0 +1,21 @@
+# Robots.txt for Orbit Space Academy & Workspace
+User-agent: *
+Allow: /
+Allow: /courses
+Allow: /about
+Allow: /siwes
+Allow: /workspace
+Allow: /contact
+Allow: /timetable
+Allow: /articles
+Allow: /articles/*
+Allow: /tutor/*
+Allow: /tutors/*
+Allow: /faculty/*
+Allow: /verify
+Disallow: /admin
+Disallow: /editor
+Disallow: /orbit-staff-gate-9x2k
+Disallow: /staff-login-auth-2025
+
+Sitemap: https://orbitspace.academy/sitemap.xml

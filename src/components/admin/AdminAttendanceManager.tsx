@@ -116,13 +116,38 @@ export const AdminAttendanceManager: React.FC<AdminAttendanceManagerProps> = ({
     return () => unsub();
   }, []);
 
+  // Selected tutor override if admin manually chooses a different instructor for this class
+  const [selectedTutorIdOverride, setSelectedTutorIdOverride] = useState<string>('');
+
+  const activeTutors = useMemo(() => {
+    void tutorVersion;
+    return TutorService.getActiveTutors();
+  }, [tutorVersion]);
+
+  // When selectedCourse changes, clear manual override so program default is used
+  useEffect(() => {
+    setSelectedTutorIdOverride('');
+  }, [selectedCourse, selectedCohort]);
+
   // Currently resolved assigned tutor for selected class
   const currentAssignedTutor = useMemo(() => {
     // tutorVersion ensures reactive re-eval when tutors update
     void tutorVersion;
     if (loadedSessionInfo?.tutor) return loadedSessionInfo.tutor;
+    if (selectedTutorIdOverride) {
+      const match = activeTutors.find(t => t.id === selectedTutorIdOverride);
+      if (match) {
+        return {
+          id: match.id,
+          name: match.name,
+          email: match.email,
+          phone: match.phone,
+          specialization: match.specialization
+        };
+      }
+    }
     return AttendanceService.getAssignedTutorForProgram(selectedCourse);
-  }, [selectedCourse, loadedSessionInfo, tutorVersion]);
+  }, [selectedCourse, loadedSessionInfo, tutorVersion, selectedTutorIdOverride, activeTutors]);
 
   // --- All Recorded Sessions for History & Stats ---
   const [courseSessions, setCourseSessions] = useState<ClassSessionRecord[]>([]);
@@ -704,51 +729,75 @@ export const AdminAttendanceManager: React.FC<AdminAttendanceManagerProps> = ({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="block text-xs font-medium text-neutral-400">
-                Assigned Tutor
+                Assigned Tutor / Instructor
               </label>
               {isAdmin && (
                 <button
                   type="button"
                   onClick={() => {
-                    const profile = TutorService.getAssignedTutorForProgram(selectedCourse);
+                    const profile =
+                      TutorService.getTutorById(currentAssignedTutor.id) ||
+                      TutorService.getAssignedTutorForProgram(selectedCourse);
                     setEditingTutor(profile);
                     setIsEditTutorModalOpen(true);
                   }}
                   className="inline-flex items-center gap-1 text-[11px] text-purple-400 hover:text-purple-300 font-medium transition cursor-pointer"
-                  title="Edit tutor name and profile across the website"
+                  title="Assign multiple subjects or edit mentor profile"
                 >
                   <Edit3 className="w-3 h-3" />
-                  <span>Edit Tutor</span>
+                  <span>Assign Subjects</span>
                 </button>
               )}
             </div>
-            <div className="bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 flex items-center justify-between gap-2.5">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 font-bold text-xs shrink-0">
-                  {currentAssignedTutor.name ? currentAssignedTutor.name.charAt(0) : 'T'}
-                </div>
-                <div className="min-w-0">
-                  <div className="text-xs font-semibold text-neutral-200 truncate">
-                    {currentAssignedTutor.name}
+            <div className="bg-neutral-950 border border-neutral-800 rounded-xl p-2.5 space-y-2">
+              <div className="flex items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-7 h-7 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 font-bold text-xs shrink-0">
+                    {currentAssignedTutor.name ? currentAssignedTutor.name.charAt(0) : 'T'}
                   </div>
-                  <div className="text-[10px] text-neutral-500 truncate">
-                    {currentAssignedTutor.specialization || currentAssignedTutor.email}
+                  <div className="min-w-0">
+                    <div className="text-xs font-semibold text-neutral-200 truncate flex items-center gap-1.5">
+                      <span>{currentAssignedTutor.name}</span>
+                    </div>
+                    <div className="text-[10px] text-neutral-500 truncate">
+                      {currentAssignedTutor.specialization || currentAssignedTutor.email}
+                    </div>
                   </div>
                 </div>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const profile =
+                        TutorService.getTutorById(currentAssignedTutor.id) ||
+                        TutorService.getAssignedTutorForProgram(selectedCourse);
+                      setEditingTutor(profile);
+                      setIsEditTutorModalOpen(true);
+                    }}
+                    className="p-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-400 hover:text-purple-300 transition shrink-0"
+                    title="Edit tutor and assign subjects"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
-              {isAdmin && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const profile = TutorService.getAssignedTutorForProgram(selectedCourse);
-                    setEditingTutor(profile);
-                    setIsEditTutorModalOpen(true);
-                  }}
-                  className="p-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-400 hover:text-purple-300 transition shrink-0"
-                  title="Edit tutor name and details"
-                >
-                  <Edit3 className="w-3.5 h-3.5" />
-                </button>
+
+              {/* Selector to change instructor for this session or course */}
+              {activeTutors.length > 0 && !isExistingSession && (
+                <div className="pt-1.5 border-t border-neutral-850 flex items-center gap-1.5">
+                  <span className="text-[10px] text-neutral-500 shrink-0">Switch:</span>
+                  <select
+                    value={selectedTutorIdOverride || currentAssignedTutor.id}
+                    onChange={(e) => setSelectedTutorIdOverride(e.target.value)}
+                    className="w-full bg-neutral-900 border border-neutral-800 focus:border-purple-500 rounded-lg px-2 py-1 text-[11px] text-neutral-300 outline-none transition truncate"
+                  >
+                    {activeTutors.map((tut) => (
+                      <option key={tut.id} value={tut.id}>
+                        {tut.name} ({tut.programs?.length || 0} subjects)
+                      </option>
+                    ))}
+                  </select>
+                </div>
               )}
             </div>
           </div>
