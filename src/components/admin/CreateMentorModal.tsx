@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, 
@@ -14,9 +14,11 @@ import {
   Award, 
   Sparkles, 
   Briefcase,
-  AlertCircle
+  AlertCircle,
+  Plus
 } from 'lucide-react';
 import { TutorProfile, TutorService } from '../../services/tutorService';
+import { ProgramService } from '../../services/programService';
 import { playSound } from '../../utils/soundEffects';
 
 interface CreateMentorModalProps {
@@ -41,7 +43,7 @@ const AVAILABLE_COURSES = [
   'Product Engineering'
 ];
 
-export const CreateMentorModal: React.FC<CreateMentorModalProps> = ({
+const CreateMentorModalContent: React.FC<CreateMentorModalProps> = ({
   isOpen,
   onClose,
   onCreated
@@ -58,19 +60,45 @@ export const CreateMentorModal: React.FC<CreateMentorModalProps> = ({
   const [photoUrl, setPhotoUrl] = useState('');
   const [status, setStatus] = useState<'active' | 'deactivated'>('active');
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
-  const [qualificationsText, setQualificationsText] = useState('');
   const [color, setColor] = useState('#a855f7');
   
+  const [accountUsername, setAccountUsername] = useState('');
+  const [initialPassword, setInitialPassword] = useState('OrbitTeacher2026!');
+
   const [customCourseInput, setCustomCourseInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  if (!isOpen) return null;
+  // Dynamic available programs from ProgramService catalog + courses
+  const allAvailablePrograms = useMemo(() => {
+    try {
+      const catalog = ProgramService.getAllPrograms().map(p => p.title);
+      const combined = Array.from(new Set([...catalog, ...AVAILABLE_COURSES]));
+      return combined.sort((a, b) => a.localeCompare(b));
+    } catch {
+      return AVAILABLE_COURSES;
+    }
+  }, []);
 
   const handleToggleCourse = (course: string) => {
-    setSelectedCourses(prev => 
-      prev.includes(course) ? prev.filter(c => c !== course) : [...prev, course]
-    );
+    setSelectedCourses(prev => {
+      const next = prev.includes(course) ? prev.filter(c => c !== course) : [...prev, course];
+      playSound('pop');
+      return next;
+    });
+  };
+
+  const handleAddProgramFromDropdown = (programName: string) => {
+    if (!programName) return;
+    if (!selectedCourses.includes(programName)) {
+      setSelectedCourses(prev => [...prev, programName]);
+      playSound('pop');
+    }
+  };
+
+  const handleRemoveCourse = (course: string) => {
+    setSelectedCourses(prev => prev.filter(c => c !== course));
+    playSound('pop');
   };
 
   const handleAddCustomCourse = () => {
@@ -78,6 +106,7 @@ export const CreateMentorModal: React.FC<CreateMentorModalProps> = ({
     if (trimmed && !selectedCourses.includes(trimmed)) {
       setSelectedCourses(prev => [...prev, trimmed]);
       setCustomCourseInput('');
+      playSound('pop');
     }
   };
 
@@ -111,11 +140,6 @@ export const CreateMentorModal: React.FC<CreateMentorModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      const qualifications = qualificationsText
-        .split('\n')
-        .map(q => q.trim())
-        .filter(Boolean);
-
       const generatedShortName = shortName.trim() || cleanName.split(' ')[0];
       const cleanSlug = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
@@ -134,9 +158,14 @@ export const CreateMentorModal: React.FC<CreateMentorModalProps> = ({
         status: status,
         verificationStatus: 'verified' as const,
         joinedDate: new Date().toISOString().split('T')[0],
-        qualifications: qualifications.length > 0 ? qualifications : undefined,
         color: color,
-        slug: cleanSlug
+        slug: cleanSlug,
+        account: {
+          hasAccount: true,
+          username: accountUsername.trim() || email.trim() || cleanSlug,
+          initialPassword: initialPassword.trim() || 'OrbitTeacher2026!',
+          accountStatus: status
+        }
       };
 
       const created = await TutorService.createTutor(newMentorData);
@@ -315,52 +344,118 @@ export const CreateMentorModal: React.FC<CreateMentorModalProps> = ({
             </div>
           </div>
 
-          {/* Courses Taught (Multi-Select) */}
-          <div className="p-4 rounded-2xl bg-[#1a1628] border border-[#2a243e] space-y-3">
+          {/* Assigned Academy Programs (Dropdown Multi-Select) */}
+          <div className="p-4 rounded-2xl bg-[#1a1628] border border-[#2a243e] space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-semibold text-white uppercase tracking-wider text-[11px] text-purple-300 flex items-center gap-1.5">
                   <BookOpen className="w-3.5 h-3.5" />
-                  <span>Courses Taught (Multi-Select) *</span>
+                  <span>Assigned Academy Programs (Multi-Program) *</span>
                 </h3>
-                <p className="text-[10px] text-[#9d98af]">
-                  Select all tracks taught by this mentor. There remains only one unified profile for all their courses.
+                <p className="text-[10px] text-[#9d98af] mt-0.5">
+                  Select available programs from the dropdown menu. A tutor can teach more than 1 program across the academy.
                 </p>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-purple-900/40 text-purple-300 font-mono text-[10px]">
-                {selectedCourses.length} Selected
+              <span className="px-2.5 py-1 rounded-full bg-purple-900/60 border border-purple-700/60 text-purple-200 font-mono text-[11px] font-semibold">
+                {selectedCourses.length} {selectedCourses.length === 1 ? 'Program' : 'Programs'} Selected
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-              {AVAILABLE_COURSES.map((course) => {
-                const isSelected = selectedCourses.includes(course);
-                return (
-                  <button
-                    key={course}
-                    type="button"
-                    onClick={() => handleToggleCourse(course)}
-                    className={`flex items-center justify-between p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-purple-950/60 border-purple-500/60 text-white shadow-sm'
-                        : 'bg-[#120f1c] border-[#2f2742] text-[#c4c0d4] hover:border-purple-500/30'
-                    }`}
-                  >
-                    <span className="font-medium text-[11px] pr-2">{course}</span>
-                    <div className={`w-4 h-4 rounded-md flex items-center justify-center shrink-0 border ${
-                      isSelected
-                        ? 'bg-purple-600 border-purple-500 text-white'
-                        : 'border-[#443b60] bg-[#1a1628]'
-                    }`}>
-                      {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
-                    </div>
-                  </button>
-                );
-              })}
+            {/* Select Dropdown Menu of Available Programs */}
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-medium text-[#c4c0d4]">
+                Select Dropdown Menu of Available Programs:
+              </label>
+              <div className="relative">
+                <select
+                  value=""
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      handleAddProgramFromDropdown(e.target.value);
+                      e.target.value = '';
+                    }
+                  }}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#120f1c] border border-purple-500/50 text-white focus:outline-none focus:border-purple-400 text-xs cursor-pointer shadow-inner pr-8"
+                >
+                  <option value="">▼ Click to select and add an available program...</option>
+                  {allAvailablePrograms.map((course) => (
+                    <option key={course} value={course} className="bg-[#120f1c] text-white py-1">
+                      {selectedCourses.includes(course) ? `✓ ${course} (Already Selected)` : `+ Add: ${course}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <p className="text-[10px] text-[#8e8a9f]">
+                Select any program to immediately assign it to this tutor. Repeat to assign multiple programs.
+              </p>
             </div>
 
-            {/* Custom Course Addition */}
-            <div className="flex items-center gap-2 pt-2">
+            {/* Currently Selected Programs (Removable Badges) */}
+            <div className="space-y-1.5 pt-1">
+              <span className="text-[10px] font-mono uppercase text-[#9d98af] block">
+                Assigned Programs ({selectedCourses.length}):
+              </span>
+              <div className="flex flex-wrap gap-1.5 min-h-[32px] p-2 rounded-xl bg-[#120f1c] border border-[#2d2642]">
+                {selectedCourses.map((prog) => (
+                  <span
+                    key={prog}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-950/80 border border-purple-600/60 text-purple-200 text-xs font-medium shadow-sm animate-fadeIn"
+                  >
+                    <span>{prog}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveCourse(prog)}
+                      className="hover:text-rose-400 text-purple-400 transition cursor-pointer p-0.5 rounded-md hover:bg-rose-950/40"
+                      title={`Remove ${prog}`}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+                {selectedCourses.length === 0 && (
+                  <span className="text-xs text-amber-400/90 font-mono flex items-center gap-1.5 py-1">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    <span>No programs selected yet. Choose one or more programs from the dropdown above.</span>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Toggle Available Tracks */}
+            <div className="space-y-2 pt-2 border-t border-[#2a243e]">
+              <span className="text-[10px] font-mono uppercase text-[#9d98af] block">
+                Quick Toggle Academy Tracks:
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                {allAvailablePrograms.map((course) => {
+                  const isSelected = selectedCourses.includes(course);
+                  return (
+                    <button
+                      key={course}
+                      type="button"
+                      onClick={() => handleToggleCourse(course)}
+                      className={`flex items-center justify-between p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-purple-950/70 border-purple-500/70 text-white shadow-sm'
+                          : 'bg-[#120f1c] border-[#2f2742] text-[#c4c0d4] hover:border-purple-500/40 hover:text-white'
+                      }`}
+                    >
+                      <span className="font-medium text-[11px] pr-2 truncate">{course}</span>
+                      <div className={`w-4 h-4 rounded-md flex items-center justify-center shrink-0 border ${
+                        isSelected
+                          ? 'bg-purple-600 border-purple-500 text-white'
+                          : 'border-[#443b60] bg-[#1a1628]'
+                      }`}>
+                        {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Custom Course / Program Addition */}
+            <div className="flex items-center gap-2 pt-1 border-t border-[#2a243e]">
               <input
                 type="text"
                 value={customCourseInput}
@@ -371,15 +466,16 @@ export const CreateMentorModal: React.FC<CreateMentorModalProps> = ({
                     handleAddCustomCourse();
                   }
                 }}
-                placeholder="Add other custom course/program..."
+                placeholder="Or type a custom specialized program name..."
                 className="flex-1 px-3.5 py-1.5 rounded-xl bg-[#120f1c] border border-[#342d4a] text-white placeholder-[#686278] focus:outline-none focus:border-purple-500 text-xs"
               />
               <button
                 type="button"
                 onClick={handleAddCustomCourse}
-                className="px-3 py-1.5 rounded-xl bg-[#231e33] hover:bg-purple-600 text-[#c4c0d4] hover:text-white transition-all text-xs font-semibold cursor-pointer"
+                className="px-3.5 py-1.5 rounded-xl bg-purple-950 hover:bg-purple-900 border border-purple-700/60 text-purple-200 hover:text-white transition-all text-xs font-semibold flex items-center gap-1 cursor-pointer"
               >
-                + Add Track
+                <Plus className="w-3 h-3" />
+                <span>Add Track</span>
               </button>
             </div>
           </div>
@@ -463,24 +559,41 @@ export const CreateMentorModal: React.FC<CreateMentorModalProps> = ({
             </div>
           </div>
 
-          {/* Qualifications & Certifications */}
+          {/* Teacher Account & Login Credentials (Admin Controlled) */}
           <div className="p-4 rounded-2xl bg-[#1a1628] border border-[#2a243e] space-y-3">
             <h3 className="font-semibold text-white uppercase tracking-wider text-[11px] text-purple-300 flex items-center gap-1.5">
-              <Award className="w-3.5 h-3.5" />
-              <span>Qualifications & Certifications</span>
+              <span>Teacher Login Credentials & Access Setup</span>
             </h3>
+            <p className="text-[11px] text-[#9d98af]">
+              Set the teacher's initial account access. Mentors can view their assigned courses, students, and supervised projects.
+            </p>
 
-            <div>
-              <label className="block text-[11px] font-medium text-[#c4c0d4] mb-1">
-                List credentials (one per line)
-              </label>
-              <textarea
-                rows={3}
-                value={qualificationsText}
-                onChange={(e) => setQualificationsText(e.target.value)}
-                placeholder={"B.Sc Computer Science, University of Ilorin\nGoogle Certified UX Design Professional\nNN/g Nielsen Norman Group UX Master Certified"}
-                className="w-full px-3.5 py-2 rounded-xl bg-[#120f1c] border border-[#342d4a] text-white placeholder-[#686278] focus:outline-none focus:border-purple-500 font-mono text-[11px]"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-medium text-[#c4c0d4] mb-1">
+                  Login Identifier (Username / Email)
+                </label>
+                <input
+                  type="text"
+                  value={accountUsername}
+                  onChange={(e) => setAccountUsername(e.target.value)}
+                  placeholder={email || "teacher@orbitspace.academy"}
+                  className="w-full px-3.5 py-2 rounded-xl bg-[#120f1c] border border-[#342d4a] text-white placeholder-[#686278] focus:outline-none focus:border-purple-500 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-[#c4c0d4] mb-1">
+                  Initial Password
+                </label>
+                <input
+                  type="text"
+                  value={initialPassword}
+                  onChange={(e) => setInitialPassword(e.target.value)}
+                  placeholder="OrbitTeacher2026!"
+                  className="w-full px-3.5 py-2 rounded-xl bg-[#120f1c] border border-[#342d4a] text-white placeholder-[#686278] focus:outline-none focus:border-purple-500 text-xs font-mono"
+                />
+              </div>
             </div>
           </div>
 
@@ -517,3 +630,9 @@ export const CreateMentorModal: React.FC<CreateMentorModalProps> = ({
     </div>
   );
 };
+
+export const CreateMentorModal: React.FC<CreateMentorModalProps> = (props) => {
+  if (!props.isOpen) return null;
+  return <CreateMentorModalContent {...props} />;
+};
+

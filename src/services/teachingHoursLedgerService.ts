@@ -35,61 +35,8 @@ const LEDGER_STORAGE_KEY = 'orbit_teaching_hours_ledger_v2';
 let ledgerMemoryCache: TeachingHourLedgerEntry[] | null = null;
 const ledgerListeners = new Set<(entries: TeachingHourLedgerEntry[]) => void>();
 
-// Default baseline ledger entries for pre-seeded faculty members
-export const DEFAULT_HISTORICAL_ENTRIES: TeachingHourLedgerEntry[] = [
-  {
-    id: 'led-hist-lawal-01',
-    lecturerId: 'tch-lawal-frontend',
-    lecturerName: 'Lawal (Senior Frontend Lead)',
-    date: '2026-01-15',
-    type: 'historical',
-    description: 'Imported manual attendance records (Q1 2024 – Q4 2025 Foundation Cohorts)',
-    hours: 146,
-    addedBy: 'Super Admin (Engr. Precious Ogunleye)',
-    createdAt: '2026-01-15T09:00:00.000Z',
-    auditReason: 'Verified institutional manual attendance registry prior to digital platform deployment.',
-    referenceNote: 'Audit Log Vol 2 / Registry Page 42',
-  },
-  {
-    id: 'led-hist-olamide-01',
-    lecturerId: 'tch-olamide-sec',
-    lecturerName: 'Olamide (Lead Security Engineer)',
-    date: '2026-01-15',
-    type: 'historical',
-    description: 'Manual Cyber Security & SOC Lab registers (2024 – 2025 Cohorts)',
-    hours: 132,
-    addedBy: 'Super Admin (Engr. Precious Ogunleye)',
-    createdAt: '2026-01-15T09:15:00.000Z',
-    auditReason: 'Verified laboratory instructor logs and student defense reviews.',
-    referenceNote: 'Audit Log Vol 2 / Registry Page 55',
-  },
-  {
-    id: 'led-hist-stat-01',
-    lecturerId: 'tch-stat-data',
-    lecturerName: 'Mr. Stat (Lead Data Science Mentor)',
-    date: '2026-01-15',
-    type: 'historical',
-    description: 'Verified statistics, SQL & data lab instruction logbook (2024 – 2025)',
-    hours: 118,
-    addedBy: 'Super Admin (Engr. Precious Ogunleye)',
-    createdAt: '2026-01-15T09:30:00.000Z',
-    auditReason: 'Audited physical attendance registers for Python and PowerBI cohorts.',
-    referenceNote: 'Audit Log Vol 2 / Registry Page 68',
-  },
-  {
-    id: 'led-hist-precious-vid-01',
-    lecturerId: 'tch-precious-video',
-    lecturerName: 'Precious (Creative Media Lead)',
-    date: '2026-01-15',
-    type: 'historical',
-    description: 'Verified video editing & creative studio logbook (2024 – 2025)',
-    hours: 95,
-    addedBy: 'Super Admin (Engr. Precious Ogunleye)',
-    createdAt: '2026-01-15T09:45:00.000Z',
-    auditReason: 'Audited post-production suite studio logs.',
-    referenceNote: 'Audit Log Vol 2 / Registry Page 81',
-  },
-];
+// Default baseline ledger entries: strictly empty (real attendance records only)
+export const DEFAULT_HISTORICAL_ENTRIES: TeachingHourLedgerEntry[] = [];
 
 function notifyListeners(entries: TeachingHourLedgerEntry[]) {
   ledgerListeners.forEach((listener) => {
@@ -128,8 +75,13 @@ function loadLocal(): TeachingHourLedgerEntry[] {
       if (raw) {
         const parsed: TeachingHourLedgerEntry[] = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          ledgerMemoryCache = parsed;
-          return parsed;
+          // Purge legacy dummy historical items (e.g. led-hist-*)
+          const genuine = parsed.filter(e => !e.id?.startsWith('led-hist-'));
+          ledgerMemoryCache = genuine;
+          try {
+            localStorage.setItem(LEDGER_STORAGE_KEY, JSON.stringify(genuine));
+          } catch {}
+          return genuine;
         }
       }
     } catch (e) {

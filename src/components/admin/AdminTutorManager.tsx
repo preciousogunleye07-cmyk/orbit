@@ -22,7 +22,6 @@ import {
 import { TutorProfile, TutorService } from '../../services/tutorService';
 import { VerificationDataService } from '../../services/verificationDataService';
 import { EditTutorModal } from './EditTutorModal';
-import { AdminHistoricalBaselineModal } from './AdminHistoricalBaselineModal';
 import { AdminTeachingHoursLedgerModal } from './AdminTeachingHoursLedgerModal';
 import { CreateMentorModal } from './CreateMentorModal';
 import { AdminMentorProfileView } from './AdminMentorProfileView';
@@ -51,10 +50,6 @@ export const AdminTutorManager: React.FC<AdminTutorManagerProps> = ({
   const [tutorToEdit, setTutorToEdit] = useState<TutorProfile | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
 
-  // Historical Baseline modal
-  const [tutorForBaseline, setTutorForBaseline] = useState<TutorProfile | null>(null);
-  const [isBaselineOpen, setIsBaselineOpen] = useState(false);
-
   // Teaching Hours Ledger modal
   const [tutorForLedger, setTutorForLedger] = useState<TutorProfile | null>(null);
   const [isLedgerOpen, setIsLedgerOpen] = useState(false);
@@ -70,7 +65,6 @@ export const AdminTutorManager: React.FC<AdminTutorManagerProps> = ({
     programsCount: number;
     programsList: string[];
     uploadedProjectEvidenceCount: number;
-    hasHistoricalBaseline: boolean;
   } | null>(null);
   const [confirmDeleteText, setConfirmDeleteText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
@@ -127,19 +121,20 @@ export const AdminTutorManager: React.FC<AdminTutorManagerProps> = ({
   // Confirm Permanent Deletion
   const handleConfirmDelete = async () => {
     if (!tutorToDelete) return;
-    if (confirmDeleteText.trim().toLowerCase() !== tutorToDelete.name.trim().toLowerCase()) {
-      showToast('Type the exact tutor name to confirm permanent removal.');
-      return;
-    }
 
     setIsDeleting(true);
     try {
-      await TutorService.deleteTutorPermanently(tutorToDelete.id);
+      const tutorName = tutorToDelete.name;
+      const tutorId = tutorToDelete.id;
+      await TutorService.deleteTutorPermanently(tutorId);
       playSound('trash');
-      showToast(`Tutor ${tutorToDelete.name} permanently removed from directory.`);
+      showToast(`Tutor "${tutorName}" permanently removed from directory.`);
       setTutorToDelete(null);
+      setConfirmDeleteText('');
+      setTutors((prev) => prev.filter((t) => t.id !== tutorId));
+      loadTutors();
     } catch (err: any) {
-      showToast(`Error: ${err.message}`);
+      showToast(`Delete failed: ${err.message || 'Could not delete tutor'}`);
     } finally {
       setIsDeleting(false);
     }
@@ -158,6 +153,11 @@ export const AdminTutorManager: React.FC<AdminTutorManagerProps> = ({
         onTutorUpdated={(updated) => {
           setSelectedMentorForDetail(updated);
           loadTutors();
+        }}
+        onTutorDeleted={() => {
+          setSelectedMentorForDetail(null);
+          loadTutors();
+          showToast('Tutor permanently removed from directory.');
         }}
       />
     );
@@ -243,7 +243,7 @@ export const AdminTutorManager: React.FC<AdminTutorManagerProps> = ({
         {filteredTutors.map((tutor) => {
           const isDeactivated = tutor.status === 'deactivated';
           const verifiedProjects = VerificationDataService.getProjectsForTutor(tutor.id).filter(p => p.verificationStatus === 'verified');
-          const verifiedHours = VerificationDataService.getTotalVerifiedHours(tutor.id, tutor.baseTeachingHours);
+          const verifiedHours = VerificationDataService.getTotalVerifiedHours(tutor.id, 0);
 
           return (
             <div
@@ -400,19 +400,6 @@ export const AdminTutorManager: React.FC<AdminTutorManagerProps> = ({
                 </button>
 
                 <button
-                  type="button"
-                  onClick={() => {
-                    setTutorForBaseline(tutor);
-                    setIsBaselineOpen(true);
-                  }}
-                  className="px-3 py-1.5 rounded-xl bg-amber-950/40 hover:bg-amber-900/60 text-amber-300 border border-amber-800/50 text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer"
-                  title="Admin-entered historical baseline (teaching hours, students, certificates)"
-                >
-                  <History className="w-3.5 h-3.5" />
-                  <span>Historical Baseline</span>
-                </button>
-
-                <button
                   onClick={() => {
                     setTutorToEdit(tutor);
                     setIsEditOpen(true);
@@ -451,17 +438,6 @@ export const AdminTutorManager: React.FC<AdminTutorManagerProps> = ({
           );
         })}
       </div>
-
-      {/* Historical Baseline Modal */}
-      <AdminHistoricalBaselineModal
-        isOpen={isBaselineOpen}
-        tutor={tutorForBaseline}
-        onClose={() => {
-          setIsBaselineOpen(false);
-          setTutorForBaseline(null);
-        }}
-        onSaved={loadTutors}
-      />
 
       {/* Teaching Hours Ledger Modal */}
       <AdminTeachingHoursLedgerModal
@@ -559,15 +535,25 @@ export const AdminTutorManager: React.FC<AdminTutorManagerProps> = ({
             )}
 
             <div className="space-y-2">
-              <label className="text-xs font-medium text-[#9d98af] block">
-                Type <span className="font-mono text-white bg-black/40 px-1.5 py-0.5 rounded">{tutorToDelete.name}</span> to confirm permanent deletion:
-              </label>
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-[#9d98af]">
+                  Type <strong className="text-white font-mono">{tutorToDelete.name}</strong> or click Quick Fill:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setConfirmDeleteText(tutorToDelete.name)}
+                  className="text-[11px] text-purple-400 hover:text-purple-300 font-mono underline cursor-pointer"
+                >
+                  Quick Fill Name
+                </button>
+              </div>
               <input
                 type="text"
                 value={confirmDeleteText}
                 onChange={(e) => setConfirmDeleteText(e.target.value)}
-                placeholder="Type exact tutor name here..."
+                placeholder={`Type "${tutorToDelete.name}", or click Quick Fill`}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-[#1b172a] border border-[#342d4a] text-xs text-white focus:outline-none focus:border-rose-500"
+                autoFocus
               />
             </div>
 
@@ -593,12 +579,13 @@ export const AdminTutorManager: React.FC<AdminTutorManagerProps> = ({
                 </button>
                 <button
                   type="button"
-                  disabled={confirmDeleteText.trim().toLowerCase() !== tutorToDelete.name.trim().toLowerCase() || isDeleting}
+                  disabled={isDeleting}
                   onClick={handleConfirmDelete}
                   className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-40 text-white text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer shadow-lg shadow-rose-950/40"
+                  title="Permanently remove tutor from directory"
                 >
                   <Trash2 className="w-4 h-4" />
-                  <span>{isDeleting ? 'Deleting...' : 'Delete Tutor'}</span>
+                  <span>{isDeleting ? 'Deleting...' : 'Permanently Delete Tutor'}</span>
                 </button>
               </div>
             </div>

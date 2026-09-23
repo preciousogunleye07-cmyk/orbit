@@ -37,7 +37,6 @@ import { AdminArticlesManager } from '../../components/admin/AdminArticlesManage
 import { AdminAttendanceManager } from '../../components/admin/AdminAttendanceManager';
 import { AdminProgramManager } from '../../components/admin/AdminProgramManager';
 import { AdminTutorManager } from '../../components/admin/AdminTutorManager';
-import { AdminVerificationHub } from '../../components/admin/AdminVerificationHub';
 import { CertificateDetailsModal } from '../../components/admin/CertificateDetailsModal';
 import { EditCertificateModal } from '../../components/admin/EditCertificateModal';
 import { RevokeConfirmationModal } from '../../components/admin/RevokeConfirmationModal';
@@ -52,7 +51,7 @@ interface AdminDashboardLayoutProps {
   onOpenPublicPage: (id: string) => void;
   onOpenPublicTutor?: (slug: string) => void;
   onOpenPublicProject?: (slug: string) => void;
-  initialTab?: 'overview' | 'directory' | 'students' | 'articles' | 'letters' | 'create' | 'timetable' | 'attendance' | 'verification' | 'programs' | 'tutors';
+  initialTab?: 'overview' | 'directory' | 'students' | 'articles' | 'letters' | 'create' | 'timetable' | 'attendance' | 'programs' | 'tutors';
 }
 
 export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
@@ -63,7 +62,7 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
   onOpenPublicProject,
   initialTab = 'overview'
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'directory' | 'students' | 'articles' | 'letters' | 'create' | 'timetable' | 'attendance' | 'verification' | 'programs' | 'tutors'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'overview' | 'directory' | 'students' | 'articles' | 'letters' | 'create' | 'timetable' | 'attendance' | 'programs' | 'tutors'>(initialTab);
   const [certificates, setCertificates] = useState<CertificateRecord[]>([]);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [prefilledStudentForCreate, setPrefilledStudentForCreate] = useState<SheetDBStudent | null>(null);
@@ -88,7 +87,7 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
     setAdminUser(getAdminSession());
   }, []);
 
-  type AdminTab = 'overview' | 'directory' | 'students' | 'articles' | 'letters' | 'create' | 'timetable' | 'attendance' | 'verification' | 'programs' | 'tutors';
+  type AdminTab = 'overview' | 'directory' | 'students' | 'articles' | 'letters' | 'create' | 'timetable' | 'attendance' | 'programs' | 'tutors';
 
   const handleTabChange = (tab: AdminTab) => {
     playSound('droplet');
@@ -313,18 +312,6 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
             </button>
 
             <button
-              onClick={() => handleTabChange('verification')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 min-h-[40px] ${
-                activeTab === 'verification'
-                  ? 'btn-purple text-white shadow-md'
-                  : 'text-[#c4c7c8] hover:text-[#ffffff] hover:bg-[#1f1b2e]'
-              }`}
-            >
-              <FolderGit2 className="w-3.5 h-3.5 text-purple-400" />
-              <span>Evidence Audit</span>
-            </button>
-
-            <button
               onClick={() => handleTabChange('programs')}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer shrink-0 min-h-[40px] ${
                 activeTab === 'programs'
@@ -446,15 +433,6 @@ export const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
                 email: adminUser?.email || 'orbitspace.ilorin@gmail.com',
                 role: 'Super Administrator',
               }}
-            />
-          )}
-
-          {activeTab === 'verification' && (
-            <AdminVerificationHub
-              currentAdminName={adminUser?.name || 'Super Administrator'}
-              onOpenPublicTutor={onOpenPublicTutor}
-              onOpenPublicProject={onOpenPublicProject}
-              onOpenPublicCertificate={onOpenPublicPage}
             />
           )}
 

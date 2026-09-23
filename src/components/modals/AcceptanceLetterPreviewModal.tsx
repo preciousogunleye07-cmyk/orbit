@@ -11,14 +11,12 @@ interface AcceptanceLetterPreviewModalProps {
   onClose: () => void;
 }
 
-export const AcceptanceLetterPreviewModal: React.FC<AcceptanceLetterPreviewModalProps> = ({
+const AcceptanceLetterPreviewModalContent: React.FC<AcceptanceLetterPreviewModalProps> = ({
   isOpen,
   onClose
 }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [copied, setCopied] = useState(false);
-
-  if (!isOpen) return null;
 
   const handleDownload = async () => {
     try {
@@ -117,3 +115,9 @@ export const AcceptanceLetterPreviewModal: React.FC<AcceptanceLetterPreviewModal
     </AnimatePresence>
   );
 };
+
+export const AcceptanceLetterPreviewModal: React.FC<AcceptanceLetterPreviewModalProps> = (props) => {
+  if (!props.isOpen) return null;
+  return <AcceptanceLetterPreviewModalContent {...props} />;
+};
+

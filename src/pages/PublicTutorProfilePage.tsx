@@ -55,7 +55,7 @@ export const PublicTutorProfilePage: React.FC<PublicTutorProfilePageProps> = ({
   const [teachingSessions, setTeachingSessions] = useState<TeachingHourRecord[]>([]);
   const [supervisedArticles, setSupervisedArticles] = useState<ArticleRecord[]>([]);
   const [copiedLink, setCopiedLink] = useState(false);
-  const [activeTab, setActiveTab] = useState<'projects' | 'hours' | 'certified' | 'articles' | 'bio'>('projects');
+  const [activeTab, setActiveTab] = useState<'projects' | 'students' | 'hours' | 'certified' | 'articles' | 'bio'>('projects');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -206,23 +206,11 @@ export const PublicTutorProfilePage: React.FC<PublicTutorProfilePageProps> = ({
   const articlesCount = computedStats?.articlesSupervisedCount ?? supervisedArticles.length;
   const teachingHistoryList = computedStats?.teachingHistory || [];
   const certifiedStudentsList = computedStats?.certifiedStudentsList || [];
+  const studentsTaughtList = computedStats?.studentsTaughtList || [];
 
   const isDeactivated = tutor.status === 'deactivated';
   const hasHistoricalBaseline = Boolean(computedStats?.hasHistoricalBaseline);
   const baselineDetails = computedStats?.historicalBaselineDetails;
-
-  const calculateLengthOfService = (startDateStr?: string) => {
-    if (!startDateStr) return 'Active Academic Service';
-    const start = new Date(startDateStr);
-    const now = new Date();
-    if (isNaN(start.getTime())) return 'Active Academic Service';
-    const diffMonths = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
-    const years = Math.floor(diffMonths / 12);
-    const months = diffMonths % 12;
-    if (years === 0) return `${months} month${months !== 1 ? 's' : ''}`;
-    if (months === 0) return `${years} year${years !== 1 ? 's' : ''}`;
-    return `${years} yr${years !== 1 ? 's' : ''}, ${months} mo${months !== 1 ? 's' : ''}`;
-  };
 
   return (
     <div className="min-h-screen bg-[#0c0a13] text-[#e5e2e1] flex flex-col justify-between pt-24 pb-16 px-4 sm:px-6 relative overflow-hidden">
@@ -299,12 +287,6 @@ export const PublicTutorProfilePage: React.FC<PublicTutorProfilePageProps> = ({
                 <span className="px-2.5 py-0.5 rounded-full bg-purple-900/40 border border-purple-700/50 text-[10px] font-mono text-purple-300">
                   ID: {tutor.id}
                 </span>
-                {hasHistoricalBaseline && (
-                  <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-[10px] font-mono text-amber-300 flex items-center gap-1">
-                    <History className="w-3 h-3" />
-                    <span>Includes Audited Pre-Platform History</span>
-                  </span>
-                )}
               </div>
 
               <p className="text-sm sm:text-base font-medium text-purple-300">
@@ -321,23 +303,9 @@ export const PublicTutorProfilePage: React.FC<PublicTutorProfilePageProps> = ({
                 </p>
               )}
 
-              {/* Qualifications */}
-              {tutor.qualifications && tutor.qualifications.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  <span className="text-[10px] font-mono text-purple-400 uppercase tracking-wider font-semibold">Qualifications:</span>
-                  {tutor.qualifications.map((q, idx) => (
-                    <span
-                      key={idx}
-                      className="px-2 py-0.5 rounded-md bg-purple-950/60 border border-purple-800/40 text-[10px] font-mono text-purple-200"
-                    >
-                      {q}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* Programs Covered Tags */}
-              <div className="flex flex-wrap gap-1.5 pt-2">
+              {/* Courses Taught */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-2">
+                <span className="text-[10px] font-mono text-purple-400 uppercase tracking-wider font-semibold mr-1">Courses Taught:</span>
                 {tutor.programs.map((prog, idx) => (
                   <span
                     key={idx}
@@ -348,111 +316,35 @@ export const PublicTutorProfilePage: React.FC<PublicTutorProfilePageProps> = ({
                 ))}
               </div>
 
-              {/* Verified Lecturer Status, Academic Institution & Length of Service Bar */}
-              <div className="pt-3 border-t border-[#251f38] flex flex-wrap items-center gap-2">
-                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/70 border border-emerald-700/50 text-emerald-300 font-mono text-[11px] font-semibold">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Verified Lecturer</span>
-                </span>
+              {/* Contact Information (Email & Phone) */}
+              {(tutor.email || tutor.phone) && (
+                <div className="pt-2 flex flex-wrap items-center gap-2">
+                  {tutor.email && (
+                    <a
+                      href={`mailto:${tutor.email}`}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1a1528] hover:bg-[#251f38] border border-[#322849] text-[#c4bfd4] hover:text-white font-mono text-xs transition-colors"
+                    >
+                      <Mail className="w-3.5 h-3.5 text-purple-400" />
+                      <span>{tutor.email}</span>
+                    </a>
+                  )}
 
-                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#1a1528] border border-[#322849] text-white font-mono text-[11px]">
-                  <Building className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Orbit Space Academy</span>
-                </span>
-
-                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#1a1528] border border-[#322849] text-[#c4bfd4] font-mono text-[11px]">
-                  <Calendar className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Joined: {tutor.joinedDate ? new Date(tutor.joinedDate).toLocaleDateString(undefined, { year: 'numeric', month: 'short' }) : 'Active Academic Service'}</span>
-                </span>
-
-                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#1a1528] border border-[#322849] text-purple-300 font-mono text-[11px] font-bold">
-                  <Clock className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Tenure: {calculateLengthOfService(tutor.joinedDate)}</span>
-                </span>
-
-                {/* Professional Links */}
-                {tutor.linkedinUrl && (
-                  <a
-                    href={tutor.linkedinUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0077b5]/20 hover:bg-[#0077b5]/30 border border-[#0077b5]/40 text-blue-300 font-mono text-[11px] transition-colors"
-                  >
-                    <Linkedin className="w-3.5 h-3.5 text-[#0077b5]" />
-                    <span>LinkedIn</span>
-                  </a>
-                )}
-
-                {tutor.portfolioUrl && (
-                  <a
-                    href={tutor.portfolioUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-950/40 hover:bg-cyan-900/50 border border-cyan-800/40 text-cyan-300 font-mono text-[11px] transition-colors"
-                  >
-                    <Globe className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>Portfolio</span>
-                  </a>
-                )}
-
-                {tutor.email && (
-                  <a
-                    href={`mailto:${tutor.email}`}
-                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#1a1528] hover:bg-[#251f38] border border-[#322849] text-[#c4bfd4] hover:text-white font-mono text-[11px] transition-colors"
-                  >
-                    <Mail className="w-3.5 h-3.5 text-purple-400" />
-                    <span>{tutor.email}</span>
-                  </a>
-                )}
-              </div>
+                  {tutor.phone && (
+                    <a
+                      href={`tel:${tutor.phone}`}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1a1528] hover:bg-[#251f38] border border-[#322849] text-[#c4bfd4] hover:text-white font-mono text-xs transition-colors"
+                    >
+                      <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>{tutor.phone}</span>
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Transparent Historical Baseline Audit Banner (If historical records exist) */}
-          {hasHistoricalBaseline && (
-            <div className="p-4 rounded-2xl bg-amber-950/20 border border-amber-800/40 text-xs space-y-1.5">
-              <div className="flex items-center gap-2 text-amber-300 font-semibold font-mono text-[11px]">
-                <FileCheck className="w-4 h-4" />
-                <span>Admin-Entered Historical Baseline Archive Credited</span>
-              </div>
-              <p className="text-[#c4bfd4] text-[11px] leading-relaxed">
-                {baselineDetails?.note || 'Pre-platform instructional records verified and archived by Orbit Space Academic Administration.'}
-              </p>
-              <div className="flex flex-wrap items-center gap-4 text-[10px] font-mono text-amber-400/80 pt-1">
-                {baselineDetails?.auditedBy && (
-                  <span>Audited By: <strong>{baselineDetails.auditedBy}</strong></span>
-                )}
-                {baselineDetails?.auditDate && (
-                  <span>Audit Date: <strong>{new Date(baselineDetails.auditDate).toLocaleDateString()}</strong></span>
-                )}
-                <span>• Credited transparently alongside real-time platform check-ins</span>
-              </div>
-            </div>
-          )}
-
           {/* Key Verified Metric Counters (Dynamic & Strict No-Dummy Data) */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-            
-            {/* Teaching Hours */}
-            <div className="bg-[#1a162a] rounded-2xl p-4 border border-[#342d4a]">
-              <div className="flex items-center gap-2 text-purple-400 mb-1">
-                <Clock className="w-4 h-4" />
-                <span className="text-[10px] font-mono uppercase tracking-wider text-[#9d98af]">Teaching Hours</span>
-              </div>
-              <div className="text-xl sm:text-2xl font-black text-white">
-                {totalVerifiedHours} <span className="text-xs font-normal text-[#a49faf]">hrs</span>
-              </div>
-              <div className="text-[10px] text-[#8e8a9f] font-mono pt-1 leading-tight">
-                {historicalTeachingHours > 0 || adjustmentHours !== 0 ? (
-                  <span>
-                    Hist: +{historicalTeachingHours}h | Live: +{newAttendanceHours}h
-                    {adjustmentHours !== 0 && ` | Adj: ${adjustmentHours > 0 ? `+${adjustmentHours}` : adjustmentHours}h`}
-                  </span>
-                ) : (
-                  <span className="text-emerald-400">SUM(Historical + Live Attendance)</span>
-                )}
-              </div>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
 
             {/* Students Taught */}
             <div className="bg-[#1a162a] rounded-2xl p-4 border border-[#342d4a]">
@@ -464,11 +356,7 @@ export const PublicTutorProfilePage: React.FC<PublicTutorProfilePageProps> = ({
                 {totalStudentsTaught}
               </div>
               <div className="text-[10px] text-[#8e8a9f] font-mono pt-1 leading-tight">
-                {hasHistoricalBaseline ? (
-                  <span>Classes: {newStudentsTaught} | Audited: {historicalStudentsTaught}</span>
-                ) : (
-                  <span className="text-cyan-400">Enrolled in tutor classes</span>
-                )}
+                <span className="text-cyan-400">Enrolled student records</span>
               </div>
             </div>
 
@@ -482,11 +370,7 @@ export const PublicTutorProfilePage: React.FC<PublicTutorProfilePageProps> = ({
                 {totalStudentsCertified}
               </div>
               <div className="text-[10px] text-[#8e8a9f] font-mono pt-1 leading-tight">
-                {hasHistoricalBaseline ? (
-                  <span>Platform: {newStudentsCertified} | Audited: {historicalStudentsCertified}</span>
-                ) : (
-                  <span className="text-emerald-400">Verified graduates</span>
-                )}
+                <span className="text-emerald-400">Verified graduate certificates</span>
               </div>
             </div>
 
@@ -500,40 +384,10 @@ export const PublicTutorProfilePage: React.FC<PublicTutorProfilePageProps> = ({
                 {totalProjectsSupervised}
               </div>
               <div className="text-[10px] text-[#8e8a9f] font-mono pt-1 leading-tight">
-                {hasHistoricalBaseline ? (
-                  <span>Portfolios: {newProjectsSupervised} | Audited: {historicalProjectsSupervised}</span>
-                ) : (
-                  <span className="text-amber-400">Verified student capstones</span>
-                )}
+                <span className="text-amber-400">Verified capstones & portfolios</span>
               </div>
             </div>
 
-          </div>
-
-          {/* Social/Verification Public Link Bar */}
-          <div className="pt-4 border-t border-[#262036] flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-3 text-[#9d98af]">
-              {tutor.joinedDate && (
-                <span>Faculty Member Since: <strong className="text-white font-mono">{tutor.joinedDate}</strong></span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2">
-              {tutor.linkedinUrl && (
-                <a
-                  href={tutor.linkedinUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1 rounded-lg bg-[#1f1a30] hover:bg-purple-900/40 text-purple-300 flex items-center gap-1.5 transition-colors"
-                >
-                  <Linkedin className="w-3.5 h-3.5" />
-                  <span>LinkedIn</span>
-                </a>
-              )}
-              <div className="text-[11px] font-mono text-[#8a849b]">
-                orbitspace.academy/tutor/{tutor.slug}
-              </div>
-            </div>
           </div>
 
         </div>
@@ -550,6 +404,18 @@ export const PublicTutorProfilePage: React.FC<PublicTutorProfilePageProps> = ({
           >
             <FolderGit2 className="w-4 h-4" />
             <span>Supervised Student Projects ({totalProjectsSupervised})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('students')}
+            className={`px-4 py-2.5 rounded-xl font-semibold text-xs transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
+              activeTab === 'students'
+                ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/40'
+                : 'text-[#9d98af] hover:text-white hover:bg-[#1a1628]'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            <span>Students Taught ({totalStudentsTaught})</span>
           </button>
 
           <button
@@ -614,12 +480,8 @@ export const PublicTutorProfilePage: React.FC<PublicTutorProfilePageProps> = ({
             {projects.length === 0 ? (
               <div className="bg-[#141120] rounded-2xl p-8 text-center border border-[#2d2740] space-y-3">
                 <FolderGit2 className="w-10 h-10 text-purple-400/60 mx-auto" />
-                <p className="text-xs text-[#9d98af]">No student capstone projects currently registered for this tutor.</p>
-                {hasHistoricalBaseline && historicalProjectsSupervised > 0 && (
-                  <p className="text-[11px] font-mono text-amber-300">
-                    Includes {historicalProjectsSupervised} historical capstones verified by admin baseline.
-                  </p>
-                )}
+                <h4 className="text-sm font-bold text-white">No projects supervised</h4>
+                <p className="text-xs text-[#9d98af]">No student capstone projects supervised by this teacher have been submitted or verified.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4">
@@ -706,6 +568,60 @@ export const PublicTutorProfilePage: React.FC<PublicTutorProfilePageProps> = ({
                           </a>
                         )}
                       </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tab: Students Currently Taught */}
+        {activeTab === 'students' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Users className="w-4 h-4 text-cyan-400" />
+                  <span>Students Currently Associated & Enrolled</span>
+                </h3>
+                <p className="text-xs text-[#9d98af]">
+                  Calculated automatically from active course enrolments and attendance sessions under this teacher.
+                </p>
+              </div>
+              <span className="text-xs font-mono px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-800/60 text-cyan-300">
+                {studentsTaughtList.length} Active Students
+              </span>
+            </div>
+
+            {studentsTaughtList.length === 0 ? (
+              <div className="bg-[#141120] rounded-2xl p-8 text-center border border-[#2d2740] space-y-3">
+                <Users className="w-10 h-10 text-cyan-400/50 mx-auto" />
+                <h4 className="text-sm font-bold text-white">No students currently assigned</h4>
+                <p className="text-xs text-[#9d98af]">No students are currently enrolled in courses taught by this teacher.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {studentsTaughtList.map((st) => (
+                  <div
+                    key={st.id}
+                    className="bg-[#141120] rounded-2xl p-4 border border-[#2d2740] hover:border-cyan-500/40 transition-all flex items-center gap-3"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-cyan-950/80 border border-cyan-800/60 flex items-center justify-center font-bold text-cyan-300 text-sm shrink-0">
+                      {st.name.charAt(0)}
+                    </div>
+                    <div className="space-y-0.5 overflow-hidden">
+                      <h4 className="text-xs font-bold text-white truncate" title={st.name}>
+                        {st.name}
+                      </h4>
+                      <p className="text-[10px] font-mono text-cyan-400 truncate" title={st.course}>
+                        {st.course}
+                      </p>
+                      {st.matricNumber && (
+                        <p className="text-[10px] font-mono text-[#8e8a9f]">
+                          ID: {st.matricNumber}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -865,8 +781,10 @@ export const PublicTutorProfilePage: React.FC<PublicTutorProfilePageProps> = ({
               </div>
 
               {teachingHistoryList.length === 0 && teachingSessions.length === 0 ? (
-                <div className="bg-[#141120] rounded-2xl p-6 text-center border border-[#2d2740] space-y-2">
-                  <p className="text-xs text-[#9d98af]">No digital check-in sessions recorded on the platform yet.</p>
+                <div className="bg-[#141120] rounded-2xl p-8 text-center border border-[#2d2740] space-y-2">
+                  <Clock className="w-8 h-8 text-purple-400/60 mx-auto" />
+                  <h4 className="text-sm font-bold text-white">No teaching hours recorded</h4>
+                  <p className="text-xs text-[#9d98af]">Teaching hours are calculated from actual attendance and class-session records.</p>
                 </div>
               ) : (
                 <div className="bg-[#141120] rounded-2xl border border-[#2d2740] overflow-hidden">
@@ -961,12 +879,8 @@ export const PublicTutorProfilePage: React.FC<PublicTutorProfilePageProps> = ({
             {certifiedStudentsList.length === 0 ? (
               <div className="bg-[#141120] rounded-2xl p-8 text-center border border-[#2d2740] space-y-3">
                 <Award className="w-10 h-10 text-purple-400/60 mx-auto" />
-                <p className="text-xs text-[#9d98af]">No digital certificates currently indexed under this tutor.</p>
-                {hasHistoricalBaseline && historicalStudentsCertified > 0 && (
-                  <p className="text-[11px] font-mono text-amber-300">
-                    Includes {historicalStudentsCertified} certified graduates recorded in historical baseline.
-                  </p>
-                )}
+                <h4 className="text-sm font-bold text-white">No student certifications available</h4>
+                <p className="text-xs text-[#9d98af]">Student certifications will appear here once students taught by this teacher complete and receive their verified certificates.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1056,34 +970,15 @@ export const PublicTutorProfilePage: React.FC<PublicTutorProfilePageProps> = ({
           </div>
         )}
 
-        {/* Tab 5: Qualifications & Bio */}
+        {/* Tab 5: Faculty Background */}
         {activeTab === 'bio' && (
-          <div className="bg-[#141120] rounded-2xl p-6 sm:p-8 border border-[#2d2740] space-y-6">
+          <div className="bg-[#141120] rounded-2xl p-6 sm:p-8 border border-[#2d2740] space-y-4">
             <div>
               <h3 className="text-base font-bold text-white mb-2">Faculty Background & Mentorship Philosophy</h3>
               <p className="text-xs sm:text-sm text-[#b8b3c6] leading-relaxed">
                 {tutor.bio || `${tutor.name} is an active industry practitioner and senior instructor at Orbit Space Academy, mentoring emerging technologists across Nigeria in modern engineering, research, and production workflows.`}
               </p>
             </div>
-
-            {tutor.qualifications && tutor.qualifications.length > 0 && (
-              <div>
-                <h4 className="text-xs font-mono uppercase tracking-wider text-[#9d98af] mb-3">
-                  Verified Industry Credentials & Accreditations
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {tutor.qualifications.map((qual, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-[#1c172d] p-3 rounded-xl border border-[#342d4a] flex items-center gap-2.5 text-xs text-[#e0dceb]"
-                    >
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>{qual}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         )}
 

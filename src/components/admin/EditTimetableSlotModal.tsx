@@ -49,7 +49,7 @@ const VENUE_SUGGESTIONS = [
   'Main Lecture Hall'
 ];
 
-export const EditTimetableSlotModal: React.FC<EditTimetableSlotModalProps> = ({
+const EditTimetableSlotModalContent: React.FC<EditTimetableSlotModalProps> = ({
   slot,
   isOpen,
   onClose,
@@ -111,8 +111,6 @@ export const EditTimetableSlotModal: React.FC<EditTimetableSlotModalProps> = ({
     }
     setError('');
   }, [slot, isOpen]);
-
-  if (!isOpen) return null;
 
   const handleSelectCourse = (suggestion: typeof COURSE_SUGGESTIONS[0]) => {
     playSound('droplet');
@@ -505,3 +503,9 @@ export const EditTimetableSlotModal: React.FC<EditTimetableSlotModalProps> = ({
     </div>
   );
 };
+
+export const EditTimetableSlotModal: React.FC<EditTimetableSlotModalProps> = (props) => {
+  if (!props.isOpen) return null;
+  return <EditTimetableSlotModalContent {...props} />;
+};
+

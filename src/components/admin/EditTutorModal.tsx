@@ -1,11 +1,34 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { X, User, Mail, Phone, BookOpen, Briefcase, Save, AlertCircle, CheckCircle2, Upload, Image as ImageIcon, Trash2, Link as LinkIcon, Clock, Plus, Check } from 'lucide-react';
-import { TutorProfile, TutorService } from '../../services/tutorService';
-import { TeachingHoursLedgerService } from '../../services/teachingHoursLedgerService';
+import { 
+  X, 
+  User, 
+  Mail, 
+  Phone, 
+  BookOpen, 
+  Briefcase, 
+  Save, 
+  AlertCircle, 
+  CheckCircle2, 
+  Upload, 
+  Image as ImageIcon, 
+  Trash2, 
+  Clock, 
+  Plus, 
+  Check, 
+  Lock, 
+  Key, 
+  Users, 
+  Award, 
+  FolderGit2, 
+  ShieldCheck,
+  UserCheck,
+  UserX
+} from 'lucide-react';
+import { TutorProfile, TutorService, ComputedTutorStats } from '../../services/tutorService';
+import { ProgramService } from '../../services/programService';
 import { isAdminAuthenticated } from '../../services/certificateService';
 import { isSubAdminAuthenticated } from '../../services/subAdminService';
-import { AdminTeachingHoursLedgerModal } from './AdminTeachingHoursLedgerModal';
 import { playSound } from '../../utils/soundEffects';
 
 const AVAILABLE_COURSES = [
@@ -31,14 +54,17 @@ interface EditTutorModalProps {
   onTutorUpdated: (tutor: TutorProfile) => void;
 }
 
-export const EditTutorModal: React.FC<EditTutorModalProps> = ({
+const EditTutorModalContent: React.FC<{
+  tutor: TutorProfile;
+  isOpen: boolean;
+  onClose: () => void;
+  onTutorUpdated: (tutor: TutorProfile) => void;
+}> = ({
   tutor,
   isOpen,
   onClose,
   onTutorUpdated,
 }) => {
-  if (!isOpen || !tutor) return null;
-
   const [name, setName] = useState(tutor.name);
   const [shortName, setShortName] = useState(tutor.shortName || tutor.name.split(' ')[0]);
   const [email, setEmail] = useState(tutor.email);
@@ -48,34 +74,53 @@ export const EditTutorModal: React.FC<EditTutorModalProps> = ({
   const [role, setRole] = useState(tutor.role);
   const [bio, setBio] = useState(tutor.bio || '');
   const [linkedinUrl, setLinkedinUrl] = useState(tutor.linkedinUrl || '');
-  const [qualificationsStr, setQualificationsStr] = useState((tutor.qualifications || []).join(', '));
+  const [portfolioUrl, setPortfolioUrl] = useState(tutor.portfolioUrl || '');
   const [selectedPrograms, setSelectedPrograms] = useState<string[]>(tutor.programs || []);
   const [customProgramInput, setCustomProgramInput] = useState('');
-  const [isLedgerModalOpen, setIsLedgerModalOpen] = useState(false);
-  const [teachingHours, setTeachingHours] = useState<number>(
-    tutor.historicalBaseline?.historicalTeachingHours ?? tutor.baseTeachingHours ?? 0
+  
+  // Dynamic computed stats (strictly read-only)
+  const [computedStats, setComputedStats] = useState<ComputedTutorStats | null>(null);
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  // Account credentials management
+  const [accountStatus, setAccountStatus] = useState<'active' | 'deactivated'>(
+    tutor.account?.accountStatus === 'deactivated' || tutor.status === 'deactivated' ? 'deactivated' : 'active'
   );
-  const [studentsTaught, setStudentsTaught] = useState<number>(
-    tutor.historicalBaseline?.historicalStudentsTaught ?? tutor.baseStudentsCount ?? 0
-  );
-  const [certifiedStudents, setCertifiedStudents] = useState<number>(
-    tutor.historicalBaseline?.historicalStudentsCertified ?? 0
-  );
-  const [projectsSupervised, setProjectsSupervised] = useState<number>(
-    tutor.historicalBaseline?.historicalProjectsSupervised ?? 0
-  );
+  const [accountUsername, setAccountUsername] = useState(tutor.account?.username || tutor.email);
+  const [newPassword, setNewPassword] = useState('');
+  const [resetPassSuccess, setResetPassSuccess] = useState(false);
+
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    let isMounted = true;
+    setLoadingStats(true);
+    TutorService.getComputedTutorStats(tutor.id)
+      .then((stats) => {
+        if (isMounted) {
+          setComputedStats(stats);
+          setLoadingStats(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load computed stats:', err);
+        if (isMounted) setLoadingStats(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [tutor.id]);
+
   const handleFileSelect = (file: File) => {
     if (!file.type.startsWith('image/')) {
       setError('Please upload a valid image file (PNG, JPG, WebP).');
       return;
     }
-    // Limit to 4MB
     if (file.size > 4 * 1024 * 1024) {
       setError('Image file is too large. Please select an image under 4MB.');
       return;
@@ -110,18 +155,60 @@ export const EditTutorModal: React.FC<EditTutorModalProps> = ({
     }
   };
 
+  // Dynamic available programs from ProgramService catalog + courses
+  const allAvailablePrograms = useMemo(() => {
+    try {
+      const catalog = ProgramService.getAllPrograms().map(p => p.title);
+      const combined = Array.from(new Set([...catalog, ...AVAILABLE_COURSES]));
+      return combined.sort((a, b) => a.localeCompare(b));
+    } catch {
+      return AVAILABLE_COURSES;
+    }
+  }, []);
+
+  const handleToggleCourse = (course: string) => {
+    setSelectedPrograms(prev => {
+      const next = prev.includes(course) ? prev.filter(c => c !== course) : [...prev, course];
+      playSound('pop');
+      return next;
+    });
+  };
+
+  const handleAddProgramFromDropdown = (programName: string) => {
+    if (!programName) return;
+    if (!selectedPrograms.includes(programName)) {
+      setSelectedPrograms(prev => [...prev, programName]);
+      playSound('pop');
+    }
+  };
+
+  const handleRemoveCourse = (course: string) => {
+    setSelectedPrograms(prev => prev.filter(c => c !== course));
+    playSound('pop');
+  };
+
+  const handleAddCustomCourse = () => {
+    const trimmed = customProgramInput.trim();
+    if (!trimmed) return;
+    if (!selectedPrograms.includes(trimmed)) {
+      setSelectedPrograms(prev => [...prev, trimmed]);
+    }
+    setCustomProgramInput('');
+    playSound('pop');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
     if (!isAdminAuthenticated() && !isSubAdminAuthenticated()) {
-      setError('Access Denied: Only Orbit Space Administrators or authorized staff can edit tutor details.');
+      setError('Access Denied: Only Orbit Space Administrators can edit teacher details.');
       playSound('error');
       return;
     }
 
     if (!name.trim()) {
-      setError('Tutor full name is required.');
+      setError('Teacher full name is required.');
       return;
     }
 
@@ -134,12 +221,16 @@ export const EditTutorModal: React.FC<EditTutorModalProps> = ({
     playSound('click');
 
     try {
-      const parsedQualifications = qualificationsStr
-        .split(',')
-        .map(q => q.trim())
-        .filter(Boolean);
-
       const finalPrograms = selectedPrograms.map(p => p.trim()).filter(Boolean);
+
+      // Assemble updated tutor profile with updated credentials
+      const updatedAccount = {
+        hasAccount: true,
+        username: accountUsername.trim() || email.trim(),
+        initialPassword: newPassword.trim() ? newPassword.trim() : (tutor.account?.initialPassword || 'OrbitTeacher2026!'),
+        accountStatus: accountStatus,
+        lastLoginAt: tutor.account?.lastLoginAt
+      };
 
       const updated: TutorProfile = {
         ...tutor,
@@ -152,19 +243,10 @@ export const EditTutorModal: React.FC<EditTutorModalProps> = ({
         role: role.trim(),
         bio: bio.trim() || undefined,
         linkedinUrl: linkedinUrl.trim() || undefined,
-        qualifications: parsedQualifications.length > 0 ? parsedQualifications : undefined,
+        portfolioUrl: portfolioUrl.trim() || undefined,
         programs: finalPrograms,
-        historicalBaseline: {
-          historicalTeachingHours: Number(teachingHours) || 0,
-          historicalStudentsTaught: Number(studentsTaught) || 0,
-          historicalStudentsCertified: Number(certifiedStudents) || 0,
-          historicalProjectsSupervised: Number(projectsSupervised) || 0,
-          historicalBaselineNote: 'Admin audited & configured',
-          historicalAuditedBy: 'Academic Administration',
-          historicalAuditDate: new Date().toISOString().split('T')[0]
-        },
-        baseTeachingHours: Number(teachingHours) || 0,
-        baseStudentsCount: Number(studentsTaught) || 0
+        status: accountStatus === 'deactivated' ? 'deactivated' : 'active',
+        account: updatedAccount
       };
 
       const result = await TutorService.updateTutor(updated, tutor.shortName);
@@ -189,7 +271,7 @@ export const EditTutorModal: React.FC<EditTutorModalProps> = ({
         initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 15 }}
-        className="bg-neutral-900 border border-neutral-800 rounded-3xl p-6 sm:p-7 max-w-xl w-full shadow-2xl space-y-5 my-8 text-neutral-200 max-h-[90vh] overflow-y-auto"
+        className="bg-neutral-900 border border-neutral-800 rounded-3xl p-6 sm:p-7 max-w-2xl w-full shadow-2xl space-y-5 my-8 text-neutral-200 max-h-[90vh] overflow-y-auto"
       >
         {/* Modal Header */}
         <div className="flex items-start justify-between gap-3 border-b border-neutral-800 pb-4">
@@ -202,16 +284,25 @@ export const EditTutorModal: React.FC<EditTutorModalProps> = ({
               )}
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white tracking-tight">Edit Faculty Mentor Profile</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-white tracking-tight">Edit Teacher Profile</h2>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                  accountStatus === 'deactivated' 
+                    ? 'bg-amber-950/60 text-amber-400 border border-amber-800/40' 
+                    : 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40'
+                }`}>
+                  {accountStatus === 'deactivated' ? 'DEACTIVATED' : 'ACTIVE'}
+                </span>
+              </div>
               <p className="text-xs text-neutral-400">
-                Update verified faculty credentials, profile photo, and teaching assignments.
+                Administer faculty credentials, account access, and multi-course assignments.
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-xl text-neutral-400 hover:text-white hover:bg-neutral-800 transition"
+            className="p-1.5 rounded-xl text-neutral-400 hover:text-white hover:bg-neutral-800 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -227,11 +318,66 @@ export const EditTutorModal: React.FC<EditTutorModalProps> = ({
         {success && (
           <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
-            <span>Faculty profile and photo updated across the platform!</span>
+            <span>Teacher profile and credentials updated across the platform!</span>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          
+          {/* Dynamic Statistics Display (Strictly Read-Only from Actual Records) */}
+          <div className="p-4 rounded-2xl bg-neutral-950 border border-neutral-800 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-purple-400" />
+                <h3 className="text-xs font-semibold text-white">
+                  Dynamic Faculty Statistics (System Derived)
+                </h3>
+              </div>
+              <span className="flex items-center gap-1 text-[10px] font-mono text-purple-300 bg-purple-950/60 border border-purple-800/40 px-2 py-0.5 rounded-md">
+                <Lock className="w-3 h-3 text-purple-400" />
+                <span>Read-Only Source of Truth</span>
+              </span>
+            </div>
+            
+            <p className="text-[11px] text-neutral-400 leading-tight">
+              Statistics are calculated automatically from attendance logs, student enrollments, verified capstones, and certificates. Manual override is disabled to prevent inconsistent records.
+            </p>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+              <div className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800/80">
+                <span className="text-[10px] font-mono text-neutral-400 uppercase block">Students Taught</span>
+                <span className="text-base font-bold text-white">
+                  {loadingStats ? '...' : (computedStats?.totalStudentsTaught ?? 0)}
+                </span>
+                <span className="text-[9px] text-cyan-400 block mt-0.5">Active course enrolments</span>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800/80">
+                <span className="text-[10px] font-mono text-neutral-400 uppercase block">Supervised Projects</span>
+                <span className="text-base font-bold text-white">
+                  {loadingStats ? '...' : (computedStats?.totalProjectsSupervised ?? 0)}
+                </span>
+                <span className="text-[9px] text-amber-400 block mt-0.5">Verified capstones</span>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800/80">
+                <span className="text-[10px] font-mono text-neutral-400 uppercase block">Certifications</span>
+                <span className="text-base font-bold text-white">
+                  {loadingStats ? '...' : (computedStats?.totalStudentsCertified ?? 0)}
+                </span>
+                <span className="text-[9px] text-purple-400 block mt-0.5">Student certificates</span>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800/80">
+                <span className="text-[10px] font-mono text-neutral-400 uppercase block">Publications</span>
+                <span className="text-base font-bold text-white">
+                  {loadingStats ? '...' : (computedStats?.articlesSupervisedCount ?? 0)}
+                </span>
+                <span className="text-[9px] text-emerald-400 block mt-0.5">Authored articles</span>
+              </div>
+            </div>
+          </div>
+
           {/* Profile Picture Option */}
           <div className="p-4 rounded-2xl bg-neutral-950 border border-neutral-800 space-y-3">
             <div className="flex items-center justify-between">
@@ -243,7 +389,7 @@ export const EditTutorModal: React.FC<EditTutorModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setPhotoUrl('')}
-                  className="text-[11px] text-rose-400 hover:text-rose-300 flex items-center gap-1 transition"
+                  className="text-[11px] text-rose-400 hover:text-rose-300 flex items-center gap-1 transition cursor-pointer"
                 >
                   <Trash2 className="w-3 h-3" />
                   Remove photo
@@ -252,262 +398,356 @@ export const EditTutorModal: React.FC<EditTutorModalProps> = ({
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-4">
-              {/* Photo Preview */}
               <div className="relative w-20 h-20 rounded-2xl bg-neutral-900 border-2 border-dashed border-neutral-700 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
                 {photoUrl ? (
                   <img
                     src={photoUrl}
                     alt="Preview"
                     className="w-full h-full object-cover"
-                    onError={() => setError('Unable to load image from provided URL.')}
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = 'none';
+                    }}
                   />
                 ) : (
-                  <div className="text-center p-2">
-                    <User className="w-6 h-6 mx-auto text-neutral-500 mb-1" />
-                    <span className="text-[10px] text-neutral-500 block font-mono">No Photo</span>
-                  </div>
+                  <span className="text-2xl font-bold text-neutral-600">
+                    {shortName ? shortName.charAt(0) : 'T'}
+                  </span>
                 )}
               </div>
 
-              {/* Upload Dropzone & URL Input */}
               <div className="flex-1 w-full space-y-2">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp,image/jpg"
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      handleFileSelect(e.target.files[0]);
-                    }
-                  }}
-                />
-
                 <div
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                   onClick={() => fileInputRef.current?.click()}
-                  className={`border border-dashed rounded-xl p-3 text-center cursor-pointer transition flex items-center justify-center gap-2 ${
+                  className={`border-2 border-dashed rounded-xl p-3 text-center cursor-pointer transition ${
                     isDragging
-                      ? 'border-purple-500 bg-purple-500/10 text-purple-300'
-                      : 'border-neutral-700 bg-neutral-900 hover:border-purple-500/50 hover:bg-neutral-850 text-neutral-300'
+                      ? 'border-purple-500 bg-purple-500/10'
+                      : 'border-neutral-800 hover:border-neutral-700 bg-neutral-900/50'
                   }`}
                 >
-                  <Upload className="w-4 h-4 text-purple-400 shrink-0" />
-                  <span className="text-xs font-medium">
-                    {isDragging ? 'Drop photo here...' : 'Click to browse or drag & drop photo'}
-                  </span>
+                  <Upload className="w-4 h-4 text-purple-400 mx-auto mb-1" />
+                  <p className="text-xs text-neutral-300 font-medium">Click to upload photo or drag & drop</p>
+                  <p className="text-[10px] text-neutral-500">PNG, JPG, WebP up to 4MB</p>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleFileSelect(e.target.files[0]);
+                      }
+                    }}
+                    className="hidden"
+                  />
                 </div>
 
-                <div className="relative">
+                <div className="flex items-center gap-2">
                   <input
                     type="url"
                     value={photoUrl}
                     onChange={(e) => setPhotoUrl(e.target.value)}
-                    placeholder="Or paste image URL (https://...)"
-                    className="w-full bg-neutral-900 border border-neutral-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-xl px-3 py-1.5 text-xs text-white outline-none transition pr-7"
+                    placeholder="Or paste direct image URL (https://...)"
+                    className="flex-1 bg-neutral-900 border border-neutral-800 focus:border-purple-500 rounded-xl px-3 py-1.5 text-xs text-white placeholder-neutral-500 outline-none"
                   />
-                  <LinkIcon className="w-3.5 h-3.5 text-neutral-500 absolute right-2.5 top-2.5 pointer-events-none" />
                 </div>
               </div>
             </div>
-            <p className="text-[10px] text-neutral-500">
-              Supported formats: JPG, PNG, WebP (max 4MB). Shown on the public verification badge, certificate links, and timetable.
-            </p>
           </div>
 
-          {/* Full Name & Short Name */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          {/* Account & Authentication Control Section */}
+          <div className="p-4 rounded-2xl bg-neutral-950 border border-neutral-800 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-semibold text-white flex items-center gap-1.5">
+                <Key className="w-4 h-4 text-purple-400" />
+                Teacher Login Account & Permissions
+              </h3>
+              <span className="text-[10px] font-mono text-neutral-400">
+                Last Login: {tutor.account?.lastLoginAt ? new Date(tutor.account.lastLoginAt).toLocaleDateString() : 'Never'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-neutral-300">
+                  Account Status
+                </label>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setAccountStatus('active')}
+                    className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition cursor-pointer ${
+                      accountStatus === 'active'
+                        ? 'bg-emerald-950/80 border-emerald-600 text-emerald-300 shadow-sm'
+                        : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    <UserCheck className="w-3.5 h-3.5" />
+                    <span>Active Access</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAccountStatus('deactivated')}
+                    className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition cursor-pointer ${
+                      accountStatus === 'deactivated'
+                        ? 'bg-amber-950/80 border-amber-600 text-amber-300 shadow-sm'
+                        : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    <UserX className="w-3.5 h-3.5" />
+                    <span>Deactivated</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-neutral-300">
+                  Login Identifier (Username/Email)
+                </label>
+                <input
+                  type="text"
+                  value={accountUsername}
+                  onChange={(e) => setAccountUsername(e.target.value)}
+                  placeholder="teacher@orbitspace.academy"
+                  className="w-full bg-neutral-900 border border-neutral-800 focus:border-purple-500 rounded-xl px-3 py-1.5 text-xs text-white outline-none"
+                />
+              </div>
+
+              <div className="sm:col-span-2 space-y-1">
+                <label className="block text-[11px] font-medium text-neutral-300">
+                  Reset Password (Leave blank to keep existing password)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new teacher password..."
+                    className="flex-1 bg-neutral-900 border border-neutral-800 focus:border-purple-500 rounded-xl px-3 py-1.5 text-xs text-white placeholder-neutral-600 outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setNewPassword('OrbitTeacher2026!')}
+                    className="px-3 py-1.5 rounded-xl bg-purple-950/60 hover:bg-purple-900 border border-purple-800/40 text-purple-300 text-xs font-semibold whitespace-nowrap cursor-pointer transition"
+                    title="Set to standard default faculty password"
+                  >
+                    Default (OrbitTeacher2026!)
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Core Profile Fields */}
+          <div className="p-4 rounded-2xl bg-neutral-950 border border-neutral-800 space-y-3">
+            <h3 className="text-xs font-semibold text-white flex items-center gap-1.5">
+              <User className="w-4 h-4 text-purple-400" />
+              Teacher Core Information
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-neutral-300">Full Name *</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. John Doe"
+                  className="w-full bg-neutral-900 border border-neutral-800 focus:border-purple-500 rounded-xl px-3 py-1.5 text-xs text-white outline-none"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-neutral-300">Short Display Name *</label>
+                <input
+                  type="text"
+                  value={shortName}
+                  onChange={(e) => setShortName(e.target.value)}
+                  placeholder="e.g. John"
+                  className="w-full bg-neutral-900 border border-neutral-800 focus:border-purple-500 rounded-xl px-3 py-1.5 text-xs text-white outline-none"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-neutral-300">Email Address *</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="mentor@orbitspace.academy"
+                  className="w-full bg-neutral-900 border border-neutral-800 focus:border-purple-500 rounded-xl px-3 py-1.5 text-xs text-white outline-none"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-neutral-300">Phone Number</label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+234 812 345 6789"
+                  className="w-full bg-neutral-900 border border-neutral-800 focus:border-purple-500 rounded-xl px-3 py-1.5 text-xs text-white outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-neutral-300">Designation / Role</label>
+                <input
+                  type="text"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  placeholder="e.g. Senior Frontend Instructor"
+                  className="w-full bg-neutral-900 border border-neutral-800 focus:border-purple-500 rounded-xl px-3 py-1.5 text-xs text-white outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-neutral-300">Specialization</label>
+                <input
+                  type="text"
+                  value={specialization}
+                  onChange={(e) => setSpecialization(e.target.value)}
+                  placeholder="e.g. React, TypeScript, Next.js"
+                  className="w-full bg-neutral-900 border border-neutral-800 focus:border-purple-500 rounded-xl px-3 py-1.5 text-xs text-white outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-neutral-300">LinkedIn Profile URL</label>
+                <input
+                  type="url"
+                  value={linkedinUrl}
+                  onChange={(e) => setLinkedinUrl(e.target.value)}
+                  placeholder="https://linkedin.com/in/username"
+                  className="w-full bg-neutral-900 border border-neutral-800 focus:border-purple-500 rounded-xl px-3 py-1.5 text-xs text-white outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-neutral-300">Portfolio Website</label>
+                <input
+                  type="url"
+                  value={portfolioUrl}
+                  onChange={(e) => setPortfolioUrl(e.target.value)}
+                  placeholder="https://johndoe.design"
+                  className="w-full bg-neutral-900 border border-neutral-800 focus:border-purple-500 rounded-xl px-3 py-1.5 text-xs text-white outline-none"
+                />
+              </div>
+
+              <div className="sm:col-span-2 space-y-1">
+                <label className="block text-[11px] font-medium text-neutral-300">Biography</label>
+                <textarea
+                  rows={2}
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="Professional summary, years of practical experience, mentorship ethos..."
+                  className="w-full bg-neutral-900 border border-neutral-800 focus:border-purple-500 rounded-xl px-3 py-1.5 text-xs text-white outline-none resize-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Multi-Course / Subject Assignment */}
+          <div className="p-4 rounded-2xl bg-neutral-950 border border-neutral-800 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xs font-semibold text-white flex items-center gap-1.5">
+                  <BookOpen className="w-4 h-4 text-purple-400" />
+                  Assigned Academy Programs ({selectedPrograms.length})
+                </h3>
+                <p className="text-[10px] text-neutral-400 mt-0.5">
+                  Select available programs from the dropdown menu. A tutor can teach more than 1 program across the academy.
+                </p>
+              </div>
+              <span className="px-2.5 py-1 rounded-full bg-purple-900/60 border border-purple-700/60 text-purple-200 font-mono text-[11px] font-semibold">
+                {selectedPrograms.length} {selectedPrograms.length === 1 ? 'Program' : 'Programs'} Assigned
+              </span>
+            </div>
+
+            {/* Select Dropdown Menu of Available Programs */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-medium text-neutral-300">
-                Full Display Name *
+              <label className="block text-[11px] font-medium text-neutral-300">
+                Select Dropdown Menu of Available Programs:
               </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Lawal (Senior Frontend Lead)"
-                required
-                className="w-full bg-neutral-950 border border-neutral-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-xl px-3 py-2 text-xs text-white outline-none transition"
-              />
+              <div className="relative">
+                <select
+                  value=""
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      handleAddProgramFromDropdown(e.target.value);
+                      e.target.value = '';
+                    }
+                  }}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-neutral-900 border border-purple-500/50 text-white focus:outline-none focus:border-purple-400 text-xs cursor-pointer shadow-inner pr-8"
+                >
+                  <option value="">▼ Click to select and assign an available program...</option>
+                  {allAvailablePrograms.map((course) => (
+                    <option key={course} value={course} className="bg-neutral-900 text-white py-1">
+                      {selectedPrograms.includes(course) ? `✓ ${course} (Already Assigned)` : `+ Assign: ${course}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <p className="text-[10px] text-neutral-400">
+                Select any program to immediately assign it to this tutor. Repeat to assign multiple programs.
+              </p>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-xs font-medium text-neutral-300">
-                Short Name / Timetable Name *
-              </label>
-              <input
-                type="text"
-                value={shortName}
-                onChange={(e) => setShortName(e.target.value)}
-                placeholder="e.g. Lawal, Olamide, Ayo"
-                required
-                className="w-full bg-neutral-950 border border-neutral-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-xl px-3 py-2 text-xs text-white outline-none transition"
-              />
-              <p className="text-[10px] text-neutral-500">Used on timetable slot headers & compact pills.</p>
-            </div>
-          </div>
-
-          {/* Email & Phone */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div className="space-y-1.5">
-              <label className="block text-xs font-medium text-neutral-300">
-                Email Address
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="tutor@orbitspace.academy"
-                className="w-full bg-neutral-950 border border-neutral-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-xl px-3 py-2 text-xs text-white outline-none transition"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="block text-xs font-medium text-neutral-300">
-                Phone Number
-              </label>
-              <input
-                type="text"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+234 800 000 0000"
-                className="w-full bg-neutral-950 border border-neutral-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-xl px-3 py-2 text-xs text-white outline-none transition"
-              />
-            </div>
-          </div>
-
-          {/* Professional Role & Title */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-medium text-neutral-300">
-              Professional Role / Academic Title
-            </label>
-            <input
-              type="text"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              placeholder="e.g. Senior Full Stack Lead, Lead Security Engineer"
-              className="w-full bg-neutral-950 border border-neutral-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-xl px-3 py-2 text-xs text-white outline-none transition"
-            />
-          </div>
-
-          {/* Specialization / Tech Stack */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-medium text-neutral-300">
-              Specialization & Focus Areas
-            </label>
-            <input
-              type="text"
-              value={specialization}
-              onChange={(e) => setSpecialization(e.target.value)}
-              placeholder="e.g. React, TypeScript, Modern UI Architectures"
-              className="w-full bg-neutral-950 border border-neutral-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-xl px-3 py-2 text-xs text-white outline-none transition"
-            />
-          </div>
-
-          {/* Bio for Verification Profile */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-medium text-neutral-300">
-              Faculty Biography
-            </label>
-            <textarea
-              rows={2}
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder="Brief summary of professional experience, mentorship philosophy, and achievements..."
-              className="w-full bg-neutral-950 border border-neutral-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-xl px-3 py-2 text-xs text-white outline-none transition resize-none"
-            />
-          </div>
-
-          {/* LinkedIn Profile & Qualifications */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div className="space-y-1.5">
-              <label className="block text-xs font-medium text-neutral-300">
-                LinkedIn Profile URL
-              </label>
-              <input
-                type="url"
-                value={linkedinUrl}
-                onChange={(e) => setLinkedinUrl(e.target.value)}
-                placeholder="https://linkedin.com/in/username"
-                className="w-full bg-neutral-950 border border-neutral-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-xl px-3 py-2 text-xs text-white outline-none transition"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="block text-xs font-medium text-neutral-300">
-                Qualifications (Comma-separated)
-              </label>
-              <input
-                type="text"
-                value={qualificationsStr}
-                onChange={(e) => setQualificationsStr(e.target.value)}
-                placeholder="e.g. B.Sc Computer Science, AWS Certified"
-                className="w-full bg-neutral-950 border border-neutral-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-xl px-3 py-2 text-xs text-white outline-none transition"
-              />
-            </div>
-          </div>
-
-          {/* Programs / Classes Managed */}
-          <div className="space-y-2.5 p-3.5 rounded-2xl bg-neutral-950/80 border border-neutral-800">
-            <div className="flex items-center justify-between gap-2">
-              <label className="block text-xs font-semibold text-white flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5 text-purple-400" />
-                Assigned Programs & Tracks ({selectedPrograms.length})
-              </label>
-              <span className="text-[10px] text-neutral-400">Click to toggle or add custom tracks</span>
-            </div>
-
-            {/* Currently Selected Badges */}
-            {selectedPrograms.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5">
-                {selectedPrograms.map((prog) => (
+            {/* Selected Courses Chips */}
+            <div className="space-y-1.5 pt-1">
+              <span className="text-[10px] font-mono uppercase text-neutral-400 block">
+                Currently Assigned Programs ({selectedPrograms.length}):
+              </span>
+              <div className="flex flex-wrap gap-1.5 min-h-[32px] p-2 rounded-xl bg-neutral-900 border border-neutral-800">
+                {selectedPrograms.map((prog, idx) => (
                   <span
-                    key={prog}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/15 border border-purple-500/30 text-purple-200 text-xs font-medium"
+                    key={idx}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-950/80 border border-purple-600/60 text-purple-200 text-xs font-medium shadow-sm animate-fadeIn"
                   >
                     <span>{prog}</span>
                     <button
                       type="button"
-                      onClick={() => setSelectedPrograms((prev) => prev.filter((p) => p !== prog))}
-                      className="text-purple-400 hover:text-white transition-colors cursor-pointer"
+                      onClick={() => handleRemoveCourse(prog)}
+                      className="hover:text-rose-400 text-purple-400 transition cursor-pointer p-0.5 rounded-md hover:bg-rose-950/40"
                       title={`Remove ${prog}`}
                     >
                       <X className="w-3 h-3" />
                     </button>
                   </span>
                 ))}
+                {selectedPrograms.length === 0 && (
+                  <span className="text-xs text-amber-400/90 font-mono flex items-center gap-1.5 py-1">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    <span>No programs currently assigned to this teacher. Select from the dropdown above.</span>
+                  </span>
+                )}
               </div>
-            ) : (
-              <p className="text-xs text-amber-400/80 flex items-center gap-1.5 py-1">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                No programs assigned yet. Select from available academy courses below.
-              </p>
-            )}
+            </div>
 
-            {/* Available Course Quick-Toggle Chips */}
-            <div className="space-y-1.5 pt-1">
-              <span className="text-[11px] font-medium text-neutral-400 block">Available Academy Programs:</span>
+            {/* Quick Toggle Available Academy Courses */}
+            <div className="space-y-1.5 pt-2 border-t border-neutral-800/80">
+              <span className="text-[10px] font-mono uppercase text-neutral-400 block">
+                Quick Toggle Academy Tracks:
+              </span>
               <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
-                {AVAILABLE_COURSES.map((course) => {
-                  const isSelected = selectedPrograms.includes(course);
+                {allAvailablePrograms.map((course) => {
+                  const isAssigned = selectedPrograms.includes(course);
                   return (
                     <button
                       key={course}
                       type="button"
-                      onClick={() => {
-                        setSelectedPrograms((prev) =>
-                          isSelected ? prev.filter((p) => p !== course) : [...prev, course]
-                        );
-                      }}
-                      className={`text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1 cursor-pointer ${
-                        isSelected
-                          ? 'bg-purple-600 text-white border-purple-500 shadow-sm shadow-purple-900/30'
-                          : 'bg-neutral-900 hover:bg-neutral-850 text-neutral-300 border-neutral-800 hover:border-neutral-700'
+                      onClick={() => handleToggleCourse(course)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition cursor-pointer flex items-center gap-1.5 ${
+                        isAssigned
+                          ? 'bg-purple-600 text-white font-semibold shadow-sm'
+                          : 'bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-neutral-200 hover:border-neutral-700'
                       }`}
                     >
-                      {isSelected ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3 text-neutral-500" />}
+                      {isAssigned && <Check className="w-3 h-3" />}
                       <span>{course}</span>
                     </button>
                   );
@@ -515,114 +755,29 @@ export const EditTutorModal: React.FC<EditTutorModalProps> = ({
               </div>
             </div>
 
-            {/* Custom Track Input */}
-            <div className="flex items-center gap-2 pt-1">
+            {/* Custom Course Add Input */}
+            <div className="flex items-center gap-2 pt-1 border-t border-neutral-800/80">
               <input
                 type="text"
                 value={customProgramInput}
                 onChange={(e) => setCustomProgramInput(e.target.value)}
+                placeholder="Or type a custom specialized program name..."
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
-                    const trimmed = customProgramInput.trim();
-                    if (trimmed && !selectedPrograms.includes(trimmed)) {
-                      setSelectedPrograms((prev) => [...prev, trimmed]);
-                      setCustomProgramInput('');
-                    }
+                    handleAddCustomCourse();
                   }
                 }}
-                placeholder="Or type custom track name and press Enter..."
-                className="flex-1 bg-neutral-900 border border-neutral-800 focus:border-purple-500 rounded-xl px-3 py-1.5 text-xs text-white outline-none transition"
+                className="flex-1 bg-neutral-900 border border-neutral-800 focus:border-purple-500 rounded-xl px-3 py-1.5 text-xs text-white placeholder-neutral-500 outline-none"
               />
               <button
                 type="button"
-                onClick={() => {
-                  const trimmed = customProgramInput.trim();
-                  if (trimmed && !selectedPrograms.includes(trimmed)) {
-                    setSelectedPrograms((prev) => [...prev, trimmed]);
-                    setCustomProgramInput('');
-                  }
-                }}
-                className="px-3 py-1.5 rounded-xl bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-medium flex items-center gap-1 transition-all cursor-pointer"
+                onClick={handleAddCustomCourse}
+                className="px-3.5 py-1.5 rounded-xl bg-purple-950 hover:bg-purple-900 border border-purple-800/60 text-purple-300 hover:text-white text-xs font-semibold flex items-center gap-1 cursor-pointer transition"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-3 h-3" />
                 <span>Add Track</span>
               </button>
-            </div>
-
-            <p className="text-[10px] text-neutral-500">
-              Students, attendance sessions, and certificates in these tracks automatically link to this mentor profile.
-            </p>
-          </div>
-
-          {/* Verified Instructional Hours & Supervisory Records */}
-          <div className="p-4 rounded-2xl bg-neutral-950 border border-neutral-800 space-y-3">
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <div>
-                <h3 className="text-xs font-semibold text-white flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-purple-400" />
-                  Teaching Hours, Students & Supervisory Baseline
-                </h3>
-                <p className="text-[10px] text-neutral-400 mt-0.5">
-                  These audited baseline figures combine with live check-in logs and audited ledger adjustments.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsLedgerModalOpen(true)}
-                className="px-2.5 py-1 rounded-lg bg-purple-950/70 hover:bg-purple-900 border border-purple-800/60 text-purple-300 text-[11px] font-medium flex items-center gap-1.5 transition-all cursor-pointer"
-                title="View tripartite ledger, upload CSV, or make audited adjustments"
-              >
-                <Clock className="w-3 h-3 text-purple-400" />
-                <span>Open Hours Ledger</span>
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="space-y-1">
-                <label className="block text-[11px] font-medium text-neutral-300">Teaching Hours</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={teachingHours}
-                  onChange={(e) => setTeachingHours(Math.max(0, parseInt(e.target.value) || 0))}
-                  className="w-full bg-neutral-900 border border-neutral-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-xl px-3 py-1.5 text-xs text-white outline-none"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-[11px] font-medium text-neutral-300">Students Taught</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={studentsTaught}
-                  onChange={(e) => setStudentsTaught(Math.max(0, parseInt(e.target.value) || 0))}
-                  className="w-full bg-neutral-900 border border-neutral-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-xl px-3 py-1.5 text-xs text-white outline-none"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-[11px] font-medium text-neutral-300">Certified Students</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={certifiedStudents}
-                  onChange={(e) => setCertifiedStudents(Math.max(0, parseInt(e.target.value) || 0))}
-                  className="w-full bg-neutral-900 border border-neutral-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-xl px-3 py-1.5 text-xs text-white outline-none"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="block text-[11px] font-medium text-neutral-300">Projects Supervised</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={projectsSupervised}
-                  onChange={(e) => setProjectsSupervised(Math.max(0, parseInt(e.target.value) || 0))}
-                  className="w-full bg-neutral-900 border border-neutral-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded-xl px-3 py-1.5 text-xs text-white outline-none"
-                />
-              </div>
             </div>
           </div>
 
@@ -631,36 +786,50 @@ export const EditTutorModal: React.FC<EditTutorModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              disabled={isSaving}
-              className="px-4 py-2 rounded-xl text-xs font-medium text-neutral-300 hover:text-white bg-neutral-800 hover:bg-neutral-700 transition"
+              className="px-4 py-2 rounded-xl text-neutral-400 hover:text-white hover:bg-neutral-800 text-xs font-medium transition cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSaving}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-purple-600 hover:bg-purple-500 shadow-md shadow-purple-900/30 transition disabled:opacity-50 cursor-pointer"
+              className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold flex items-center gap-2 shadow-lg shadow-purple-950/40 disabled:opacity-50 transition cursor-pointer"
             >
-              <Save className="w-3.5 h-3.5" />
-              <span>{isSaving ? 'Saving...' : 'Save & Cascade All'}</span>
+              {isSaving ? (
+                <>
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Saving Updates...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Save Teacher Changes</span>
+                </>
+              )}
             </button>
           </div>
         </form>
       </motion.div>
-
-      {/* Teaching Hours Ledger Modal */}
-      <AdminTeachingHoursLedgerModal
-        isOpen={isLedgerModalOpen}
-        initialLecturerId={tutor.id}
-        onClose={() => setIsLedgerModalOpen(false)}
-        onUpdated={() => {
-          // Re-fetch tutor stats or update baseline hours if needed
-          const sum = TeachingHoursLedgerService.getLecturerLedgerSummary(tutor.id);
-          if (sum.historicalHours > 0) {
-            setTeachingHours(sum.historicalHours);
-          }
-        }}
-      />
     </div>
   );
 };
+
+export const EditTutorModal: React.FC<EditTutorModalProps> = ({
+  tutor,
+  isOpen,
+  onClose,
+  onTutorUpdated,
+}) => {
+  if (!isOpen || !tutor) return null;
+
+  return (
+    <EditTutorModalContent
+      key={tutor.id}
+      tutor={tutor}
+      isOpen={isOpen}
+      onClose={onClose}
+      onTutorUpdated={onTutorUpdated}
+    />
+  );
+};
+

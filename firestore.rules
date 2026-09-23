@@ -23,6 +23,12 @@ service cloud.firestore {
       allow write: if true;
     }
 
+    // System Metadata & Tombstones (e.g. permanently deleted records)
+    match /system_metadata/{metaId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
     // Academic Programs & Courses Management
     match /programs/{programId} {
       allow read: if true;

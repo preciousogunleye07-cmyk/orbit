@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActiveModal } from '../types';
-import { MapPin, MessageCircle, Instagram, Linkedin, Video, Shield, ShieldCheck, FileText, PenTool } from 'lucide-react';
+import { MapPin, MessageCircle, Instagram, Linkedin, Video, Shield, ShieldCheck, FileText, PenTool, UserCheck } from 'lucide-react';
 import { OrbitLogo } from './OrbitLogo';
 import { playSound } from '../utils/soundEffects';
 import { canAccessAdminPortal } from '../utils/adminSecurity';
@@ -147,6 +147,20 @@ export const FooterSection: React.FC<FooterSectionProps> = ({ setActiveModal, se
                 >
                   <ShieldCheck className="w-3.5 h-3.5 text-[#a855f7]" />
                   <span>Verify Certificate</span>
+                </a>
+              </li>
+              <li className="pt-1">
+                <a
+                  href="/teacher/login"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    playSound('pulse');
+                    navigateToPage('teacher/login');
+                  }}
+                  className="text-purple-300 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer text-xs"
+                >
+                  <UserCheck className="w-3.5 h-3.5 text-[#a855f7]" />
+                  <span>Faculty & Teacher Portal</span>
                 </a>
               </li>
               {canAccessAdminPortal() && (

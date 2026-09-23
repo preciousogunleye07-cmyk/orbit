@@ -178,6 +178,13 @@
         "auditReason": { "type": "string", "description": "Reason logged for adjustment or historical import" },
         "referenceNote": { "type": "string", "description": "Optional administrative note or reference document" }
       }
+    },
+    "system_metadata": {
+      "fields": {
+        "id": { "type": "string", "description": "Metadata key name e.g. deleted_tutors" },
+        "deletedIds": { "type": "array", "description": "Array of permanently deleted tutor IDs and aliases" },
+        "updatedAt": { "type": "string", "description": "Timestamp of metadata update" }
+      }
     }
   },
   "relations": [],
@@ -186,6 +193,7 @@
     "enrollments": "Insertable by prospective learners during registration.",
     "timetable": "Publicly readable by all students and guests; writable and editable by administrators.",
     "tutors": "Publicly readable; writable by verified administrators.",
+    "system_metadata": "Publicly readable and writable for system configuration and synchronization.",
     "programs": "Publicly readable; writable by administrators.",
     "teaching_hours": "Publicly readable for verified totals; writable by administrators.",
     "teaching_hours_ledger": "Publicly readable audit ledger; writable by authorized administrators and attendance events.",

@@ -22,6 +22,9 @@ import { ArticlesPage } from './pages/ArticlesPage';
 import { ArticleDetailPage } from './pages/ArticleDetailPage';
 import { SubAdminPortal } from './pages/editor/SubAdminPortal';
 import { AttendancePage } from './pages/AttendancePage';
+import { TeacherLoginPage } from './pages/teacher/TeacherLoginPage';
+import { TeacherDashboardPage } from './pages/teacher/TeacherDashboardPage';
+import { TutorAuthService } from './services/tutorAuthService';
 
 import { EnrollModal } from './components/modals/EnrollModal';
 import { SIWESModal } from './components/modals/SIWESModal';
@@ -53,11 +56,13 @@ type RouteState =
   | { mode: 'article-detail'; slug: string }
   | { mode: 'sub-admin' }
   | { mode: 'admin-login' }
-  | { mode: 'admin-dashboard'; subTab?: 'overview' | 'directory' | 'create' | 'articles' | 'verification' | 'programs' | 'tutors' }
+  | { mode: 'admin-dashboard'; subTab?: 'overview' | 'directory' | 'students' | 'articles' | 'letters' | 'create' | 'timetable' | 'attendance' | 'programs' | 'tutors' }
   | { mode: 'admin-blocked' }
   | { mode: 'public-certificate'; authId: string }
   | { mode: 'public-tutor'; tutorSlug: string }
-  | { mode: 'public-project'; projectSlug: string };
+  | { mode: 'public-project'; projectSlug: string }
+  | { mode: 'teacher-login' }
+  | { mode: 'teacher-dashboard' };
 
 function getCurrentLocationPath(): string {
   if (typeof window === 'undefined') return '/';
@@ -166,6 +171,27 @@ function parsePathToRoute(path: string): RouteState {
   // Main site pages
   if (MAIN_PAGES.includes(lowerPath)) {
     return { mode: 'main', page: lowerPath };
+  }
+
+  // Teacher / Faculty Authentication & Portal
+  if (
+    lowerPath === 'teacher' ||
+    lowerPath === 'teacher/login' ||
+    lowerPath === 'faculty' ||
+    lowerPath === 'faculty/login' ||
+    lowerPath === 'teacher/portal'
+  ) {
+    if (TutorAuthService.getCurrentTeacher()) {
+      return { mode: 'teacher-dashboard' };
+    }
+    return { mode: 'teacher-login' };
+  }
+
+  if (lowerPath === 'teacher/dashboard' || lowerPath === 'faculty/dashboard') {
+    if (TutorAuthService.getCurrentTeacher()) {
+      return { mode: 'teacher-dashboard' };
+    }
+    return { mode: 'teacher-login' };
   }
 
   // Tutor Public Authentication / Verification Link: /tutor/[unique-tutor-slug]
@@ -515,6 +541,58 @@ export default function App() {
                 onNavigateToTutor={(slug) => navigateTo(`/tutor/${slug}`)}
                 onNavigateToCertificate={(certId) => navigateTo(`/${certId}`)}
               />
+            </motion.div>
+          )}
+
+          {/* 11. Teacher / Faculty Sign In Page (/teacher/login) */}
+          {route.mode === 'teacher-login' && (
+            <motion.div
+              key="teacher-login"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="w-full"
+            >
+              <TeacherLoginPage
+                onLoginSuccess={(tutor) => {
+                  navigateTo('/teacher/dashboard');
+                }}
+                onNavigateHome={() => navigateTo('/')}
+              />
+            </motion.div>
+          )}
+
+          {/* 12. Teacher / Faculty Dashboard Portal (/teacher/dashboard) */}
+          {route.mode === 'teacher-dashboard' && (
+            <motion.div
+              key="teacher-dashboard"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="w-full"
+            >
+              {(() => {
+                const currentTeacher = TutorAuthService.getCurrentTeacher();
+                if (!currentTeacher) {
+                  return (
+                    <TeacherLoginPage
+                      onLoginSuccess={() => navigateTo('/teacher/dashboard')}
+                      onNavigateHome={() => navigateTo('/')}
+                    />
+                  );
+                }
+                return (
+                  <TeacherDashboardPage
+                    initialTutor={currentTeacher}
+                    onLogout={() => navigateTo('/teacher/login')}
+                    onNavigateHome={() => navigateTo('/')}
+                    onNavigateToCertificate={(certId) => navigateTo(`/${certId}`)}
+                    onNavigateToProject={(slug) => navigateTo(`/project/${slug}`)}
+                  />
+                );
+              })()}
             </motion.div>
           )}
 

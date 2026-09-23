@@ -51,94 +51,8 @@ export interface SupervisedProjectRecord {
 const TEACHING_HOURS_STORAGE = 'orbit_space_teaching_hours_v1';
 const SUPERVISED_PROJECTS_STORAGE = 'orbit_space_supervised_projects_v1';
 
-// Seed authentic historical teaching hours and supervised projects
-export const DEFAULT_TEACHING_HOURS: TeachingHourRecord[] = [
-  {
-    id: 'th-lawal-001',
-    tutorId: 'tch-lawal-frontend',
-    tutorName: 'Lawal',
-    program: 'Front End Development',
-    date: '2026-03-10',
-    durationHours: 2.5,
-    studentsCount: 16,
-    topicCovered: 'Modern React Architecture & Custom State Stores with TypeScript',
-    sessionNotes: 'Deep dive into performant state reconciliation and design tokens.',
-    verificationStatus: 'verified',
-    verifiedBy: 'Academic Director (Precious Ogunleye)',
-    verifiedAt: '2026-03-10T16:00:00Z',
-    createdAt: '2026-03-10T14:30:00Z'
-  },
-  {
-    id: 'th-lawal-002',
-    tutorId: 'tch-lawal-frontend',
-    tutorName: 'Lawal',
-    program: 'Web Development',
-    date: '2026-03-12',
-    durationHours: 3.0,
-    studentsCount: 18,
-    topicCovered: 'RESTful Endpoints, Microservices & PostgreSQL ORM Integration',
-    verificationStatus: 'verified',
-    verifiedBy: 'Academic Director',
-    verifiedAt: '2026-03-12T17:00:00Z',
-    createdAt: '2026-03-12T15:00:00Z'
-  },
-  {
-    id: 'th-olamide-001',
-    tutorId: 'tch-olamide-sec',
-    tutorName: 'Olamide',
-    program: 'Cyber Security',
-    date: '2026-03-11',
-    durationHours: 3.0,
-    studentsCount: 14,
-    topicCovered: 'SOC Defense, Wireshark Network Packet Inspection & SIEM Triage',
-    verificationStatus: 'verified',
-    verifiedBy: 'Academic Director',
-    verifiedAt: '2026-03-11T18:00:00Z',
-    createdAt: '2026-03-11T15:30:00Z'
-  },
-  {
-    id: 'th-olamide-002',
-    tutorId: 'tch-olamide-sec',
-    tutorName: 'Olamide',
-    program: 'Cyber Security',
-    date: '2026-03-14',
-    durationHours: 2.5,
-    studentsCount: 12,
-    topicCovered: 'OWASP Top 10 Web Exploits & Defense Simulations in Lab 1',
-    verificationStatus: 'verified',
-    verifiedBy: 'Academic Director',
-    verifiedAt: '2026-03-14T17:30:00Z',
-    createdAt: '2026-03-14T15:00:00Z'
-  },
-  {
-    id: 'th-stat-001',
-    tutorId: 'tch-stat-data',
-    tutorName: 'Mr. Stat',
-    program: 'Data Analysis',
-    date: '2026-03-09',
-    durationHours: 2.5,
-    studentsCount: 19,
-    topicCovered: 'Power BI DAX Formulas, ETL Pipelines & Interactive KPI Dashboards',
-    verificationStatus: 'verified',
-    verifiedBy: 'Academic Director',
-    verifiedAt: '2026-03-09T18:00:00Z',
-    createdAt: '2026-03-09T15:30:00Z'
-  },
-  {
-    id: 'th-precious-001',
-    tutorId: 'tch-precious-video',
-    tutorName: 'Precious',
-    program: 'Video Editing',
-    date: '2026-03-13',
-    durationHours: 3.0,
-    studentsCount: 15,
-    topicCovered: 'Premiere Pro Lumetri Color Grading, Motion Graphics & Audio Mix',
-    verificationStatus: 'verified',
-    verifiedBy: 'Admin Office',
-    verifiedAt: '2026-03-13T17:00:00Z',
-    createdAt: '2026-03-13T14:00:00Z'
-  }
-];
+// Seed authentic teaching hours: strictly empty, derived dynamically from attendance sessions
+export const DEFAULT_TEACHING_HOURS: TeachingHourRecord[] = [];
 
 export const DEFAULT_SUPERVISED_PROJECTS: SupervisedProjectRecord[] = [
   {
@@ -152,9 +66,9 @@ export const DEFAULT_SUPERVISED_PROJECTS: SupervisedProjectRecord[] = [
     category: 'web',
     projectUrl: 'https://orbitspace.academy/projects/michael-escrow',
     repoUrl: 'https://github.com/orbitspace-capstone/escrow-engine',
-    tutorId: 'tch-lawal-frontend',
-    tutorName: 'Lawal (Senior Frontend Lead)',
-    tutorRole: 'Senior Full Stack Lead & Mentor',
+    tutorId: 'tch-lawal',
+    tutorName: 'Lawal Kehinde',
+    tutorRole: 'Senior Full Stack & Cloud Architect',
     supervisionDate: '2026-02-12',
     visibility: 'public',
     verificationStatus: 'verified',
@@ -174,9 +88,9 @@ export const DEFAULT_SUPERVISED_PROJECTS: SupervisedProjectRecord[] = [
     category: 'web',
     projectUrl: 'https://orbitspace.academy/projects/precious-analytics',
     repoUrl: 'https://github.com/orbitspace-capstone/design-system',
-    tutorId: 'tch-lawal-frontend',
-    tutorName: 'Lawal (Senior Frontend Lead)',
-    tutorRole: 'Senior Full Stack Lead',
+    tutorId: 'tch-lawal',
+    tutorName: 'Lawal Kehinde',
+    tutorRole: 'Senior Full Stack & Cloud Architect',
     supervisionDate: '2026-02-25',
     visibility: 'public',
     verificationStatus: 'verified',
@@ -196,7 +110,7 @@ export const DEFAULT_SUPERVISED_PROJECTS: SupervisedProjectRecord[] = [
     category: 'security',
     projectUrl: 'https://orbitspace.academy/projects/amina-soc',
     tutorId: 'tch-olamide-sec',
-    tutorName: 'Olamide (Lead Security Engineer)',
+    tutorName: 'Olamide Akintola',
     tutorRole: 'Lead Security Engineer & SOC Analyst',
     supervisionDate: '2026-03-01',
     visibility: 'public',
@@ -217,8 +131,8 @@ export const DEFAULT_SUPERVISED_PROJECTS: SupervisedProjectRecord[] = [
     category: 'data',
     projectUrl: 'https://orbitspace.academy/projects/emmanuel-churn',
     tutorId: 'tch-stat-data',
-    tutorName: 'Mr. Stat (Lead Data Science Mentor)',
-    tutorRole: 'Statistics & Analytics Lead',
+    tutorName: 'Babatunde Adeleke (Mr. Stat)',
+    tutorRole: 'Lead Data Science & Analytics Mentor',
     supervisionDate: '2026-02-18',
     visibility: 'public',
     verificationStatus: 'verified',
@@ -241,7 +155,12 @@ export const VerificationDataService = {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          hoursMemory = parsed;
+          // Purge legacy dummy entries like th-lawal-001, th-olamide-001, etc.
+          const genuine = parsed.filter(h => !h.id.startsWith('th-lawal-') && !h.id.startsWith('th-olamide-') && !h.id.startsWith('th-stat-') && !h.id.startsWith('th-precious-'));
+          hoursMemory = genuine;
+          try {
+            localStorage.setItem(TEACHING_HOURS_STORAGE, JSON.stringify(genuine));
+          } catch {}
           return hoursMemory;
         }
       }

@@ -1,5 +1,5 @@
 import { collection, doc, getDocs, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
-import { db, isFirebaseConfigured } from './firebase';
+import { db, isFirebaseConfigured, handleFirestoreError, OperationType } from './firebase';
 import { isAdminAuthenticated, getCertificates } from './certificateService';
 import { isSubAdminAuthenticated } from './subAdminService';
 import { getLocalTimetableSlots, saveTimetableSlot } from './timetableService';
@@ -16,7 +16,17 @@ export interface TutorHistoricalBaseline {
   historicalAuditDate?: string;
 }
 
+
+export interface TutorAccountCredentials {
+  hasAccount: boolean;
+  username: string; // login identifier / email
+  initialPassword?: string; // admin-set initial password or temporary pin
+  lastLoginAt?: string;
+  accountStatus: "active" | "deactivated";
+}
+
 export interface TutorProfile {
+  account?: TutorAccountCredentials;
   id: string;
   slug: string; // URL slug for public link /tutor/[slug]
   name: string;
@@ -74,6 +84,42 @@ export const AVAILABLE_COURSES = [
 ];
 
 const TUTORS_STORAGE_KEY = 'orbit_space_tutors_v1';
+const TUTORS_DELETED_KEY = 'orbit_space_tutors_deleted_v2';
+
+export function getDeletedTutorIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(TUTORS_DELETED_KEY);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) {
+        return new Set(arr.map(s => String(s).toLowerCase().trim()));
+      }
+    }
+  } catch {}
+  return new Set();
+}
+
+export function saveDeletedTutorIds(ids: string[]): void {
+  const current = getDeletedTutorIds();
+  ids.forEach(id => {
+    if (id && typeof id === 'string') {
+      current.add(id.toLowerCase().trim());
+    }
+  });
+  try {
+    localStorage.setItem(TUTORS_DELETED_KEY, JSON.stringify(Array.from(current)));
+  } catch {}
+}
+
+export function isTutorDeleted(t: TutorProfile | null | undefined, deletedSet: Set<string>): boolean {
+  if (!t || !t.id) return true;
+  const idNorm = t.id.toLowerCase().trim();
+  if (deletedSet.has(idNorm)) return true;
+  if (t.slug && deletedSet.has(t.slug.toLowerCase().trim())) return true;
+  if (t.name && deletedSet.has(t.name.toLowerCase().trim())) return true;
+  if (t.aliasIds && t.aliasIds.some(a => deletedSet.has(a.toLowerCase().trim()))) return true;
+  return false;
+}
 
 export const DEFAULT_TUTORS: TutorProfile[] = [
   {
@@ -99,28 +145,16 @@ export const DEFAULT_TUTORS: TutorProfile[] = [
     verificationStatus: 'verified',
     joinedDate: '2024-03-15',
     bio: 'Senior engineering mentor specializing in high-performance frontend micro-architectures, React design tokens, Node.js cloud APIs, and distributed microservices.',
-    qualifications: [
-      'B.Sc Computer Science',
-      'Meta Certified Frontend Developer',
-      'PostgreSQL Certified Professional',
-      'AWS Certified Cloud Practitioner',
-      'Node.js Core Contributor'
-    ],
     linkedinUrl: 'https://linkedin.com/in/orbitspace-lawal',
     portfolioUrl: 'https://lawal.dev',
     aliasIds: ['tch-lawal-frontend', 'tch-lawal-backend'],
     aliasSlugs: ['lawal-frontend-lead', 'lawal-backend-architect'],
-    historicalBaseline: {
-      historicalTeachingHours: 146,
-      historicalStudentsTaught: 68,
-      historicalStudentsCertified: 42,
-      historicalProjectsSupervised: 18,
-      historicalBaselineNote: 'Imported verified manual attendance registers (Q1 2024 – Q4 2025 Foundation Cohorts)',
-      historicalAuditedBy: 'Super Admin (Engr. Precious Ogunleye)',
-      historicalAuditDate: '2026-01-15'
+  account: {
+      hasAccount: true,
+      username: "lawal.engineering@orbitspace.academy",
+      initialPassword: "OrbitTeacher2026!",
+      accountStatus: "active"
     },
-    baseTeachingHours: 146,
-    baseStudentsCount: 68
   },
   {
     id: 'tch-precious',
@@ -145,27 +179,16 @@ export const DEFAULT_TUTORS: TutorProfile[] = [
     verificationStatus: 'verified',
     joinedDate: '2023-11-01',
     bio: 'Award-winning video producer, AI systems architect, and creative technologist training developers in commercial media editing, visual storytelling, and autonomous agent workflows.',
-    qualifications: [
-      'Adobe Certified Professional in Video Design',
-      'DaVinci Resolve Certified Editor',
-      'Google Cloud Certified AI Engineer',
-      'Python Institute Certified'
-    ],
     linkedinUrl: 'https://linkedin.com/in/precious-ogunleye',
     portfolioUrl: 'https://preciousogunleye.com',
     aliasIds: ['tch-precious-video', 'tch-precious-auto', 'tch-precious-ogunleye'],
     aliasSlugs: ['precious-creative-director', 'precious-ai-automation'],
-    historicalBaseline: {
-      historicalTeachingHours: 110,
-      historicalStudentsTaught: 54,
-      historicalStudentsCertified: 38,
-      historicalProjectsSupervised: 14,
-      historicalBaselineNote: 'Archival creative media and automation workshop logs (2024 – 2025)',
-      historicalAuditedBy: 'Super Admin',
-      historicalAuditDate: '2026-01-15'
+  account: {
+      hasAccount: true,
+      username: "creative.media@orbitspace.academy",
+      initialPassword: "OrbitTeacher2026!",
+      accountStatus: "active"
     },
-    baseTeachingHours: 110,
-    baseStudentsCount: 54
   },
   {
     id: 'tch-olamide-sec',
@@ -184,20 +207,14 @@ export const DEFAULT_TUTORS: TutorProfile[] = [
     verificationStatus: 'verified',
     joinedDate: '2024-01-20',
     bio: 'Cybersecurity defense lead managing active threat hunting, incident mitigation pipelines, and enterprise SIEM architectures in Ilorin.',
-    qualifications: ['CompTIA Security+', 'CEH Certified Ethical Hacker', 'Cisco CCNA CyberOps'],
     linkedinUrl: 'https://linkedin.com/in/olamide-security',
     aliasIds: ['tch-olamide', 'tch-adebayo-vance'],
-    historicalBaseline: {
-      historicalTeachingHours: 132,
-      historicalStudentsTaught: 48,
-      historicalStudentsCertified: 32,
-      historicalProjectsSupervised: 15,
-      historicalBaselineNote: 'Manual Cyber Security & SOC Lab registers (2024 – 2025 Cohorts)',
-      historicalAuditedBy: 'Academic Director',
-      historicalAuditDate: '2026-01-15'
+  account: {
+      hasAccount: true,
+      username: "olamide.cyber@orbitspace.academy",
+      initialPassword: "OrbitTeacher2026!",
+      accountStatus: "active"
     },
-    baseTeachingHours: 132,
-    baseStudentsCount: 48
   },
   {
     id: 'tch-stat-data',
@@ -216,20 +233,14 @@ export const DEFAULT_TUTORS: TutorProfile[] = [
     verificationStatus: 'verified',
     joinedDate: '2024-02-14',
     bio: 'Data strategist and statistical modeler equipping students with real-world business intelligence, automated ETL scripts, and predictive modeling.',
-    qualifications: ['M.Sc Applied Statistics', 'Microsoft Certified Power BI Data Analyst Associate'],
     linkedinUrl: 'https://linkedin.com/in/mr-stat-orbitspace',
     aliasIds: ['tch-stat', 'tch-mr-stat', 'tch-marcus-okafor'],
-    historicalBaseline: {
-      historicalTeachingHours: 95,
-      historicalStudentsTaught: 42,
-      historicalStudentsCertified: 28,
-      historicalProjectsSupervised: 10,
-      historicalBaselineNote: 'Audited physical sign-in sheets for Data Analytics cohorts',
-      historicalAuditedBy: 'Academic Board',
-      historicalAuditDate: '2026-01-15'
+  account: {
+      hasAccount: true,
+      username: "data.mentor@orbitspace.academy",
+      initialPassword: "OrbitTeacher2026!",
+      accountStatus: "active"
     },
-    baseTeachingHours: 95,
-    baseStudentsCount: 42
   },
   {
     id: 'tch-rekay-content',
@@ -248,17 +259,14 @@ export const DEFAULT_TUTORS: TutorProfile[] = [
     verificationStatus: 'verified',
     joinedDate: '2024-04-10',
     bio: 'Viral content architect helping brand creators and influencers execute viral marketing campaigns and high-engagement reels.',
-    qualifications: ['Digital Storytelling Fellow', 'Meta Certified Digital Creator'],
     linkedinUrl: 'https://linkedin.com/in/rekay-orbitspace',
     aliasIds: ['tch-rekay'],
-    historicalBaseline: {
-      historicalTeachingHours: 64,
-      historicalStudentsTaught: 35,
-      historicalStudentsCertified: 25,
-      historicalProjectsSupervised: 8
+  account: {
+      hasAccount: true,
+      username: "rekay.content@orbitspace.academy",
+      initialPassword: "OrbitTeacher2026!",
+      accountStatus: "active"
     },
-    baseTeachingHours: 64,
-    baseStudentsCount: 35
   },
   {
     id: 'tch-ayo-product',
@@ -284,17 +292,14 @@ export const DEFAULT_TUTORS: TutorProfile[] = [
     verificationStatus: 'verified',
     joinedDate: '2024-03-01',
     bio: 'Product systems engineer combining industrial hardware prototyping, embedded microcontrollers, IoT telemetry, and cloud scale backends.',
-    qualifications: ['B.Eng Mechanical Engineering', 'Embedded Systems Specialist', 'COREN Registered Engineer'],
     linkedinUrl: 'https://linkedin.com/in/ayo-orbitspace',
     aliasIds: ['tch-ayo', 'tch-fatima-bello'],
-    historicalBaseline: {
-      historicalTeachingHours: 78,
-      historicalStudentsTaught: 38,
-      historicalStudentsCertified: 22,
-      historicalProjectsSupervised: 9
+  account: {
+      hasAccount: true,
+      username: "ayo.product@orbitspace.academy",
+      initialPassword: "OrbitTeacher2026!",
+      accountStatus: "active"
     },
-    baseTeachingHours: 78,
-    baseStudentsCount: 38
   }
 ];
 
@@ -388,15 +393,30 @@ function isDummyTeacher(t: TutorProfile): boolean {
 }
 
 function consolidateAndMigrateTutors(savedTutors: TutorProfile[]): TutorProfile[] {
+  const deletedSet = getDeletedTutorIds();
   const canonicalMap = new Map<string, TutorProfile>();
+
   DEFAULT_TUTORS.forEach(t => {
-    if (!isDummyTeacher(t)) {
-      canonicalMap.set(t.id, { ...t });
+    if (isDummyTeacher(t) || isTutorDeleted(t, deletedSet)) {
+      return;
     }
+    const entry: TutorProfile = { ...t };
+    delete (entry as any).historicalBaseline;
+    delete (entry as any).baseTeachingHours;
+    delete (entry as any).baseStudentsCount;
+    if (!entry.account) {
+      entry.account = {
+        hasAccount: true,
+        username: entry.email,
+        initialPassword: "OrbitTeacher2026!",
+        accountStatus: entry.status || "active"
+      };
+    }
+    canonicalMap.set(t.id, entry);
   });
 
   const findCanonical = (t: TutorProfile): TutorProfile | undefined => {
-    if (isDummyTeacher(t)) return undefined;
+    if (isDummyTeacher(t) || isTutorDeleted(t, deletedSet)) return undefined;
     if (canonicalMap.has(t.id)) return canonicalMap.get(t.id);
     for (const [_, canon] of canonicalMap.entries()) {
       if (canon.aliasIds?.includes(t.id)) return canon;
@@ -414,14 +434,12 @@ function consolidateAndMigrateTutors(savedTutors: TutorProfile[]): TutorProfile[
   };
 
   savedTutors.forEach((t) => {
-    if (!t || !t.id || isDummyTeacher(t)) return;
+    if (!t || !t.id || isDummyTeacher(t) || isTutorDeleted(t, deletedSet)) return;
     const canon = findCanonical(t);
     if (canon) {
       const mergedPrograms = Array.from(new Set([...(canon.programs || []), ...(t.programs || [])]));
-      const mergedQualifications = Array.from(new Set([...(canon.qualifications || []), ...(t.qualifications || [])]));
       const mergedAliases = Array.from(new Set([...(canon.aliasIds || []), ...(t.aliasIds || []), t.id].filter(id => id !== canon.id)));
       canon.programs = mergedPrograms;
-      canon.qualifications = mergedQualifications;
       canon.aliasIds = mergedAliases;
       if (t.portfolioUrl && !canon.portfolioUrl) canon.portfolioUrl = t.portfolioUrl;
       if (t.phone && !canon.phone) canon.phone = t.phone;
@@ -435,7 +453,7 @@ function consolidateAndMigrateTutors(savedTutors: TutorProfile[]): TutorProfile[
     }
   });
 
-  return Array.from(canonicalMap.values());
+  return Array.from(canonicalMap.values()).filter(t => !isTutorDeleted(t, deletedSet));
 }
 
 export const TutorService = {
@@ -443,15 +461,16 @@ export const TutorService = {
    * Get all tutors (active & deactivated)
    */
   getAllTutors(): TutorProfile[] {
-    if (tutorsMemoryCache && tutorsMemoryCache.length > 0) {
-      return tutorsMemoryCache;
+    const deletedSet = getDeletedTutorIds();
+    if (tutorsMemoryCache !== null && Array.isArray(tutorsMemoryCache)) {
+      return tutorsMemoryCache.filter(t => !isTutorDeleted(t, deletedSet));
     }
 
     try {
       const raw = localStorage.getItem(TUTORS_STORAGE_KEY);
-      if (raw) {
+      if (raw !== null) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           const consolidated = consolidateAndMigrateTutors(parsed);
           tutorsMemoryCache = consolidated;
           try {
@@ -464,9 +483,10 @@ export const TutorService = {
       console.warn('Could not read tutors from localStorage:', e);
     }
 
-    tutorsMemoryCache = [...DEFAULT_TUTORS];
+    const initial = DEFAULT_TUTORS.filter(t => !isTutorDeleted(t, deletedSet));
+    tutorsMemoryCache = initial;
     try {
-      localStorage.setItem(TUTORS_STORAGE_KEY, JSON.stringify(DEFAULT_TUTORS));
+      localStorage.setItem(TUTORS_STORAGE_KEY, JSON.stringify(initial));
     } catch {}
     return tutorsMemoryCache;
   },
@@ -557,12 +577,18 @@ export const TutorService = {
       try {
         const colRef = collection(db, 'tutors');
         unsubFirestore = onSnapshot(colRef, (snapshot) => {
-          if (!snapshot.empty) {
-            const map = new Map<string, TutorProfile>();
-            DEFAULT_TUTORS.forEach(t => map.set(t.id, t));
-            snapshot.forEach(docSnap => {
-              const data = docSnap.data() as TutorProfile;
-              if (data && docSnap.id) {
+          const deletedSet = getDeletedTutorIds();
+          const map = new Map<string, TutorProfile>();
+          DEFAULT_TUTORS.forEach(t => {
+            if (!isTutorDeleted(t, deletedSet)) {
+              map.set(t.id, t);
+            }
+          });
+          snapshot.forEach(docSnap => {
+            const data = docSnap.data() as TutorProfile;
+            if (data && docSnap.id) {
+              const fullData = { ...data, id: docSnap.id };
+              if (!isTutorDeleted(fullData, deletedSet)) {
                 const existing = map.get(docSnap.id);
                 map.set(docSnap.id, { 
                   ...existing,
@@ -570,17 +596,23 @@ export const TutorService = {
                   id: docSnap.id,
                   slug: data.slug || existing?.slug || docSnap.id
                 });
+              } else {
+                map.delete(docSnap.id);
               }
-            });
-            const merged = Array.from(map.values());
-            tutorsMemoryCache = merged;
-            try {
-              localStorage.setItem(TUTORS_STORAGE_KEY, JSON.stringify(merged));
-            } catch {}
-            callback(merged);
-          }
+            }
+          });
+          const merged = Array.from(map.values()).filter(t => !isTutorDeleted(t, deletedSet));
+          tutorsMemoryCache = merged;
+          try {
+            localStorage.setItem(TUTORS_STORAGE_KEY, JSON.stringify(merged));
+          } catch {}
+          callback(merged);
         }, (err) => {
-          console.warn('Firestore tutors subscription notice:', err.message);
+          if (err?.code === 'permission-denied' || String(err?.message || '').includes('permission')) {
+            handleFirestoreError(err, OperationType.GET, 'tutors');
+          } else {
+            console.warn('Firestore tutors subscription notice:', err.message);
+          }
         });
       } catch (err) {
         console.warn('Firestore onSnapshot error for tutors:', err);
@@ -978,26 +1010,10 @@ export const TutorService = {
       else if (e.type === 'adjustment') adjustmentHours += h;
     });
 
-    // If no historical entries in ledger yet, but tutor has historical baseline or baseTeachingHours, seed it
-    if (historicalTeachingHours === 0 && (baseline?.historicalTeachingHours || tutor.baseTeachingHours)) {
-      const baseHours = Number(baseline?.historicalTeachingHours ?? tutor.baseTeachingHours ?? 0);
-      if (baseHours > 0) {
-        TeachingHoursLedgerService.addHistoricalEntry({
-          lecturerId: tutor.id,
-          lecturerName: tutor.name,
-          hours: baseHours,
-          reason: baseline?.historicalBaselineNote || 'Imported manual attendance records before digital system',
-          note: baseline?.historicalBaselineNote,
-          addedBy: baseline?.historicalAuditedBy || 'Super Admin (Engr. Precious Ogunleye)'
-        }).catch(() => {});
-        historicalTeachingHours = baseHours;
-      }
-    }
-
-    historicalTeachingHours = Math.round(historicalTeachingHours * 10) / 10;
+    historicalTeachingHours = 0;
     newAttendanceHours = Math.round(newAttendanceHours * 10) / 10;
     adjustmentHours = Math.round(adjustmentHours * 10) / 10;
-    const totalTeachingHours = Math.round((historicalTeachingHours + newAttendanceHours + adjustmentHours) * 10) / 10;
+    const totalTeachingHours = Math.max(0, Math.round((newAttendanceHours + adjustmentHours) * 10) / 10);
 
     // 3. Students Taught (from actual class enrollment & session attendance across all tutor's programs)
     const realStudents = await AttendanceService.getStudentsTaughtByTutor(tutor.id, tutor.programs);
@@ -1038,24 +1054,15 @@ export const TutorService = {
         return true;
       }
 
-      // 4. Student taught by this tutor in verified attendance records
+      // 4. Certified student was taught by this tutor in verified attendance/enrolment AND course matches
       if (studentNamesTaughtSet.has(certStudent)) {
-        return true;
-      }
-
-      // 5. Automatic assignment from program curriculum track
-      const assignedTutor = TutorService.getAssignedTutorForProgram(cert.course);
-      if (assignedTutor && (allTargetIds.has(assignedTutor.id.toLowerCase()) || assignedTutor.id.toLowerCase() === cleanId)) {
-        return true;
-      }
-
-      // 6. Direct match with any of tutor's programs
-      const matchesProgram = (tutor.programs || []).some(p => {
-        const normP = p.toLowerCase().trim();
-        return certCourse === normP || certCourse.includes(normP) || normP.includes(certCourse);
-      });
-      if (matchesProgram) {
-        return true;
+        const matchesProgram = (tutor.programs || []).some(p => {
+          const normP = p.toLowerCase().trim();
+          return certCourse === normP || certCourse.includes(normP) || normP.includes(certCourse);
+        });
+        if (matchesProgram) {
+          return true;
+        }
       }
 
       return false;
@@ -1075,7 +1082,7 @@ export const TutorService = {
       projectUrl: c.projectUrl
     }));
     const newStudentsCertified = certifiedStudentsList.length;
-    const totalStudentsCertified = historicalStudentsCertified + newStudentsCertified;
+    const totalStudentsCertified = newStudentsCertified;
 
     // Also include certified graduates in students taught if not already present
     matchingCerts.forEach((cert) => {
@@ -1091,7 +1098,7 @@ export const TutorService = {
       }
     });
     const newStudentsTaught = studentsTaughtList.length;
-    const totalStudentsTaught = historicalStudentsTaught + newStudentsTaught;
+    const totalStudentsTaught = newStudentsTaught;
 
     // 5. Student Projects Supervised (from verified projects across canonical ID and aliases)
     const allProjects = VerificationDataService.getAllSupervisedProjects();
@@ -1102,7 +1109,7 @@ export const TutorService = {
       return matches && p.verificationStatus === 'verified';
     });
     const newProjectsSupervised = supervisedProjectsList.length;
-    const totalProjectsSupervised = historicalProjectsSupervised + newProjectsSupervised;
+    const totalProjectsSupervised = newProjectsSupervised;
 
     // 6. Articles / Research Supervised
     const articlesList = getArticlesByTutorName(tutor.name);
@@ -1214,8 +1221,6 @@ export const TutorService = {
     const updatedTutor: TutorProfile = {
       ...tutor,
       historicalBaseline: undefined,
-      baseTeachingHours: 0,
-      baseStudentsCount: 0
     };
 
     return await this.updateTutor(updatedTutor);
@@ -1294,12 +1299,32 @@ export const TutorService = {
    * Hard delete tutor (only if explicit admin confirmation given)
    */
   async hardDeleteTutor(tutorId: string): Promise<boolean> {
-    if (!isAdminAuthenticated()) {
-      throw new Error('Access Denied: Admin required.');
+    if (!isAdminAuthenticated() && !isSubAdminAuthenticated()) {
+      throw new Error('Access Denied: Only authenticated administrators can remove tutors.');
     }
 
     const all = this.getAllTutors();
-    const filtered = all.filter(t => t.id !== tutorId);
+    const tutorToDelete = all.find(t => 
+      t.id.toLowerCase() === tutorId.toLowerCase() || 
+      t.slug.toLowerCase() === tutorId.toLowerCase() || 
+      t.aliasIds?.some(a => a.toLowerCase() === tutorId.toLowerCase())
+    );
+
+    const idsToRecord: string[] = [tutorId];
+    if (tutorToDelete) {
+      idsToRecord.push(tutorToDelete.id);
+      if (tutorToDelete.slug) idsToRecord.push(tutorToDelete.slug);
+      if (tutorToDelete.name) idsToRecord.push(tutorToDelete.name);
+      if (tutorToDelete.shortName) idsToRecord.push(tutorToDelete.shortName);
+      if (tutorToDelete.aliasIds && Array.isArray(tutorToDelete.aliasIds)) {
+        idsToRecord.push(...tutorToDelete.aliasIds);
+      }
+    }
+
+    saveDeletedTutorIds(idsToRecord);
+    const deletedSet = getDeletedTutorIds();
+
+    const filtered = all.filter(t => !isTutorDeleted(t, deletedSet));
     tutorsMemoryCache = filtered;
 
     try {
@@ -1311,12 +1336,153 @@ export const TutorService = {
     if (isFirebaseConfigured() && db) {
       try {
         await deleteDoc(doc(db, 'tutors', tutorId));
-      } catch (e) {
-        console.warn('Firestore tutor delete notice:', e);
+      } catch (err: any) {
+        if (err?.code === 'permission-denied' || String(err?.message || '').includes('permission')) {
+          handleFirestoreError(err, OperationType.DELETE, `tutors/${tutorId}`);
+        } else {
+          console.warn('Firestore tutor delete notice:', err?.message || err);
+        }
+      }
+
+      if (tutorToDelete && tutorToDelete.id !== tutorId) {
+        try {
+          await deleteDoc(doc(db, 'tutors', tutorToDelete.id));
+        } catch {
+          // ignore alias delete failure
+        }
+      }
+
+      try {
+        await setDoc(doc(db, 'system_metadata', 'deleted_tutors'), {
+          deletedIds: Array.from(deletedSet),
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+      } catch (err: any) {
+        if (err?.code === 'permission-denied' || String(err?.message || '').includes('permission')) {
+          handleFirestoreError(err, OperationType.WRITE, 'system_metadata/deleted_tutors');
+        } else {
+          console.warn('Firestore metadata write notice:', err?.message || err);
+        }
       }
     }
 
+    // Cascade to Timetable slots
+    try {
+      const slots = getLocalTimetableSlots();
+      const matchInstructor = (slotInstructor: string) => {
+        if (!slotInstructor) return false;
+        const norm = slotInstructor.toLowerCase().trim();
+        return idsToRecord.some(id => norm.includes(id.toLowerCase().trim()));
+      };
+
+      for (const slot of slots) {
+        if (matchInstructor(slot.instructor)) {
+          await saveTimetableSlot({
+            ...slot,
+            instructor: 'Faculty (To Be Announced)'
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('Notice clearing instructor from timetable slots:', err);
+    }
+
     window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new CustomEvent('orbit-tutors-updated', { detail: { deletedId: tutorId } }));
+    return true;
+  },
+
+  /**
+   * Set or update tutor account credentials
+   */
+  async setTutorAccount(tutorId: string, account: TutorAccountCredentials): Promise<boolean> {
+    const tutor = this.getTutorById(tutorId);
+    if (!tutor) return false;
+
+    await this.updateTutor({
+      ...tutor,
+      account
+    });
+    return true;
+  },
+
+  /**
+   * Reset or update tutor password
+   */
+  async resetTutorPassword(tutorId: string, newPassword: string): Promise<boolean> {
+    const tutor = this.getTutorById(tutorId);
+    if (!tutor) return false;
+
+    const currentAccount = tutor.account || {
+      hasAccount: true,
+      username: tutor.email,
+      accountStatus: tutor.status || 'active'
+    };
+
+    await this.updateTutor({
+      ...tutor,
+      account: {
+        ...currentAccount,
+        initialPassword: newPassword
+      }
+    });
+    return true;
+  },
+
+  /**
+   * Toggle teacher account status (active vs deactivated)
+   */
+  async toggleTutorAccountStatus(tutorId: string): Promise<boolean> {
+    const tutor = this.getTutorById(tutorId);
+    if (!tutor) return false;
+
+    const nextStatus = tutor.status === 'active' ? 'deactivated' : 'active';
+    const currentAccount = tutor.account || {
+      hasAccount: true,
+      username: tutor.email,
+      accountStatus: nextStatus
+    };
+
+    await this.updateTutor({
+      ...tutor,
+      status: nextStatus,
+      account: {
+        ...currentAccount,
+        accountStatus: nextStatus
+      }
+    });
+    return true;
+  },
+
+  /**
+   * Add a single program to tutor
+   */
+  async addProgramToTutor(tutorId: string, program: string): Promise<boolean> {
+    const tutor = this.getTutorById(tutorId);
+    if (!tutor) return false;
+
+    const currentPrograms = tutor.programs || [];
+    if (!currentPrograms.includes(program.trim())) {
+      await this.updateTutor({
+        ...tutor,
+        programs: [...currentPrograms, program.trim()]
+      });
+    }
+    return true;
+  },
+
+  /**
+   * Remove a program from tutor
+   */
+  async removeProgramFromTutor(tutorId: string, program: string): Promise<boolean> {
+    const tutor = this.getTutorById(tutorId);
+    if (!tutor) return false;
+
+    const currentPrograms = tutor.programs || [];
+    await this.updateTutor({
+      ...tutor,
+      programs: currentPrograms.filter(p => p.toLowerCase() !== program.toLowerCase().trim())
+    });
     return true;
   }
 };
